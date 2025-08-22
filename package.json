@@ -1,0 +1,20 @@
+{
+  "name": "sc-dental-clinic",
+  "version": "1.0.0",
+  "description": "*A.Y. 2025-2026*<br/>\r An ongoing website project for a dental clinic management system as a requirement for Software Engineering 2 course. Built with Next.JS, [backend], and Tailwind CSS.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meiigang/sc-dental-clinic.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/meiigang/sc-dental-clinic/issues"
+  },
+  "homepage": "https://github.com/meiigang/sc-dental-clinic#readme"
+}
