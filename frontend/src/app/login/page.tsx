@@ -36,6 +36,12 @@ export default function Login () {
                     </div>
                 </form>
             </div>
+
+            {/* Links to dashboards for testing purposes */}
+            <div className="flex flex-col items-center justify-center space-y-8 bg-[#082565] text-white">
+                <Link href="/patient-dashboard">Go to Patient Dashboard</Link>
+                <Link href="/staff-dashboard">Go to Staff Dashboard</Link>
+            </div>
         </main>
     );
 }
