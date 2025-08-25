@@ -11,29 +11,54 @@ export default function Register() {
         middleName: "",
         suffix: "",
         email: "",
-        contact: "",
+        contactNumber: "",
         password: "",
         confirmPassword: ""
     });
 
+    const [errors, setErrors] = useState({
+        contactNumber: "",
+        password: ""
+    });
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({...form, [e.target.name]: e.target.value});
+
+        // Clear errors on input change
+        setErrors({ contactNumber: "", password: "" });
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!agreed ) return;
+
+        // contactNumber number validation
+        if (!/^\d{11}$/.test(form.contactNumber)) {
+            alert("contactNumber number must be exactly 11 digits.");
+            return;
+        }
+
         // Validate password matching
-        const res = await fetch("http://localhost: 4000/api/users/register", {
+        if (form.password !== form.confirmPassword) {
+            alert("Passwords do not match.");
+            return;
+        }
+
+        // Final check before submit
+        if (errors.contactNumber || errors.password) {
+            alert("Please fix the errors before submitting.");
+            return;
+        }
+
+        const res = await fetch("http://localhost:4000/api/users/register", {
            method: "POST",
            headers: {"Content-Type": "application/json"},
            body: JSON.stringify(form) 
         });
 
         const data = await res.json();
-        //Handle response (success, error, etc.)
-        alert(data.message || "Successfully Registered!")
+        console.log(data);
     }
 
     return (
@@ -66,7 +91,7 @@ export default function Register() {
                             <div className="label-input flex flex-col">
                                 <label htmlFor="suffix"><b>Suffix</b></label>
                                 <input type="text" className='form-input bg-[#DAE3F6] p-4 rounded-xl w-38' id="suffix" name="suffix"
-                                value={form.suffix} onChange={handleChange} required
+                                value={form.suffix} onChange={handleChange}
                                 placeholder = "Suffix"/>
                             </div>
                         </div>
@@ -77,12 +102,18 @@ export default function Register() {
                             placeholder = "Email Address"/>
                         </div>
                         <div className="label-input flex flex-col">
-                            <label htmlFor="contact"><b>Contact Number</b></label>
-                            <input type="text" className='form-input bg-[#DAE3F6] p-4 rounded-xl w-84' id="contact" name="contact"
-                            value={form.contact} onChange={handleChange} required
+                            {errors.contactNumber && (
+                                <span style={{ color: "red", marginBottom: "4px" }}>{errors.contactNumber}</span>
+                            )}
+                            <label htmlFor="contactNumber"><b>Contact Number</b></label>
+                            <input type="text" className='form-input bg-[#DAE3F6] p-4 rounded-xl w-84' id="contactNumber" name="contactNumber"
+                            value={form.contactNumber} onChange={handleChange} required
                             placeholder = "Contact Number"/>
                         </div>
                         <div className="label-input flex flex-col">
+                            {errors.password && (
+                                <span style={{ color: "red", marginBottom: "4px" }}>{errors.password}</span>
+                            )}
                             <label htmlFor="password"><b>Password</b></label>
                             <input type="password" className='form-input bg-[#DAE3F6] p-4 rounded-xl w-84' id="password" name="password"
                             value={form.password} onChange={handleChange} required
@@ -101,7 +132,7 @@ export default function Register() {
                         <label htmlFor="terms" className="ml-2 text-sm font-light"><b>I agree with the the Terms and Conditions.</b></label>
                     </div>
                     {/* Submit Button */}
-                    <button type="submit" className='submit-button bg-[#082565] text-white p-3 rounded-xl' disabled={!agreed}><b>Create New Account</b></button>
+                    <button type="submit" className='submit-button bg-[#082565] text-white p-3 rounded-xl cursor-pointer' disabled={!agreed}><b>Create New Account</b></button>
                 </form>
                 <div className="flex justify-center text-sm text-[#151515] font-bold">
                         <span>

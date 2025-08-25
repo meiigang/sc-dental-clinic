@@ -1,6 +1,9 @@
+import 'dotenv/config';
 import express from "express";
+import { createClient } from "@supabase/supabase-js";
 import userRouter from './routes/users.mjs';
 import cors from "cors";
+import { supabaseMiddleware } from "./utils/middleware/middleware.mjs";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -13,6 +16,7 @@ const supabase = createClient(supabaseUrl, supabaseKey); //Connect backend to da
 
 //Middleware
 app.use(express.json());
+app.use(supabaseMiddleware);
 app.use(cors({origin: CLIENT_ORIGIN }))
 app.use('/api/users', userRouter);
 

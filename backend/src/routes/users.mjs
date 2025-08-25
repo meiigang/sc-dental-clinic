@@ -1,9 +1,9 @@
 //ROUTER API
 import {Router} from "express";
 import {registerValidation} from "../utils/middleware/validationSchemas.mjs"
-import registerHandler from "../api/user/register.mjs"
-import {loginValidation} from "../utils/middleare/validationSchemas.mjs";
-import loginHandler from "../api/user/login.mjs";
+import registerHandler from "../api/users/register.mjs"
+import {loginValidation} from "../utils/middleware/validationSchemas.mjs";
+import loginHandler from "../api/users/login.mjs";
 
 const router = Router();
 

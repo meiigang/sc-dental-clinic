@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken"
+import {createClient} from "@supabase/supabase-js";
 
 //Middleware for verifying JWT
 export function authenticateToken(req, res, next) {
@@ -11,4 +12,12 @@ export function authenticateToken(req, res, next) {
         req.user = user;
         next()
     })
+}
+
+//Supabase middleware
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
+export function supabaseMiddleware(req, res, next) {
+  req.supabase = supabase;
+  next();
 }

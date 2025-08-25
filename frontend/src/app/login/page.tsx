@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from 'next/link';
 
 export default function Login () {
@@ -7,6 +8,8 @@ export default function Login () {
         email: "",
         password: ""
     });
+    const [error, setError] = useState("");
+    const router = useRouter();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value})
@@ -24,6 +27,15 @@ export default function Login () {
 
         const data = await res.json();
         alert(data.message);
+
+        if (res.ok && data.token) {
+            localStorage.setItem("token", data.token)
+            //Redirect to dashboard
+            router.push("/patient-dashboard");
+        }
+        else {
+            setError(data.message || "Login failed");
+        }
     }
 
     return (
@@ -40,7 +52,7 @@ export default function Login () {
                         <input 
                         type="text" 
                         id="email-contact" 
-                        name="email-contact" 
+                        name="email" 
                         className='p-3 rounded-lg w-84 bg-[#DAE3F6]' 
                         value={form.email}
                         onChange={handleChange}
@@ -65,7 +77,7 @@ export default function Login () {
                         </div>
                     </div>
                     <div className="button-container flex justify-center">
-                        <button type="submit" className='bg-[#082565] text-white p-3 rounded-xl w-30'><b>Log In</b></button>
+                        <button type="submit" className='bg-[#082565] text-white p-3 rounded-xl w-30 cursor-pointer'><b>Log In</b></button>
                     </div>
                     <div className="flex justify-center text-sm text-[#151515] font-bold">
                         <span>
@@ -74,12 +86,6 @@ export default function Login () {
                         </span>
                     </div>
                 </form>
-            </div>
-
-            {/* Links to dashboards for testing purposes */}
-            <div className="flex flex-col items-center justify-center space-y-8 bg-[#082565] text-white">
-                <Link href="/patient-dashboard">Go to Patient Dashboard</Link>
-                <Link href="/staff-dashboard">Go to Staff Dashboard</Link>
             </div>
         </main>
     );

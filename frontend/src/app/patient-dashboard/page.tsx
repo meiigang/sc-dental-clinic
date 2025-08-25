@@ -1,14 +1,35 @@
+"use client";
 import Image from "next/image";
 import { RiPencilFill } from "react-icons/ri";
+import { jwtDecode } from "jwt-decode";
+import { useEffect, useState } from "react";
 
 export default function PatientDashboard() {
+
+    //Get user info from JWT Login token
+    const [userName, setUserName] = useState("User");
+
+    useEffect(() => {
+        // Get token from localStorage
+        const token = localStorage.getItem("token");
+        if (token) {
+        try {
+            // Decode JWT to get user info
+            const decoded: any = jwtDecode(token);
+            setUserName(decoded.firstName || decoded.email || "User");
+        } catch (err) {
+            setUserName("User");
+        }
+        }
+    }, []);
+
   return (
     <main className="bg-blue-light">
         <div className="page-container px-50 py-20 space-y-6 min-h-screen">
             {/* User Profile */}
             <div className="mt-4 justify-center">
                 {/* "Staff" to be replaced by user*/}
-                <h1 className="inline-block whitespace-nowrap text-3xl font-bold text-blue-dark">Welcome, Staff</h1>
+                <h1 className="inline-block whitespace-nowrap text-3xl font-bold text-blue-dark">Welcome, {userName}</h1>
                 {/* Edit Profile button */}
                 <div>
                     <span className="flex items-center text-blue-primary">

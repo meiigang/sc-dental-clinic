@@ -1,25 +1,37 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export default async function loginHandler(req, res) {
-    const {email, password} = req.body;
+    const { email, password } = req.body;
 
-    //Find user by email
-    const {data: user, error} = await req.supabase
-    .from("users")
-    .select("*")
-    .eq("email", email)
-    .single();
+    // Find user by email
+    const { data: user, error } = await req.supabase
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .single();
 
-    if(!user){
-        return res.status(401).json({message: "Invalid email or password."});
+    // Only log after user is defined
+    console.log("User from DB:", user);
+    console.log("Password from form:", password);
+    console.log("Password hash from DB:", user?.password_hash);
+
+    if (!user || !user.password_hash) {
+        return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    //Compare password
-    const match = await bcrypt.compare(password, user.password);
+    // Compare password
+    const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
-        return res.status(401).json({message: "Invalid email or password."});
+        return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    res.json({ message: "Login successful", user: { id: user.id, email: user.email}});
-}
+    // Generate JWT
+    const token = jwt.sign(
+        { id: user.id, email: user.email, firstName: user.firstName },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+    );
 
+    res.json({ message: "Login successful", token });
+}

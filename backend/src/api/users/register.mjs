@@ -1,8 +1,11 @@
 import bcrypt from "bcrypt";
 
 export default async function registerHandler(req, res) {
+
+    console.log("Incoming registration data:", req.body); // Log the data
+
     //Get user input from request body
-    const { lastName, firstName, middleName, suffix, email, contact, password } = req.body;
+    const { lastName, firstName, middleName, suffix, email, contactNumber, password } = req.body;
 
     //Check if user already exists in database
     const {data: existing} = await req.supabase
@@ -21,18 +24,20 @@ export default async function registerHandler(req, res) {
     //Insert user
     const {error} = await req.supabase.from("users").insert([
         {
-            last_name: lastName,
-            first_name: firstName,
-            middle_name: middleName,
-            suffix,
+            lastName: lastName,
+            firstName: firstName,
+            middleName: middleName,
+            nameSuffix: suffix,
             email,
-            contact,
-            password: hashedPassword,
+            contactNumber: contactNumber,
+            password_hash: hashedPassword,
+            created_at: new Date().toISOString()
         }
     ]);
 
     if (error) {
-    return res.status(500).json({ message: "Registration failed" });
+        console.error("Supabase insert error:", error);
+        return res.status(500).json({ message: "Registration failed" });
   }
 
   res.json({ message: "Registration successful" });
