@@ -2,13 +2,14 @@
 
 /* Global CSS variables */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F8FAFF;
+  --foreground: #151515;
 
   /* Custom blues */
-  --blue-light: #F8FAFF;
   --blue-primary: #466BBA;
   --blue-dark: #082565;
+  --blue-accent: #98AFDF;
+  --blue-light: #DAE3F6;
 }
 
 @theme inline {
