@@ -2,12 +2,14 @@
 import Image from "next/image";
 import { RiPencilFill } from "react-icons/ri";
 import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react";
 
 export default function PatientDashboard() {
 
     //Get user info from JWT Login token
     const [userName, setUserName] = useState("User");
+    const router = useRouter();
 
     useEffect(() => {
         // Get token from localStorage
