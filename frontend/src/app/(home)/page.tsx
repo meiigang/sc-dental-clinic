@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { services } from "@/data/servicesData";
 
 export default function Home() {

@@ -7,10 +7,10 @@ export default function Register() {
     const [agreed, setAgreed] = useState(false);
 
     return (
-        <main>
+        <main className="bg-blue-light">
             <div className="page-container py-20 space-y-6 min-h-screen">
                 <div className="page-title flex items-center justify-center">
-                    <h1 className='text-5xl font-bold text-[#082565]'>Register</h1>
+                    <h1 className='text-5xl font-bold text-blue-dark'>Register</h1>
                 </div>
                 <form action="register" className='register-form flex flex-col items-center justify-center'>
                     <div className="form-container flex flex-col space-y-5 mt-10">
