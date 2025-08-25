@@ -31,7 +31,7 @@ export default function Login () {
         if (res.ok && data.token) {
             localStorage.setItem("token", data.token)
             //Redirect to dashboard
-            router.push("/(patient-dashboard)/dashboard");
+            router.push("/dashboard");
         }
         else {
             setError(data.message || "Login failed");
