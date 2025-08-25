@@ -14,8 +14,8 @@
 
   /* Custom text colors */
   --text-dark: #151515;
-  --text-blue: #082565;
-  --text-light: #F8FAFF;
+  --text-black: #082565;
+  --text-white: #F8FAFF;
 
   /* shadcn colors */
   --radius: 0.625rem;

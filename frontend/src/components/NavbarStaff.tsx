@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -19,7 +18,7 @@ export default function NavbarStaff() {
           <Image
             src="/images/Logo.png"
             alt="SC Dental Clinic Logo"
-            className="h-10 w-10 rounded-full"
+            className="h-10 w-10"
             width={40}
             height={40}
           />
@@ -93,11 +92,15 @@ export default function NavbarStaff() {
       {isOpen && (
         <div className="md:hidden px-4 pb-4 space-y-2 font-medium bg-blue-primary">
           {links.map((item) => {
-            const href =
-              `/${item.toLowerCase() === "landing" ? "" : item.toLowerCase()}`;
-            const isActive =
-              pathname === href ||
-              (pathname === "/" && item.toLowerCase() === "landing");
+            let href = "";
+              if (item === "Dashboard") {
+                href = "/staff-landing";
+              } else {
+                href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
+              }
+              const isActive =
+                pathname === href ||
+                (pathname === "/" && item === "Dashboard");
 
             return (
               <Link

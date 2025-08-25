@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -26,7 +25,7 @@ export default function NavbarStaff() {
           <Image
             src="/images/Logo.png"
             alt="SC Dental Clinic Logo"
-            className="h-10 w-10 rounded-full"
+            className="h-10 w-10"
             width={40}
             height={40}
           />
@@ -40,21 +39,25 @@ export default function NavbarStaff() {
           {links.map((item) => {
             if (item === "Log Out") {
               return (
-                <a
+                <Link
                   key={item}
                   href="/"
                   onClick={handleLogout}
                   className="px-3 py-2 rounded-md text-sm lg:text-base transition text-blue-light hover:bg-blue-light hover:text-blue-dark"
                   style={{cursor: "pointer"}}>
                   {item}
-                </a>
+                </Link>
               )
             }
-            const href =
-              `/${item.toLowerCase() === "dashboard" ? "" : item.toLowerCase().replace(/\s+/g, '-')}`;
-            const isActive =
-              pathname === href ||
-              (pathname === "/" && item.toLowerCase() === "dashboard");
+            let href = "";
+              if (item === "Dashboard") {
+                href = "/dashboard";
+              } else {
+                href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
+              }
+              const isActive =
+                pathname === href ||
+                (pathname === "/" && item === "Dashboard");
 
             return (
               <Link
@@ -108,11 +111,15 @@ export default function NavbarStaff() {
       {isOpen && (
         <div className="md:hidden px-4 pb-4 space-y-2 font-medium bg-blue-primary">
           {links.map((item) => {
-            const href =
-              `/${item.toLowerCase() === "dashboard" ? "" : item.toLowerCase()}`;
-            const isActive =
-              pathname === href ||
-              (pathname === "/" && item.toLowerCase() === "dashboard");
+            let href = "";
+              if (item === "Dashboard") {
+                href = "/dashboard";
+              } else {
+                href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
+              }
+              const isActive =
+                pathname === href ||
+                (pathname === "/" && item === "Dashboard");
 
             return (
               <Link
