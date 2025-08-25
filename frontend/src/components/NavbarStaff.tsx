@@ -31,11 +31,15 @@ export default function NavbarStaff() {
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-4 lg:space-x-6 font-medium">
           {links.map((item) => {
-            const href =
-              `/${item.toLowerCase() === "dashboard" ? "" : item.toLowerCase().replace(/\s+/g, '-')}`;
-            const isActive =
-              pathname === href ||
-              (pathname === "/" && item.toLowerCase() === "dashboard");
+            let href = "";
+              if (item === "Dashboard") {
+                href = "/staff-landing";
+              } else {
+                href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
+              }
+              const isActive =
+                pathname === href ||
+                (pathname === "/" && item === "Dashboard");
 
             return (
               <Link
@@ -90,10 +94,10 @@ export default function NavbarStaff() {
         <div className="md:hidden px-4 pb-4 space-y-2 font-medium bg-blue-primary">
           {links.map((item) => {
             const href =
-              `/${item.toLowerCase() === "dashboard" ? "" : item.toLowerCase()}`;
+              `/${item.toLowerCase() === "landing" ? "" : item.toLowerCase()}`;
             const isActive =
               pathname === href ||
-              (pathname === "/" && item.toLowerCase() === "dashboard");
+              (pathname === "/" && item.toLowerCase() === "landing");
 
             return (
               <Link

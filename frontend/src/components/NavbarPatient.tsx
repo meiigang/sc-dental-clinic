@@ -31,11 +31,15 @@ export default function NavbarStaff() {
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-4 lg:space-x-6 font-medium">
           {links.map((item) => {
-            const href =
-              `/${item.toLowerCase() === "dashboard" ? "" : item.toLowerCase().replace(/\s+/g, '-')}`;
-            const isActive =
-              pathname === href ||
-              (pathname === "/" && item.toLowerCase() === "dashboard");
+            let href = "";
+              if (item === "Dashboard") {
+                href = "/dashboard";
+              } else {
+                href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
+              }
+              const isActive =
+                pathname === href ||
+                (pathname === "/" && item === "Dashboard");
 
             return (
               <Link
