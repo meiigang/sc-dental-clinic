@@ -23,6 +23,11 @@ export default function PatientDashboard() {
         }
     }, []);
 
+    const handleLogout = () => {
+        localStorage.removeItem("token"); //Remove JWT
+        router.push("/"); //Redirect user back to homepage
+    }
+
   return (
     <main className="bg-blue-light">
         <div className="page-container px-50 py-20 space-y-6 min-h-screen">

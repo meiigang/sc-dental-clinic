@@ -1,13 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function NavbarStaff() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    router.push("/");
+  };
 
   const links: string[] = ["Dashboard", "Log Out"];
 
@@ -31,6 +38,18 @@ export default function NavbarStaff() {
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-4 lg:space-x-6 font-medium">
           {links.map((item) => {
+            if (item === "Log Out") {
+              return (
+                <a
+                  key={item}
+                  href="/"
+                  onClick={handleLogout}
+                  className="px-3 py-2 rounded-md text-sm lg:text-base transition text-blue-light hover:bg-blue-light hover:text-blue-dark"
+                  style={{cursor: "pointer"}}>
+                  {item}
+                </a>
+              )
+            }
             const href =
               `/${item.toLowerCase() === "dashboard" ? "" : item.toLowerCase().replace(/\s+/g, '-')}`;
             const isActive =
