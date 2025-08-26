@@ -77,7 +77,7 @@ export default function Home() {
                       {service.description}
                     </p>
                     <a
-                      href="/signup"
+                      href="/register"
                       className="mt-4 px-4 py-2 bg-blue-primary text-white font-medium rounded-lg shadow-md hover:bg-blue-dark transition text-sm"
                     >
                       Sign up to avail service

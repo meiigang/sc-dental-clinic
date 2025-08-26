@@ -58,7 +58,12 @@ export default function Footer(): JSX.Element {
               >
                 <path d="M1.5 6.75A2.25 2.25 0 0 1 3.75 4.5h16.5A2.25 2.25 0 0 1 22.5 6.75v10.5A2.25 2.25 0 0 1 20.25 19.5H3.75A2.25 2.25 0 0 1 1.5 17.25V6.75zM3.75 6l8.25 5.25L20.25 6H3.75zm0 12V8.67l8.25 5.25 8.25-5.25V18H3.75z" />
               </svg>
-              <span>sabadocuatondentalclinic@gmail.com</span>
+              <a
+                href="mailto:sabadocuatondentalclinic@gmail.com"
+                className="text-white hover:underline"
+              >
+                sabadocuatondentalclinic@gmail.com
+              </a>
             </div>
 
             <div className="flex items-center space-x-3">
@@ -71,7 +76,14 @@ export default function Footer(): JSX.Element {
               >
                 <path d="M22.5 12a10.5 10.5 0 1 0-12.15 10.4v-7.36h-2.7v-3.04h2.7V9.64c0-2.67 1.59-4.14 4.03-4.14 1.16 0 2.38.21 2.38.21v2.61h-1.34c-1.32 0-1.73.82-1.73 1.66v2h2.95l-.47 3.04h-2.48v7.36A10.5 10.5 0 0 0 22.5 12z" />
               </svg>
-              <span>Sabado-Cuaton Dental Clinic</span>
+              <a
+                href="https://www.facebook.com/SabadoCuatonDentalClinic"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white hover:underline"
+              >
+                Sabado-Cuaton Dental Clinic
+              </a>
             </div>
 
             <div className="flex items-center space-x-3">
@@ -84,7 +96,12 @@ export default function Footer(): JSX.Element {
               >
                 <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.11-.21c1.21.48 2.54.73 3.9.73.55 0 1 .45 1 1V20a1 1 0 0 1-1 1C10.61 21 3 13.39 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.36.25 2.69.73 3.9a1 1 0 0 1-.21 1.11l-2.4 2.4z" />
               </svg>
-              <span>0942 155 1053</span>
+              <a
+                href="tel:09421551053"
+                className="text-white hover:underline"
+              >
+                0942 155 1053
+              </a>
             </div>
           </div>
         </div>
