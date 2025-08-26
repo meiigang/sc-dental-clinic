@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Register() {
     
@@ -20,6 +21,8 @@ export default function Register() {
         contactNumber: "",
         password: ""
     });
+
+    const router = useRouter();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({...form, [e.target.name]: e.target.value});
@@ -59,6 +62,13 @@ export default function Register() {
 
         const data = await res.json();
         console.log(data);
+
+        if (res.ok) {
+            // Registration successful, redirect to login
+            router.push("/login");
+        } else {
+            alert(data.message || "Registration failed");
+        }
     }
 
     return (
@@ -132,7 +142,9 @@ export default function Register() {
                         <label htmlFor="terms" className="ml-2 text-sm font-light"><b>I agree with the the Terms and Conditions.</b></label>
                     </div>
                     {/* Submit Button */}
-                    <button type="submit" className='submit-button bg-[#082565] text-white p-3 rounded-xl cursor-pointer' disabled={!agreed}><b>Create New Account</b></button>
+                    <button type="submit" className='submit-button bg-[#082565] text-white p-3 rounded-xl cursor-pointer' 
+                    disabled={!agreed}
+                    ><b>Create New Account</b></button>
                 </form>
                 <div className="flex justify-center text-sm text-[#151515] font-bold">
                         <span>
