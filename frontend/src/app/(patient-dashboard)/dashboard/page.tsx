@@ -7,23 +7,30 @@ import { useEffect, useState } from "react";
 
 export default function PatientDashboard() {
 
-    //Get user info from JWT Login token
-    const [userName, setUserName] = useState("User");
+    const [firstName, setFirstName] = useState("User");
+    const [fullName, setFullName] = useState("User");
+    const [userEmail, setUserEmail] = useState("");
+    const [userContact, setUserContact] = useState("");
     const router = useRouter();
 
     useEffect(() => {
-        // Get token from localStorage
         const token = localStorage.getItem("token");
         if (token) {
             try {
-                // Decode JWT to get user info
                 const decoded: any = jwtDecode(token);
-                setUserName(decoded.firstName || decoded.email || "User");
+                setFirstName(decoded.firstName || "User");
+                setFullName(`${decoded.firstName || ""} ${decoded.lastName || ""}`.trim());
+                setUserEmail(decoded.email || "");
+                setUserContact(decoded.contactNumber || "");
             } catch (err) {
-                setUserName("User");
+                setFirstName("User");
+                setFullName("User");
+                setUserEmail("");
+                setUserContact("");
             }
+        } else {
+            router.push("/login");
         }
-        else if(!token) router.push("/login");
     }, [router]);
 
     const handleLogout = () => {
@@ -37,7 +44,7 @@ export default function PatientDashboard() {
             {/* User Profile */}
             <div className="mt-4 justify-center">
                 {/* "Staff" to be replaced by user*/}
-                <h1 className="inline-block whitespace-nowrap text-3xl font-bold text-blue-dark">Welcome, {userName}</h1>
+                <h1 className="inline-block whitespace-nowrap text-3xl font-bold text-blue-dark">Welcome, {firstName}</h1>
                 {/* Edit Profile button */}
                 <div>
                     <span className="flex items-center text-blue-primary">
@@ -51,17 +58,17 @@ export default function PatientDashboard() {
                     <div className="flex flex-row gap-4 mt-5">
                         {/* Profile Detail Labels */}
                         <div className="flex flex-col gap-4 mt-6">
-                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Name</span>
-                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Email Address</span>
-                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Phone Number</span>
-                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Password</span>
+                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark whitespace-nowrap">Name</span>
+                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark whitespace-nowrap">Email Address</span>
+                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark whitespace-nowrap">Phone Number</span>
+                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark whitespace-nowrap">Password</span>
                         </div>
                         {/* Profile Key Values*/}
                         <div className="flex flex-col gap-4 mt-6">
-                            <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userName}</span>
-                            <span className="px-4 py-2 rounded-2xl font-medium text-dark">email</span>
-                            <span className="px-4 py-2 rounded-2xl font-medium text-dark">123</span>
-                            <span className="px-4 py-2 rounded-2xl font-medium text-dark">123</span>
+                            <span className="px-4 py-2 rounded-2xl font-medium text-dark">{fullName}</span>
+                                <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userEmail}</span>
+                                <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userContact}</span>
+                                <span className="px-4 py-2 rounded-2xl font-medium text-dark">********</span>
                         </div>
                     </div>
                     
@@ -70,7 +77,7 @@ export default function PatientDashboard() {
                         <Image
                             src="/images/img-profile-default.png"
                             alt="Default Profile Picture"
-                            className="w-60 h-60 rounded-3xl object-cover"
+                            className="w-100 rounded-3xl object-cover"
                             width={160}
                             height={160}
                         />

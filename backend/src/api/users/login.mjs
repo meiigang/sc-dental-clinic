@@ -28,7 +28,12 @@ export default async function loginHandler(req, res) {
 
     // Generate JWT
     const token = jwt.sign(
-        { id: user.id, email: user.email, firstName: user.firstName },
+        { id: user.id, 
+            email: user.email, 
+            firstName: user.firstName,
+            lastName: user.lastName,
+            contactNumber: user.contactNumber
+        },
         process.env.JWT_SECRET,
         { expiresIn: "1h" }
     );
