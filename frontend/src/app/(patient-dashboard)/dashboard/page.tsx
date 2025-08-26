@@ -15,19 +15,20 @@ export default function PatientDashboard() {
         // Get token from localStorage
         const token = localStorage.getItem("token");
         if (token) {
-        try {
-            // Decode JWT to get user info
-            const decoded: any = jwtDecode(token);
-            setUserName(decoded.firstName || decoded.email || "User");
-        } catch (err) {
-            setUserName("User");
+            try {
+                // Decode JWT to get user info
+                const decoded: any = jwtDecode(token);
+                setUserName(decoded.firstName || decoded.email || "User");
+            } catch (err) {
+                setUserName("User");
+            }
         }
-        }
-    }, []);
+        else if(!token) router.push("/login");
+    }, [router]);
 
     const handleLogout = () => {
         localStorage.removeItem("token"); //Remove JWT
-        router.push("/"); //Redirect user back to homepage
+        window.location.replace("/login"); // Force reload to clear cached state
     }
 
   return (

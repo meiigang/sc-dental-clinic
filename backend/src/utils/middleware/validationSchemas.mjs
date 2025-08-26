@@ -46,7 +46,15 @@ export const registerValidation = [
 
 //Validation schema for login
 export const loginValidation = [
-  body("email").isEmail().withMessage("Valid email is required"),
+  body("email")
+    .custom(value => {
+      // Accept valid email or 11-digit contact number
+      return (
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ||
+        /^\d{11}$/.test(value)
+      );
+    })
+    .withMessage("Enter a valid email or 11-digit contact number"),
   body("password").notEmpty().withMessage("Password is required"),
   (req, res, next) => {
     const errors = validationResult(req);
@@ -55,4 +63,4 @@ export const loginValidation = [
     }
     next();
   }
-]
+];

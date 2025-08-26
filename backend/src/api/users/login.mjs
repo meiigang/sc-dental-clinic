@@ -8,7 +8,7 @@ export default async function loginHandler(req, res) {
     const { data: user, error } = await req.supabase
         .from("users")
         .select("*")
-        .eq("email", email)
+        .or(`email.eq.${email},contactNumber.eq.${email}`)
         .single();
 
     // Only log after user is defined
@@ -17,13 +17,13 @@ export default async function loginHandler(req, res) {
     console.log("Password hash from DB:", user?.password_hash);
 
     if (!user || !user.password_hash) {
-        return res.status(401).json({ message: "Invalid email or password." });
+        return res.status(401).json({ message: "Invalid email/contact number or password." });
     }
 
     // Compare password
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
-        return res.status(401).json({ message: "Invalid email or password." });
+        return res.status(401).json({ message: "Invalid email/contact number or password." });
     }
 
     // Generate JWT
