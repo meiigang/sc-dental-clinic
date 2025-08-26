@@ -17,7 +17,7 @@ export default function Navbar(): JSX.Element {
           <img
             src="/images/Logo.png"
             alt="SC Dental Clinic Logo"
-            className="h-10 w-10 rounded-full"
+            className="h-10 w-10"
           />
           <span className="text-lg sm:text-xl font-bold text-blue-light">
             Sabado - Cuaton Dental Clinic

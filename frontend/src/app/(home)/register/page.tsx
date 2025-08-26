@@ -62,7 +62,7 @@ export default function Register() {
     }
 
     return (
-        <main className="bg-blue-light">
+        <main>
             <div className="page-container py-20 space-y-6 min-h-screen">
                 <div className="page-title flex items-center justify-center">
                     <h1 className='text-5xl font-bold text-blue-dark'>Register</h1>

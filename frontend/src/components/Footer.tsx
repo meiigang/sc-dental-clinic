@@ -13,7 +13,7 @@ export default function Footer(): JSX.Element {
               <img
                 src="/images/logo.png"
                 alt="Clinic Logo"
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full"
+                className="w-16 h-16 sm:w-20 sm:h-20"
               />
               <div>
                 <h2 className="text-white text-xl sm:text-2xl md:text-3xl font-bold">
