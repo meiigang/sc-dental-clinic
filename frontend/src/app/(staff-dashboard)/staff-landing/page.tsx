@@ -17,13 +17,23 @@ export default function StaffDashboard() {
                     </span>
                 </div>
 
-                <div className="flex items-center gap-120 mt-4">
-                    <div className="flex flex-col gap-4 mt-6">                    
-                        {/* Profile Details (to be replaced by user data) */}
-                        <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Name</span>
-                        <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Email Address</span>
-                        <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Phone Number</span>
-                        <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Password</span>
+                <div className="flex justify-start gap-90 mt-4">
+                    {/* Profile Details*/}
+                    <div className="flex flex-row gap-4 mt-5">
+                        {/* Profile Detail Labels */}
+                        <div className="flex flex-col gap-4 mt-6">
+                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Name</span>
+                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Email Address</span>
+                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Phone Number</span>
+                            <span className="bg-[#98AFDF] px-4 py-2 rounded-2xl font-medium text-blue-dark">Password</span>
+                        </div>
+                        {/* Profile Key Values*/}
+                        <div className="flex flex-col gap-4 mt-6">
+                            <span className="px-4 py-2 rounded-2xl font-medium text-dark">Name</span>
+                            <span className="px-4 py-2 rounded-2xl font-medium text-dark">email</span>
+                            <span className="px-4 py-2 rounded-2xl font-medium text-dark">123</span>
+                            <span className="px-4 py-2 rounded-2xl font-medium text-dark">123</span>
+                        </div>
                     </div>
 
                     {/* Profile Picture */}
