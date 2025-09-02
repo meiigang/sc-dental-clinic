@@ -56,6 +56,8 @@ export default function NavbarStaff() {
             let href = "";
               if (item === "Dashboard") {
                 href = "/staff-landing";
+              } else if (item === "Notifications") {
+                href = "/staff-notifications"
               } else {
                 href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
               }
@@ -118,6 +120,8 @@ export default function NavbarStaff() {
             let href = "";
               if (item === "Dashboard") {
                 href = "/staff-landing";
+              } else if (item === "Notifications") {
+                href = "/staff-notifications"
               } else {
                 href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
               }

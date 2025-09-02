@@ -15,7 +15,7 @@ export default function NavbarStaff() {
     router.push("/");
   };
 
-  const links: string[] = ["Dashboard", "Log Out"];
+  const links: string[] = ["Patient Information Record", "Notifications", "Dashboard", "Log Out"];
 
   return (
     <nav className="bg-blue-primary shadow-md sticky top-0 z-50">
