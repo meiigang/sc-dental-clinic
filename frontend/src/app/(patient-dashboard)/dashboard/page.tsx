@@ -4,6 +4,9 @@ import { RiPencilFill } from "react-icons/ri";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react";
+import { RiLightbulbLine } from 'react-icons/ri';
+import { RiArrowRightUpLine } from "react-icons/ri";
+import Link from 'next/link';
 
 export default function PatientDashboard() {
 
@@ -11,6 +14,7 @@ export default function PatientDashboard() {
     const [fullName, setFullName] = useState("User");
     const [userEmail, setUserEmail] = useState("");
     const [userContact, setUserContact] = useState("");
+    const [showPatientDialog, setShowPatientDialog] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -22,6 +26,15 @@ export default function PatientDashboard() {
                 setFullName(`${decoded.firstName || ""} ${decoded.lastName || ""}`.trim());
                 setUserEmail(decoded.email || "");
                 setUserContact(decoded.contactNumber || "");
+
+                //Check patient record
+                fetch(`http://localhost:4000/api/patients/check-record/${decoded.id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.hasPatientRecord) {
+                            setShowPatientDialog(true);
+                        }
+                    })
             } catch (err) {
                 setFirstName("User");
                 setFullName("User");
@@ -82,8 +95,22 @@ export default function PatientDashboard() {
                             height={160}
                         />
                     </div>
+                </div> 
+            </div>
+
+            {/* Show dialog box if patient does not have a patient record */}
+            {showPatientDialog && (
+            <div className="dialog-box bg-[#DAE3F6] text-[#082565] p-10 mt-40 rounded-2xl flex flex-row justify-center">
+                <div className="mr-5 ">
+                    < RiLightbulbLine size={35}/>
+                </div>
+                <div className="text-container w-170 px-5 text-lg">
+                    You need to fill out your <b>Patient Information Record</b> first before you can reserve an appointment.
+                    <Link href="/" className="text-[#466BBA] ml-1 inline-flex items-center underline">Take me there<RiArrowRightUpLine /></Link>
                 </div>
             </div>
+        )}
+            
 
             {/* Appointments Table */}
             <div className="mt-50">
