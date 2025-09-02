@@ -5,7 +5,7 @@ export default async function registerHandler(req, res) {
     console.log("Incoming registration data:", req.body); // Log the data
 
     //Get user input from request body
-    const { lastName, firstName, middleName, suffix, email, contactNumber, password } = req.body;
+    const { lastName, firstName, middleName, suffix, email, contactNumber, password, role } = req.body;
 
     //Check if user already exists in database
     const {data: existing} = await req.supabase
@@ -31,7 +31,8 @@ export default async function registerHandler(req, res) {
             email,
             contactNumber: contactNumber,
             password_hash: hashedPassword,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            role: role || "patient" //Default user role, staff to change at database directly
         }
     ]);
 
