@@ -18,8 +18,8 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can start editing by modifying any `page.tsx` file. The page auto-updates as you edit the file.
 
 ## Current Progress
-Landing pages have been created, but there are still revisions to be made.
-Dashboard pages have yet to be created.
+- Sprint 1: Landing and dashboard pages have been created. Update user account information and Sort/Search Patient functions are needed.
+- Sprint 2: Developing service management and patient record management modules.

@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { services } from "@/data/servicesData";
 
 export default function Home() {
@@ -20,20 +22,22 @@ export default function Home() {
             Davao City community.
           </p>
 
-          <a
+          <Link
             href="/register"
             className="inline-block mt-6 px-4 sm:px-6 py-2 sm:py-3 bg-blue-primary text-white font-medium rounded-lg shadow-md hover:bg-blue-dark transition text-sm sm:text-base"
           >
             Sign up to book appointment
-          </a>
+          </Link>
         </div>
 
         {/* Image Side */}
         <div className="md:w-1/2 mt-8 md:mt-0 flex justify-center">
-          <img
+          <Image
             src="/images/home-section1-portrait.jpg"
             alt="Dentist Portrait"
             className="w-40 sm:w-56 md:w-72 lg:w-80 h-auto rounded-lg shadow-lg"
+            width={300}
+            height={420}
           />
         </div>
       </section>
@@ -95,12 +99,12 @@ export default function Home() {
           happier smile.
         </p>
 
-        <a
+        <Link
           href="/services"
           className="inline-block mt-6 px-4 sm:px-6 py-2 sm:py-3 bg-blue-primary text-white font-medium rounded-lg shadow-md hover:bg-blue-dark transition text-sm sm:text-base"
         >
           See More
-        </a>
+        </Link>
       </section>
     </main>
   );
