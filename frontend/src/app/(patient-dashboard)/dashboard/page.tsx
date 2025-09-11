@@ -106,7 +106,7 @@ export default function PatientDashboard() {
                 </div>
                 <div className="text-container w-170 px-5 text-lg">
                     You need to fill out your <b>Patient Information Record</b> first before you can reserve an appointment.
-                    <Link href="/" className="text-[#466BBA] ml-1 inline-flex items-center underline">Take me there<RiArrowRightUpLine /></Link>
+                    <Link href="/patient-information-record" className="text-[#466BBA] ml-1 inline-flex items-center underline">Take me there<RiArrowRightUpLine /></Link>
                 </div>
             </div>
         )}
