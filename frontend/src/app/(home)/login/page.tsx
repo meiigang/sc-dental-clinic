@@ -29,9 +29,6 @@ export default function Login () {
 
         const data = await res.json();
 
-        //Redirect logic based on patient role
-        const token = localStorage.getItem("token");
-
         if(res.ok && data.token) {
             if (rememberMe) {
                 localStorage.setItem("token", data.token);
@@ -39,21 +36,28 @@ export default function Login () {
             }
             else {
                 sessionStorage.setItem("token", data.token);
-                setError(data.message || "Invalid email/contact number or password.");
+                setError("");
             }
+
+            // Always check both storages for token
+            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
             type MyJwtPayload = {
                 role: string;
                 [key: string]: any;
             };
 
-            const decoded = jwtDecode<MyJwtPayload>(data.token);
-            console.log("Decoded JWT:", decoded)
+            if (token) {
+                const decoded = jwtDecode<MyJwtPayload>(token);
+                console.log("Decoded JWT:", decoded)
 
-            if(decoded.role === "staff" || decoded.role === "dentist") {
-                router.push("/staff-landing");
+                if(decoded.role === "staff" || decoded.role === "dentist") {
+                    router.push("/staff-landing");
+                } else {
+                    router.push("/dashboard")
+                }
             } else {
-                router.push("/dashboard")
+                setError("Token not found after login.");
             }
         } else {
             setError(data.message || "Login failed.")

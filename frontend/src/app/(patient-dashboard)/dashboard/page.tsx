@@ -18,7 +18,7 @@ export default function PatientDashboard() {
     const router = useRouter();
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         if (token) {
             try {
                 const decoded: any = jwtDecode(token);

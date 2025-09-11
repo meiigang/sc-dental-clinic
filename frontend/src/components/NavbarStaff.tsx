@@ -10,7 +10,7 @@ export default function NavbarStaff() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const pathname = usePathname();
 
-  const links: string[] = ["Appointments", "Patient Records", "Notifications", "Dashboard", "Log Out"];
+  const links: string[] = ["Appointments", "Patient Records", "Services", "Notifications", "Dashboard", "Log Out"];
 
   const router = useRouter();
 
@@ -54,13 +54,15 @@ export default function NavbarStaff() {
               );
             }
             let href = "";
-              if (item === "Dashboard") {
-                href = "/staff-landing";
-              } else if (item === "Notifications") {
-                href = "/staff-notifications"
-              } else {
-                href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
-              }
+            if (item === "Dashboard") {
+              href = "/staff-landing";
+            } else if (item === "Notifications") {
+              href = "/staff-notifications";
+            } else if (item === "Services") {
+              href = "/staff-services"; // ✅ fixed
+            } else {
+              href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
+            }
               const isActive =
                 pathname === href ||
                 (pathname === "/" && item === "Dashboard");
