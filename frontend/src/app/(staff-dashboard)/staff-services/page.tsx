@@ -399,16 +399,16 @@ export default function StaffServices() {
                 <label className="font-medium">Type *</label>
                 <Select
                   value={editingService.type}
-                  onValueChange={(value) =>
-                    setEditingService({ ...editingService, type: value })
+                  onValueChange={(value: string) =>
+                  setEditingService({ ...editingService, type: value })
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Surgery">Surgery</SelectItem>
-                    <SelectItem value="Cleaning">Cleaning</SelectItem>
+                  <SelectItem value="Surgery">Surgery</SelectItem>
+                  <SelectItem value="Cleaning">Cleaning</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -465,18 +465,18 @@ export default function StaffServices() {
                 <label className="font-medium">Status *</label>
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={editingService.status === "Available"}
-                    onCheckedChange={(checked) =>
-                      setEditingService({
-                        ...editingService,
-                        status: checked ? "Available" : "Unavailable",
-                      })
-                    }
+                  checked={editingService.status === "Available"}
+                  onCheckedChange={(checked: boolean) =>
+                    setEditingService({
+                    ...editingService,
+                    status: checked ? "Available" : "Unavailable",
+                    })
+                  }
                   />
                   <span>
-                    {editingService.status === "Available"
-                      ? "Available"
-                      : "Unavailable"}
+                  {editingService.status === "Available"
+                    ? "Available"
+                    : "Unavailable"}
                   </span>
                 </div>
               </div>
