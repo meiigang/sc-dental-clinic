@@ -221,7 +221,7 @@ export default function StaffServices() {
                   Add Service
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl w-full">
+              <DialogContent className="max-w-lg h-xl">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold text-blue-900">
                     Add Service
