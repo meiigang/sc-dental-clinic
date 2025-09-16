@@ -40,12 +40,16 @@ export const medicalSchema = z.object({
   hospitalizationDetails: z.string().optional(),
   onMedication: z.enum(["yes", "no"]),
   medicationDetails: z.string().optional(),
+  usesTobacco: z.string().optional(),
+  usesDrugs: z.string().optional(),
+  allergies: z.array(z.string()),
   bleedingTime: z.string().optional(),
   isPregnant: z.enum(["yes", "no"]),
   isNursing: z.enum(["yes", "no"]),
   isTakingBirthControl: z.enum(["yes", "no"]),
   bloodType: z.string().min(1, "Required"),
   bloodPressure: z.string().optional(),
+  diseases: z.array(z.string())
 }).superRefine((data, ctx) => {
   if (data.underMedicalTreatment === "yes" && !data.medicalTreatmentCondition) {
     ctx.addIssue({

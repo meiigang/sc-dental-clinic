@@ -31,6 +31,7 @@ export default async function loginHandler(req, res) {
         {   id: user.id, 
             email: user.email, 
             firstName: user.firstName,
+            middleName: user.middleName,
             lastName: user.lastName,
             contactNumber: user.contactNumber,
             role: user.role
