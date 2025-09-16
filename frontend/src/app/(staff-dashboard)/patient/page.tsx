@@ -52,7 +52,7 @@ export default function PatientRecord() {
   }
 
   return (
-    <main className="bg-blue-light">
+    <main>
       <div className="page-container px-50 py-20 space-y-6 min-h-screen">
         {/* Patient Profile */}
         <div className="justify-center">
