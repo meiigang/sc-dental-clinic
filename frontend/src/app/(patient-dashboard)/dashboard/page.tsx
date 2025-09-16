@@ -64,7 +64,7 @@ export default function PatientDashboard() {
   }
 
   return (
-    <main className="bg-blue-light">
+    <main>
       <div className="page-container px-50 py-20 space-y-6 min-h-screen">
         {/* User Profile */}
         <div className="mt-4 justify-center">

@@ -26,11 +26,11 @@ export default function PatientRecords() {
   const [value, setValue] = useState("")
   
   return (
-    <main className="bg-blue-light">
+    <main>
       <div className="record-container flex flex-col items-center py-20 min-h-screen">
         <h1 className="text-3xl font-bold text-blue-dark">Patient Records</h1>
         
-        <div className="bg-blue-accent mt-10 w-full max-w-4xl rounded-3xl p-6">
+        <div className="bg-blue-light mt-10 w-full max-w-4xl h-full rounded-3xl p-6">
           {/* Filter Button */}
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
