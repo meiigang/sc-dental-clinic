@@ -1,7 +1,7 @@
 "use client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { z } from "zod"
 import { jwtDecode } from "jwt-decode"
@@ -23,6 +23,7 @@ import { personalSchema } from "@/components/forms/formSchemas/schemas"
 export default function PersonalInfoForm() {
     const personalForm = useForm<z.infer<typeof personalSchema>>({
     resolver: zodResolver(personalSchema),
+    mode: "onSubmit",
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -45,6 +46,9 @@ export default function PersonalInfoForm() {
     }
   })
 
+  const[ isEditing, setIsEditing ] = useState(false);
+  const [ hasSubmitted, setHasSubmitted ] = useState(false);
+
   const birthDate = personalForm.watch("birthDate");
 
   useEffect(() => {
@@ -60,6 +64,13 @@ export default function PersonalInfoForm() {
     personalForm.setValue("age", "", { shouldValidate: true });
   } 
   }, [birthDate, personalForm]);
+
+  useEffect(() => {
+    if (isEditing) {
+      setHasSubmitted(false);
+      personalForm.clearErrors();
+    }
+  }, [isEditing]);
 
   useEffect(() => {
     //Decode JWT
@@ -89,6 +100,8 @@ export default function PersonalInfoForm() {
 
   function onPersonalSubmit(values: z.infer<typeof personalSchema>) {
     console.log("Personal Info:", values)
+    setHasSubmitted(true);
+    setIsEditing(false);
   }
 
     return (
@@ -107,7 +120,7 @@ export default function PersonalInfoForm() {
                       readOnly
                       className="bg-[#DAE3F6]" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="min-h-[20px]"/>
                   </FormItem>
                 )}
               />
@@ -122,7 +135,6 @@ export default function PersonalInfoForm() {
                       readOnly
                       className="bg-[#DAE3F6]" />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -137,7 +149,6 @@ export default function PersonalInfoForm() {
                       readOnly
                       className="bg-[#DAE3F6]" />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -150,8 +161,9 @@ export default function PersonalInfoForm() {
                     <FormControl>
                       <Input
                         {...field}
-
-                        className="bg-[#F8FAFF]"
+                        readOnly={!isEditing}
+                        className={`${isEditing && hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""}
+                        ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                       />
                     </FormControl>
                   </FormItem>
@@ -164,8 +176,9 @@ export default function PersonalInfoForm() {
                   <FormItem>
                     <FormLabel className="text-[#082565]">Suffix</FormLabel>
                     <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger className="bg-[#F8FAFF]" readOnly >
+                      <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}>
+                        <SelectTrigger className={`${isEditing && hasSubmitted && personalForm.formState.errors.suffix ? "border-red-500" : ""}
+                          ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}>
                           <SelectValue placeholder="Select" 
                           />
                         </SelectTrigger>
@@ -178,7 +191,6 @@ export default function PersonalInfoForm() {
                         </SelectContent>
                       </Select>
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -197,10 +209,12 @@ export default function PersonalInfoForm() {
                           const val = e.target.value;
                           field.onChange(val ? new Date(val) : undefined);
                         }}
+                        disabled={!isEditing}
                         onBlur={field.onBlur}
                         name={field.name}
                         ref={field.ref}
-                        className="bg-[#F8FAFF]"
+                        className={`${isEditing && hasSubmitted && personalForm.formState.errors.birthDate ? "border-red-500" : ""}
+                        ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                       />
                     </FormControl>
                   </FormItem>
@@ -217,7 +231,7 @@ export default function PersonalInfoForm() {
                       <Input
                         {...field}
                         readOnly
-                        className="bg-[#F8FAFF] w-20"
+                        className="bg-[#DAE3F6] w-20"
                       />
                     </FormControl>
                   </FormItem>
@@ -231,7 +245,9 @@ export default function PersonalInfoForm() {
                     <FormLabel className="text-[#082565]">Sex *</FormLabel>
                     <FormControl>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger className="bg-[#F8FAFF] w-30">
+                        <SelectTrigger className={`${isEditing && hasSubmitted && personalForm.formState.errors.sex ? "border-red-500" : ""}
+                        ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} w-30`}
+                        disabled={!isEditing}>
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
@@ -240,7 +256,6 @@ export default function PersonalInfoForm() {
                         </SelectContent>
                       </Select>
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -254,7 +269,9 @@ export default function PersonalInfoForm() {
                     <FormControl>
                       <Input
                         {...field}
-                        className="bg-[#F8FAFF]"
+                        readOnly={!isEditing}
+                        className={`${isEditing && hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""}
+                        ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                       />
                     </FormControl>
                   </FormItem>
@@ -269,7 +286,9 @@ export default function PersonalInfoForm() {
                     <FormControl>
                       <Input
                         {...field}
-                        className="bg-[#F8FAFF]"
+                        readOnly={!isEditing}
+                        className={`${isEditing && hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""}
+                        ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                       />
                     </FormControl>
                   </FormItem>
@@ -283,7 +302,9 @@ export default function PersonalInfoForm() {
                     <FormLabel className="text-[#082565]">Home Address *</FormLabel>
                     <Input
                       {...field}
-                      className="bg-[#F8FAFF] w-full"
+                      readOnly={!isEditing}
+                      className={`${isEditing && hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""}
+                      ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} w-full`}
                     />
                   </FormItem>
                 )}
@@ -296,7 +317,9 @@ export default function PersonalInfoForm() {
                     <FormLabel className="text-[#082565]">Occupation</FormLabel>
                     <Input 
                       {...field}
-                      className="bg-[#F8FAFF]"
+                       readOnly={!isEditing}
+                       className={`${isEditing && hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""}
+                        ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                     />
                   </FormItem>
                 )}
@@ -309,7 +332,9 @@ export default function PersonalInfoForm() {
                     <FormLabel className="text-[#082565]">Dental Insurance</FormLabel>
                     <Input
                       {...field}
-                      className="bg-[#F8FAFF]"
+                      readOnly={!isEditing}
+                      className={`${isEditing && hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""}
+                      ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                       />
                   </FormItem>
                 )}
@@ -323,6 +348,7 @@ export default function PersonalInfoForm() {
                     <FormControl>
                       <Input
                         type="date"
+                        disabled={!isEditing}
                         placeholder="MM/DD/YYYY"
                         value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                         onChange={e => {
@@ -332,7 +358,8 @@ export default function PersonalInfoForm() {
                         onBlur={field.onBlur}
                         name={field.name}
                         ref={field.ref}
-                        className="bg-[#F8FAFF]"
+                        className={`${isEditing && hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""}
+                          ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                       />
                     </FormControl>
                   </FormItem>
@@ -347,6 +374,7 @@ export default function PersonalInfoForm() {
                     <FormControl>
                       <Input
                         type="date"
+                        disabled={!isEditing}
                         placeholder="MM/DD/YYYY"
                         value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                         onChange={e => {
@@ -356,7 +384,8 @@ export default function PersonalInfoForm() {
                         onBlur={field.onBlur}
                         name={field.name}
                         ref={field.ref}
-                        className="bg-[#F8FAFF]"
+                        className={`${isEditing && hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""}
+                          ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                       />
                     </FormControl>
                   </FormItem>
@@ -371,12 +400,13 @@ export default function PersonalInfoForm() {
                 name="emergencyContactName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#082565]">Full Name</FormLabel>
+                    <FormLabel className="text-[#082565]">Full Name *</FormLabel>
                     <FormControl>
                       <Input placeholder="Juan Dela Cruz" {...field} 
-                      className="bg-[#F8FAFF]" />
+                       readOnly={!isEditing}
+                       className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""}
+                       ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`} />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -385,10 +415,12 @@ export default function PersonalInfoForm() {
                 name="emergencyContactOccupation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#082565]">Occupation</FormLabel>
+                    <FormLabel className="text-[#082565]">Occupation *</FormLabel>
                     <Input 
                       {...field}
-                      className="bg-[#F8FAFF]"
+                      readOnly={!isEditing}
+                      className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""}
+                        ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                     />
                   </FormItem>
                 )}
@@ -398,19 +430,34 @@ export default function PersonalInfoForm() {
                 name="emergencyContactNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#082565]">Contact Number</FormLabel>
+                    <FormLabel className="text-[#082565]">Contact Number *</FormLabel>
                     <FormControl>
                       <Input
                       {...field} 
-                      className="bg-[#F8FAFF]" />
+                      readOnly={!isEditing}
+                      className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""}
+                        ${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`} />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4">
-                Edit changes
-              </Button>
+              {isEditing ? (
+                <Button type="submit" className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4">
+                  Save Changes
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
+                  onClick={() => {
+                    setIsEditing(true);
+                    personalForm.reset(personalForm.getValues())
+                  }}
+                >
+                  Edit Changes
+                </Button>
+              )}
+              
             </form>
           </Form>
         </div>

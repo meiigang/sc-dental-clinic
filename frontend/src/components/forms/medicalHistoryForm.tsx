@@ -45,6 +45,15 @@ export default function medicalHistoryForm() {
         }
     })
 
+    //Use state for buttons and fields
+    const[isEditing, setIsEditing] = useState(false);
+
+    //When submitting form
+    function onMedicalSubmit (values: z.infer<typeof medicalSchema>) {
+          console.log("Medical History Info:", values)
+          setIsEditing(false);
+        }
+
     return (
         <div className="form-container bg-[#DAE3F6] justify-center mt-10 p-10 rounded-xl">
             <h3 className="text-xl font-semibold text-blue-dark mb-5">Medical History</h3>
@@ -59,8 +68,9 @@ export default function medicalHistoryForm() {
                                 <FormLabel className="text-[#082565]">Physician Name</FormLabel>
                                 <FormControl>
                                     <Input {...field} 
+                                    readOnly={!isEditing}
                                     placeholder="Dr. John Doe"
-                                    className="bg-[#F8FAFF]"/>
+                                    className= {`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}/>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -75,7 +85,8 @@ export default function medicalHistoryForm() {
                                 <FormLabel className="text-[#082565]">Office Address</FormLabel>
                                 <FormControl>
                                     <Input {...field} 
-                                    className="bg-[#F8FAFF]"/>
+                                    readOnly={!isEditing}
+                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}/>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -90,7 +101,8 @@ export default function medicalHistoryForm() {
                                 <FormLabel className="text-[#082565]">Specialty</FormLabel>
                                 <FormControl>
                                     <Input {...field} 
-                                    className="bg-[#F8FAFF]"/>
+                                    readOnly= {!isEditing}
+                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}/>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -105,7 +117,8 @@ export default function medicalHistoryForm() {
                                 <FormLabel className="text-[#082565]">Office Number</FormLabel>
                                 <FormControl>
                                     <Input {...field} 
-                                    className="bg-[#F8FAFF]"/>
+                                    readOnly={!isEditing}
+                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}/>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -135,11 +148,12 @@ export default function medicalHistoryForm() {
                                             <FormItem>
                                             <FormControl>
                                                 <input
+                                                disabled={!isEditing}
                                                 type="radio"
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -156,9 +170,10 @@ export default function medicalHistoryForm() {
                                                     <input
                                                     type="radio"
                                                     value="no"
+                                                    disabled={!isEditing}
                                                     checked={field.value === "no"}
                                                     onChange={() => field.onChange("no")}
-                                                    className="accent-blue-600"
+                                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                     />
                                                 </FormControl>
                                                 </FormItem>
@@ -180,10 +195,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -199,10 +215,11 @@ export default function medicalHistoryForm() {
                                                 <FormControl>
                                                     <input
                                                     type="radio"
+                                                    disabled={!isEditing}
                                                     value="no"
                                                     checked={field.value === "no"}
                                                     onChange={() => field.onChange("no")}
-                                                    className="accent-blue-600"
+                                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                     />
                                                 </FormControl>
                                                 </FormItem>
@@ -243,10 +260,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -262,10 +280,11 @@ export default function medicalHistoryForm() {
                                                 <FormControl>
                                                     <input
                                                     type="radio"
+                                                    disabled={!isEditing}
                                                     value="no"
                                                     checked={field.value === "no"}
                                                     onChange={() => field.onChange("no")}
-                                                    className="accent-blue-600"
+                                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                     />
                                                 </FormControl>
                                                 </FormItem>
@@ -305,10 +324,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -324,10 +344,11 @@ export default function medicalHistoryForm() {
                                                 <FormControl>
                                                     <input
                                                     type="radio"
+                                                    disabled={!isEditing}
                                                     value="no"
                                                     checked={field.value === "no"}
                                                     onChange={() => field.onChange("no")}
-                                                    className="accent-blue-600"
+                                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                     />
                                                 </FormControl>
                                                 </FormItem>
@@ -367,10 +388,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -386,10 +408,11 @@ export default function medicalHistoryForm() {
                                                 <FormControl>
                                                     <input
                                                     type="radio"
+                                                    disabled={!isEditing}
                                                     value="no"
                                                     checked={field.value === "no"}
                                                     onChange={() => field.onChange("no")}
-                                                    className="accent-blue-600"
+                                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                     />
                                                 </FormControl>
                                                 </FormItem>
@@ -429,10 +452,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -448,10 +472,11 @@ export default function medicalHistoryForm() {
                                                 <FormControl>
                                                     <input
                                                     type="radio"
+                                                    disabled={!isEditing}
                                                     value="no"
                                                     checked={field.value === "no"}
                                                     onChange={() => field.onChange("no")}
-                                                    className="accent-blue-600"
+                                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                     />
                                                 </FormControl>
                                                 </FormItem>
@@ -472,10 +497,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -491,10 +517,11 @@ export default function medicalHistoryForm() {
                                                 <FormControl>
                                                     <input
                                                     type="radio"
+                                                    disabled={!isEditing}
                                                     value="no"
                                                     checked={field.value === "no"}
                                                     onChange={() => field.onChange("no")}
-                                                    className="accent-blue-600"
+                                                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                     />
                                                 </FormControl>
                                                 </FormItem>
@@ -531,6 +558,7 @@ export default function medicalHistoryForm() {
                                                     type="checkbox"
                                                     value={option}
                                                     checked={medicalForm.watch("allergies")?.includes(option)}
+                                                    disabled={!isEditing}
                                                     onChange={e => {
                                                         const checked = e.target.checked;
                                                         const prev = medicalForm.getValues("allergies") || [];
@@ -564,7 +592,9 @@ export default function medicalHistoryForm() {
                                             <FormItem className="inline-block ml-2">
                                                 <FormControl>
                                                    <input type="text" {...field} 
-                                                   className="bg-[#F8FAFF] text-sm w-32 rounded-xl px-5 border border-gray-300 focus:outline-none" />
+                                                   disabled={!isEditing}
+                                                   className= {`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} "bg-[#F8FAFF] text-sm w-32 rounded-xl px-5 border border-gray-300 focus:outline-none"`}
+                                                   />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -592,10 +622,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -611,10 +642,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="no"
                                                 checked={field.value === "no"}
                                                 onChange={() => field.onChange("no")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -636,10 +668,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -655,10 +688,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="no"
                                                 checked={field.value === "no"}
                                                 onChange={() => field.onChange("no")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -680,10 +714,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="yes"
                                                 checked={field.value === "yes"}
                                                 onChange={() => field.onChange("yes")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -699,10 +734,11 @@ export default function medicalHistoryForm() {
                                             <FormControl>
                                                 <input
                                                 type="radio"
+                                                disabled={!isEditing}
                                                 value="no"
                                                 checked={field.value === "no"}
                                                 onChange={() => field.onChange("no")}
-                                                className="accent-blue-600"
+                                                className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} accent-blue-600`}
                                                 />
                                             </FormControl>
                                             </FormItem>
@@ -723,7 +759,8 @@ export default function medicalHistoryForm() {
                                                 <FormControl>
                                                     <select
                                                     {...field}
-                                                    className="bg-[#F8FAFF] text-sm w-32 rounded-xl px-5 border border-gray-300 focus:outline-none"
+                                                    disabled={!isEditing}
+                                                    className= {`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} ="bg-[#F8FAFF] text-sm w-32 rounded-xl px-5 border border-gray-300 focus:outline-none" `}
                                                     >
                                                     <option value="">Select...</option>
                                                     <option value="A+">A+</option>
@@ -753,7 +790,8 @@ export default function medicalHistoryForm() {
                                             <FormItem className="inline-block ml-2">
                                                 <FormControl>
                                                    <input type="text" {...field} 
-                                                   className="bg-[#F8FAFF] text-sm w-32 rounded-xl px-5 border border-gray-300 focus:outline-none" />
+                                                   disabled={!isEditing}
+                                                   className= {`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"} "bg-[#F8FAFF] text-sm w-32 rounded-xl px-5 border border-gray-300 focus:outline-none"`}/>
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -786,6 +824,7 @@ export default function medicalHistoryForm() {
                                                         <label key={option} className="flex items-center gap-2 min-w-0 whitespace-nowrap">
                                                             <input
                                                                 type="checkbox"
+                                                                disabled={!isEditing}
                                                                 value={option}
                                                                 checked={medicalForm.watch("diseases")?.includes(option)}
                                                                 onChange={e => {
@@ -812,10 +851,24 @@ export default function medicalHistoryForm() {
                             </tbody>
                         </table>
                     </div>
-                    
-                    <Button type="submit" className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4">
-                        Edit changes
-                    </Button>
+                    {
+                        !isEditing ? (
+                            <Button
+                            type="button"
+                            className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
+                            onClick={() => setIsEditing(true)}
+                            >
+                            Edit changes
+                            </Button>
+                        ) : (
+                            <Button
+                            type="button"
+                            className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
+                            >
+                            Save Changes
+                            </Button>
+                        )
+                    }
                 </form>
             </Form>
         </div>
