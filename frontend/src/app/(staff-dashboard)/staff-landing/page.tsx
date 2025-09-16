@@ -75,9 +75,9 @@ export default function StaffDashboard() {
         {/* User Profile */}
         <div className="mt-4 justify-center">
           <h1 className="inline-block whitespace-nowrap text-3xl font-bold text-blue-dark">Welcome, {firstName}</h1>
-
+          
+          {/* Profile Details*/}
           <div className="flex gap-90 mt-8">
-            {/* Profile Details*/}
             <div className="flex flex-row gap-4">
               {/* Profile Detail Labels */}
               <div className="flex flex-col gap-4">
@@ -114,7 +114,7 @@ export default function StaffDashboard() {
                     <RiPencilFill />Edit Profile
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl">
+                <DialogContent className="max-w-3xl">
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-blue-dark">Edit Profile</DialogTitle>
                   </DialogHeader>

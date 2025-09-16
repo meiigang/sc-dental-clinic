@@ -108,7 +108,7 @@ export default function PatientDashboard() {
                     <RiPencilFill />Edit Profile
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl">
+                <DialogContent className="max-w-3xl">
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-blue-dark mb-4">Edit Profile</DialogTitle>
                   </DialogHeader>
