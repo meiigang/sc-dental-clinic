@@ -12,7 +12,7 @@ export const personalSchema = z.object({
   nationality: z.string().min(1, "Required"),
   nickname: z.string().optional(),
   homeAddress: z.string().min(1, "Required"),
-  occupation: z.string().min(1, "Required"),
+  occupation: z.string().optional(),
   dentalInsurance: z.string().optional(),
   effectiveDate: z.date().min(new Date(), "Invalid date"),
   patientSince: z.date().min(new Date(), "Invalid date"),

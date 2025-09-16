@@ -1,6 +1,6 @@
 "use client"
 import { useForm } from "react-hook-form"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { z } from "zod"
 import {
@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { dentistSchema } from "@/components/forms/formSchemas/schemas"
 
-export default function dentalHistoryForm() {
+export default function DentalHistoryForm() {
   // Instantiate dental form
   const dentalForm = useForm<z.infer<typeof dentistSchema>>({
     defaultValues: {
@@ -24,11 +24,19 @@ export default function dentalHistoryForm() {
     }
   })
 
+  const [ isEditing, setIsEditing ] = useState(false);
+
+  useEffect(() => {
+    console.log("DentalHistoryForm mounted");
+    return () => console.log("DentalHistoryForm unmounted");
+  }, []);
+
   const lastDentalVisit = dentalForm.watch("lastDentalVisit");
 
   //Log info on screen to catch any errors
   function onDentalSubmit (values: z.infer<typeof dentistSchema>) {
       console.log("Dental History Info:", values)
+      setIsEditing(false);
     }
   //Use effect for when checkbox is clicked
     //Disable when patient is an existing patient
@@ -46,7 +54,9 @@ export default function dentalHistoryForm() {
               <FormItem>
                 <FormLabel className="text-[#082565] col-span-3 md:col-span-3">Previous Dentist</FormLabel>
                 <FormControl>
-                  <Input placeholder="Jane" {...field} className="bg-[#F8FAFF]" />
+                  <Input placeholder="Jane" {...field} 
+                  className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
+                  readOnly = {!isEditing} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -70,16 +80,32 @@ export default function dentalHistoryForm() {
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    className="bg-[#F8FAFF]"
+                    disabled ={!isEditing}
+                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4">
-            Edit changes
-          </Button>
+          {
+            !isEditing ? (
+              <Button
+                type="button"
+                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit changes
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
+              >
+                Save Changes
+              </Button>
+            )
+}
         </form>
       </Form>
     </div>
