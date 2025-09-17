@@ -1,35 +1,51 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { CheckIcon } from "lucide-react";
 import { RxCaretDown } from "react-icons/rx";
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-{/* Filter Dropdown Options */}
 const frameworks = [
-  {
-    value: "ascending",
-    label: "Ascending (A-Z)",
-  },
-  {
-    value: "descending",
-    label: "Descending (Z-A)",
-  }
-]
+  { value: "ascending", label: "Ascending (A-Z)" },
+  { value: "descending", label: "Descending (Z-A)" }
+];
 
 export default function PatientRecords() {
-  const [open, setOpen] = useState(false)
-  const [value, setValue] = useState("")
-  
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const [patients, setPatients] = useState<any[]>([]);
+  const [filtered, setFiltered] = useState<any[]>([]);
+
+  // Fetch patients on mount
+  useEffect(() => {
+    async function fetchPatients() {
+      const res = await fetch("http://localhost:4000/api/patients/all");
+      const data = await res.json();
+      setPatients(data.patients || []);
+      setFiltered(data.patients || []);
+    }
+    fetchPatients();
+  }, []);
+
+  // Filter logic
+  useEffect(() => {
+    if (value === "ascending") {
+      setFiltered([...patients].sort((a, b) => a.last_name.localeCompare(b.last_name)));
+    } else if (value === "descending") {
+      setFiltered([...patients].sort((a, b) => b.last_name.localeCompare(a.last_name)));
+    } else {
+      setFiltered(patients);
+    }
+  }, [value, patients]);
+
   return (
     <main>
       <div className="record-container flex flex-col items-center py-20 min-h-screen">
         <h1 className="text-3xl font-bold text-blue-dark">Patient Records</h1>
-        
         <div className="bg-blue-light mt-10 w-full max-w-4xl h-full rounded-3xl p-6">
           {/* Filter Button */}
           <Popover open={open} onOpenChange={setOpen}>
@@ -73,9 +89,27 @@ export default function PatientRecords() {
                 </CommandList>
               </Command>
             </PopoverContent>
-        </Popover>
+          </Popover>
 
-        {/* Search Button */}
+          {/* Patient List */}
+          <div className="mt-6">
+            {filtered.length === 0 ? (
+              <div className="text-center text-gray-500">No patients found.</div>
+            ) : (
+              <ul>
+                {filtered.map((patient) => (
+                  <li key={patient.id} className="py-2 border-b">
+                    <Link
+                      href={`/staff-dashboard/patient/${patient.id}`}
+                      className="text-blue-700 hover:underline"
+                    >
+                      {patient.last_name}, {patient.first_name} {patient.middle_name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </main>

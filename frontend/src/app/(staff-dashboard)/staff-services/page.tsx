@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,7 +61,22 @@ export default function StaffServices() {
   const [filterOption, setFilterOption] = useState("");
   const [error, setError] = useState("");
 
-  const addService = () => {
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const res = await fetch("http://localhost:4000/api/services");
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.services)) {
+          setServices(data.services);
+        }
+      } catch (err) {
+        // handle error
+      }
+    }
+    fetchServices();
+  }, []);
+
+  const addService = async () => {
     if (!newName.trim() || !newPrice.trim() || !newType) return;
 
     // duplicate check (case-insensitive)
@@ -75,27 +90,38 @@ export default function StaffServices() {
 
     const duration = `${hours}h ${minutes}m`;
 
-    const newService: Service = {
-      id: Date.now(),
-      name: newName.trim(),
-      description: newDescription.trim(),
-      price: newPrice,
-      duration,
-      type: newType,
-      status: status ? "Available" : "Unavailable",
-    };
-
-    setServices([newService, ...services]);
-
-    // reset form
-    setNewName("");
-    setNewDescription("");
-    setNewPrice("");
-    setHours("1");
-    setMinutes("0");
-    setNewType("");
-    setStatus(true);
-    setError("");
+    // API call to backend
+    try {
+      const res = await fetch("http://localhost:4000/api/services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName.trim(),
+          description: newDescription.trim(),
+          price: newPrice,
+          duration,
+          type: newType,
+          status: status ? "Available" : "Unavailable",
+        }),
+      });
+      const result = await res.json();
+      if (res.ok) {
+        setServices([result.service, ...services]);
+        // reset form
+        setNewName("");
+        setNewDescription("");
+        setNewPrice("");
+        setHours("1");
+        setMinutes("0");
+        setNewType("");
+        setStatus(true);
+        setError("");
+      } else {
+        setError(result.message || "Failed to add service.");
+      }
+    } catch (err) {
+      setError("Failed to add service.");
+    }
   };
 
   const openEdit = (service: Service) => {
@@ -104,27 +130,46 @@ export default function StaffServices() {
     setError("");
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editingService) return;
 
     // check duplicates excluding current
-    const isDuplicate = services.some(
-      (s) =>
-        s.id !== editingService.id &&
-        s.name.toLowerCase() === editingService.name.trim().toLowerCase()
-    );
-    if (isDuplicate) {
-      setError("A service with this name already exists.");
-      return;
-    }
+  const isDuplicate = services.some(
+    (s) =>
+      s.id !== editingService.id &&
+      s.name.toLowerCase() === editingService.name.trim().toLowerCase()
+  );
+  if (isDuplicate) {
+    setError("A service with this name already exists.");
+    return;
+  }
 
+  const result = await updateService(editingService);
+  if (result && result.service) {
     setServices((prev) =>
-      prev.map((s) => (s.id === editingService.id ? editingService : s))
+      prev.map((s) => (s.id === editingService.id ? result.service : s))
     );
-
     setIsEditOpen(false);
     setEditingService(null);
     setError("");
+  } else {
+    setError(result?.message || "Failed to update service.");
+  }
+};
+  //Update service
+  const updateService = async (service: Service) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/services/${service.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(service),
+      });
+      const result = await res.json();
+      return result;
+    } catch (err) {
+      setError("Failed to update service.");
+      return null;
+    }
   };
 
   // search + filter + sort combined
