@@ -7,14 +7,13 @@ import { useRef } from "react";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { dentistSchema } from "@/components/forms/formSchemas/schemas"
+import { dentistSchema } from "@/components/patientForms/formSchemas/schemas"
 import { jwtDecode } from "jwt-decode"
 
 export default function DentalHistoryForm() {
@@ -190,20 +189,22 @@ export default function DentalHistoryForm() {
 
   //Render HTML
   return (
-    <div className="form-container bg-[#DAE3F6] justify-center mt-10 p-10 rounded-xl w-full-max max-w-7xl">
+    <div className="form-container bg-blue-light justify-center mt-10 p-10 rounded-xl">
       <h3 className="text-xl font-semibold text-blue-dark mb-5">Dental History</h3>
       <Form {...dentalForm}>
-        <form ref={formRef}onSubmit={dentalForm.handleSubmit(onDentalSubmit)} className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full-max max-w-6xl">
+        <form ref={formRef} onSubmit={dentalForm.handleSubmit(onDentalSubmit)} className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl">
           <FormField
             control={dentalForm.control}
             name="previousDentist"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[#082565] col-span-3 md:col-span-3">Previous Dentist</FormLabel>
+                <FormLabel className="text-blue-dark col-span-3 md:col-span-3">Previous Dentist</FormLabel>
                 <FormControl>
-                  <Input placeholder="Jane" {...field} 
-                  className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
-                  readOnly = {!isEditing} />
+                  <Input
+                    placeholder="Jane" {...field} 
+                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                    readOnly={!isEditing}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -214,7 +215,7 @@ export default function DentalHistoryForm() {
             name="lastDentalVisit"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[#082565] col-span-2 md:col-span-2">Last Dental Visit</FormLabel>
+                <FormLabel className="text-blue-dark col-span-2 md:col-span-2">Last Dental Visit</FormLabel>
                 <FormControl>
                   <Input
                     type="date"
@@ -228,7 +229,7 @@ export default function DentalHistoryForm() {
                     name={field.name}
                     ref={field.ref}
                     disabled ={!isEditing}
-                    className={`${isEditing ? "bg-[#F8FAFF]" : "bg-[#DAE3F6]"}`}
+                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
                   />
                 </FormControl>
                 <FormMessage />
@@ -252,7 +253,7 @@ export default function DentalHistoryForm() {
                 Edit changes
               </Button>
             )
-}
+          }
         </form>
       </Form>
     </div>

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { profileSchema, Profile } from "../app/(staff-dashboard)/staff-landing/schema";
+import { profileSchema, Profile } from "./schema";
 
 interface EditProfileFormProps {
   initialValues: Partial<Profile>;
@@ -44,7 +43,7 @@ export function EditProfileForm({ initialValues, onSubmit, loading }: EditProfil
               {/* First Name */}
               <FormField name="firstName" control={form.control} render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel>First Name *</FormLabel>
                   <FormControl>
                     <Input {...field} id="firstName" placeholder="First Name" required />
                   </FormControl>
@@ -66,7 +65,7 @@ export function EditProfileForm({ initialValues, onSubmit, loading }: EditProfil
               {/* Last Name */}
               <FormField name="lastName" control={form.control} render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Last Name</FormLabel>
+                  <FormLabel>Last Name *</FormLabel>
                   <FormControl>
                     <Input {...field} id="lastName" placeholder="Last Name" required />
                   </FormControl>
@@ -86,7 +85,6 @@ export function EditProfileForm({ initialValues, onSubmit, loading }: EditProfil
                       <SelectContent>
                         <SelectItem value="Jr.">Jr.</SelectItem>
                         <SelectItem value="Sr.">Sr.</SelectItem>
-                        <SelectItem value="I">I</SelectItem>
                         <SelectItem value="II">II</SelectItem>
                         <SelectItem value="III">III</SelectItem>
                       </SelectContent>
@@ -100,7 +98,7 @@ export function EditProfileForm({ initialValues, onSubmit, loading }: EditProfil
             {/* Email Address */}
             <FormField name="email" control={form.control} render={({ field }) => (
               <FormItem>
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel>Email Address *</FormLabel>
                 <FormControl>
                   <Input {...field} id="email" type="email" placeholder="Email Address" required />
                 </FormControl>
@@ -111,9 +109,9 @@ export function EditProfileForm({ initialValues, onSubmit, loading }: EditProfil
             {/* Contact Number */}
             <FormField name="contactNumber" control={form.control} render={({ field }) => (
               <FormItem>
-                <FormLabel>Contact Number</FormLabel>
+                <FormLabel>Contact Number *</FormLabel>
                 <FormControl>
-                  <Input {...field} id="contactNumber" placeholder="Contact Number" required />
+                  <Input {...field} id="contactNumber" placeholder="09XXXXXXXXX" required />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -21,5 +21,10 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 You can start editing by modifying any `page.tsx` file. The page auto-updates as you edit the file.
 
 ## Current Progress
-- Sprint 1: Landing and dashboard pages have been created. Update user account information and Sort/Search Patient functions are needed.
-- Sprint 2: Developing service management and patient record management modules.
+### Sprint 1: User Management
+- Landing and dashboard pages have been created.
+- Update user account information and Sort/Search Patient backend functions are needed.
+### Sprint 2: Service Management, Patient Record Management
+- Staff-side Services backend functions are needed.
+- Staff-side Individual Patient Record template backend functions are needed.
+- Patient-side Patient Information Record backend functions are needed. 

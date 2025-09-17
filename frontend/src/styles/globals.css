@@ -5,6 +5,7 @@
 
 /* Global CSS variables */
 :root {
+  --background: #F8FAFF;
 
   /* Custom blues */
   --blue-primary: #466BBA;
@@ -13,8 +14,8 @@
   --blue-light: #DAE3F6;
 
   /* Custom text colors */
-  --text-dark: #151515;
-  --text-black: #082565;
+  --text-black: #151515;
+  --text-blue-dark: #082565;
   --text-white: #F8FAFF;
 
   /* shadcn colors */
@@ -135,9 +136,9 @@
   :root {
 
     /* Optionally adjust blues for dark mode */
-    --blue-light: #e6f0ff;
-    --blue-primary: #3357a5;
-    --blue-dark: #011a3f;
+    --blue-light: #DAE3F6;
+    --blue-primary: #466BBA;
+    --blue-dark: #082565;
   }
 }
 
@@ -146,7 +147,7 @@ body {
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.205 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);

@@ -151,7 +151,7 @@ export default function StaffServices() {
     });
 
   return (
-    <main className="bg-blue-100 min-h-screen flex flex-col items-center">
+    <main className="min-h-screen flex flex-col items-center">
       {/* Top bar */}
       <section className="w-full max-w-7xl px-6 py-10 flex flex-col md:flex-row items-start justify-between gap-8">
         <div className="md:w-1/2 text-center md:text-left space-y-6">
