@@ -1,6 +1,6 @@
-import PersonalInfoForm from "@/components/forms/personalform"
-import DentalHistoryForm  from "@/components/forms/dentalHistoryForm"
-import MedicalHistoryForm from "@/components/forms/medicalHistoryForm"
+import PersonalInfoForm from "@/components/patientForms/personalInfoForm"
+import DentalHistoryForm  from "@/components/patientForms/dentalHistoryForm"
+import MedicalHistoryForm from "@/components/patientForms/medicalHistoryForm"
 
 export default function PatientRecords() {
   return (

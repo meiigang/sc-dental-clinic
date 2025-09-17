@@ -21,6 +21,7 @@ export function AppointmentHistoryTable() {
       </TableHeader>
       <TableBody>
         <TableRow className="bg-background hover:bg-blue-accent">
+          {/* insert data fetching logic here */}
           <TableCell>September 16, 2025</TableCell>
           <TableCell>10:00 AM</TableCell>
           <TableCell>Teeth Cleaning</TableCell>

@@ -9,7 +9,7 @@ import { RiLightbulbLine } from 'react-icons/ri'
 import { RiArrowRightUpLine } from "react-icons/ri"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
-import { EditProfileForm } from "@/components/EditProfileForm"
+import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
 
 export default function PatientDashboard() {
   // Extract token variables
@@ -72,15 +72,15 @@ export default function PatientDashboard() {
 
           <div className="flex gap-90 mt-8">
             {/* Profile Details*/}
-            <div className="flex flex-row gap-4 mt-5">
+            <div className="flex flex-row gap-4">
               {/* Profile Detail Labels */}
-              <div className="flex flex-col gap-4 mt-6">
+              <div className="flex flex-col gap-4">
                 <span className="bg-blue-accent px-4 py-2 rounded-2xl font-medium text-blue-dark whitespace-nowrap">Name</span>
                 <span className="bg-blue-accent px-4 py-2 rounded-2xl font-medium text-blue-dark whitespace-nowrap">Email Address</span>
                 <span className="bg-blue-accent px-4 py-2 rounded-2xl font-medium text-blue-dark whitespace-nowrap">Phone Number</span>
               </div>
               {/* Profile Key Values*/}
-              <div className="flex flex-col gap-4 mt-6">
+              <div className="flex flex-col gap-4">
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">{fullName}</span>
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userEmail}</span>
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userContact}</span>
@@ -104,13 +104,13 @@ export default function PatientDashboard() {
               <Dialog>
                 {/* Edit Profile Button */}
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-primary text-white">
+                  <Button className="bg-blue-primary text-white hover:bg-blue-dark w-full">
                     <RiPencilFill />Edit Profile
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-3xl">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-blue-dark mb-4">Edit Profile</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold text-blue-dark">Edit Profile</DialogTitle>
                   </DialogHeader>
                   {/* Edit Profile Form Component */}
                 <EditProfileForm

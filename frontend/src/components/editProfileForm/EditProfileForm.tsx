@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { profileSchema, Profile } from "../app/(staff-dashboard)/staff-landing/schema";
+import { profileSchema, Profile } from "./schema";
 
 interface EditProfileFormProps {
   initialValues: Partial<Profile>;
@@ -86,7 +85,6 @@ export function EditProfileForm({ initialValues, onSubmit, loading }: EditProfil
                       <SelectContent>
                         <SelectItem value="Jr.">Jr.</SelectItem>
                         <SelectItem value="Sr.">Sr.</SelectItem>
-                        <SelectItem value="I">I</SelectItem>
                         <SelectItem value="II">II</SelectItem>
                         <SelectItem value="III">III</SelectItem>
                       </SelectContent>
