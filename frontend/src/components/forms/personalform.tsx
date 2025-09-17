@@ -48,9 +48,11 @@ export default function PersonalInfoForm() {
 
   const[ isEditing, setIsEditing ] = useState(false);
   const [ hasSubmitted, setHasSubmitted ] = useState(false);
+  const [ userId, setUserId ] = useState<string>("");
 
   const birthDate = personalForm.watch("birthDate");
 
+  // Calculate age from birth date
   useEffect(() => {
     if (birthDate instanceof Date && !isNaN(birthDate.getTime())) {
       const today = new Date();
@@ -65,6 +67,7 @@ export default function PersonalInfoForm() {
   } 
   }, [birthDate, personalForm]);
 
+  //Reset form when toggling edit mode
   useEffect(() => {
     if (isEditing) {
       setHasSubmitted(false);
@@ -72,6 +75,7 @@ export default function PersonalInfoForm() {
     }
   }, [isEditing]);
 
+  //Populate form with user data from JWT
   useEffect(() => {
     //Decode JWT
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -79,6 +83,7 @@ export default function PersonalInfoForm() {
     if (token) {
     try {
       type UserJwtPayload = {
+        id?: string;
         firstName?: string;
         middleName?: string;
         lastName?: string;
@@ -92,17 +97,114 @@ export default function PersonalInfoForm() {
       const allowedSuffixes = ["none", "Jr", "Sr", "II", "III"] as const;
       const suffix = allowedSuffixes.includes(user.suffix as any) ? user.suffix : "none";
       personalForm.setValue("suffix", suffix as typeof allowedSuffixes[number]);
+      setUserId(user.id || user.sub || "");
+      console.log("Decoded JWT:", user); // For debugging
+      console.log("userId to send:", user.id); // For debugging
     } catch (err) {
       console.error("Invalid token:", err);
     } 
     }
   }, [personalForm]);
 
+  console.log("Current userId state:", userId);
+
+  //When form is submitted
   function onPersonalSubmit(values: z.infer<typeof personalSchema>) {
     console.log("Personal Info:", values)
     setHasSubmitted(true);
+     if (userId) {
+        updatePersonalInfo(values, userId);
+    } else {
+        submitPersonalInfo(values);
+    }
     setIsEditing(false);
   }
+
+  //Submit data to backend
+  async function submitPersonalInfo(data: z.infer<typeof personalSchema>) {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const payload = { ...data, userId };
+      const res = await fetch("http://localhost:4000/api/patients/patientPersonalInfo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }, body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+      return result;
+    } catch (error) {
+      console.error("Error submitting personal info:", error);
+      return null;
+    }
+  }
+
+  //Fetch existing personal info from backend
+  useEffect(() => {
+    if (!userId) return;
+
+    async function fetchPatientInfo() {
+      try {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        const res = await fetch(`http://localhost:4000/api/patients/patientPersonalInfo/${userId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        console.log("Fetched patient info from backend:", data);
+        if (data.patient) {
+          personalForm.reset({
+            ...personalForm.getValues(),
+            nickname: data.patient.nickname || "",
+            suffix: data.patient.suffix || "none",
+            birthDate: data.patient.birth_date ? new Date(data.patient.birth_date) : undefined,
+            age: data.patient.age || "",
+            sex: data.patient.sex || "",
+            religion: data.patient.religion || "",
+            nationality: data.patient.nationality || "",
+            homeAddress: data.patient.home_address || "",
+            occupation: data.patient.occupation || "",
+            dentalInsurance: data.patient.dental_insurance || "",
+            effectiveDate: data.patient.effective_date ? new Date(data.patient.effective_date) : undefined,
+            patientSince: data.patient.patient_since ? new Date(data.patient.patient_since) : undefined,
+            emergencyContactName: data.emergencyContact?.name || "",
+            emergencyContactOccupation: data.emergencyContact?.occupation || "",
+            emergencyContactNumber: data.emergencyContact?.contact_number || "",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching patient info:", err);
+      }
+    }
+
+    fetchPatientInfo();
+  }, [userId, personalForm]);
+
+  //PATCH or update personal info
+  async function updatePersonalInfo(data: z.infer<typeof personalSchema>, userId: string) {
+    try {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        const payload = { ...data };
+        const res = await fetch(`http://localhost:4000/api/patients/patientPersonalInfo/${userId}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(payload),
+        });
+        const result = await res.json();
+        return result;
+    } catch (error) {
+        console.error("Error updating personal info:", error);
+        return null;
+    }
+}
 
     return (
         <div className="form-container bg-[#DAE3F6] justify-center mt-10 p-10 rounded-xl">
