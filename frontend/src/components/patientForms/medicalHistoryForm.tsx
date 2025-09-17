@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { medicalSchema } from "@/components/patientForms/formSchemas/schemas"
 
-export default function medicalHistoryForm() {
+export default function medicalHistoryForm({ readOnly = false }) {
   // Instantiate medical form
   const medicalForm = useForm<z.infer<typeof medicalSchema>>({
     defaultValues: {
@@ -855,6 +855,7 @@ export default function medicalHistoryForm() {
             </table>
           </div>
           {
+            !readOnly && (
             !isEditing ? (
               <Button
                 className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
@@ -866,7 +867,7 @@ export default function medicalHistoryForm() {
               <Button className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark">
                 Save Changes
               </Button>
-            )
+            ))
           }
         </form>
       </Form>

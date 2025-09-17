@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { personalSchema } from "@/components/patientForms/formSchemas/schemas"
 
 
-export default function PersonalInfoForm() {
+export default function PersonalInfoForm({ readOnly = false }) {
   const personalForm = useForm<z.infer<typeof personalSchema>>({
     resolver: zodResolver(personalSchema),
     mode: "onSubmit",
@@ -430,7 +430,8 @@ export default function PersonalInfoForm() {
               </FormItem>
             )}
           />
-          {isEditing ? (
+          {!readOnly && (
+          isEditing ? (
             <Button type="submit" className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark">
               Save Changes
             </Button>
@@ -445,7 +446,8 @@ export default function PersonalInfoForm() {
             >
               Edit Changes
             </Button>
-          )}
+          )
+        )}
           
         </form>
       </Form>

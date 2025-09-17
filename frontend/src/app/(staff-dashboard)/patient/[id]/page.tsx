@@ -1,54 +1,46 @@
 "use client"
 import Image from "next/image"
-import Link from 'next/link'
 import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { jwtDecode } from "jwt-decode"
-import { useRouter } from "next/navigation"
 import { AppointmentHistoryTable } from "@/components/AppointmentHistoryTable"
+import PersonalInfoForm from "@/components/patientForms/personalInfoForm";
+import DentalHistoryForm from "@/components/patientForms/dentalHistoryForm";
+import MedicalHistoryForm from "@/components/patientForms/medicalHistoryForm";
 
 export default function PatientRecord() {
-  // Extract token variables
-  const [firstName, setFirstName] = useState("User");
   const [fullName, setFullName] = useState("User");
-  const [userEmail, setUserEmail] = useState("");
   const [userContact, setUserContact] = useState("");
-  const [showPatientDialog, setShowPatientDialog] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
   const router = useRouter();
+  const params = useParams();
+  const patientId = params?.id;
 
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (token) {
+    if (!patientId) return;
+    async function fetchPatient() {
       try {
-      const decoded: any = jwtDecode(token);
-      setFirstName(decoded.firstName || "User");
-      setFullName(`${decoded.firstName || ""} ${decoded.lastName || ""}`.trim());
-      setUserEmail(decoded.email || "");
-      setUserContact(decoded.contactNumber || "");
-
-      // Check patient record
-      fetch(`http://localhost:4000/api/patients/check-record/${decoded.id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (!data.hasPatientRecord) {
-            setShowPatientDialog(true);
-          }
-        })
+        const res = await fetch(`http://localhost:4000/api/patients/${patientId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setFullName(
+          `${data.last_name} ${data.first_name} ${data.middle_name}`.trim()
+        );
+        setUserContact(data.contact_number || "");
+        setUserEmail(data.email || "");
       } catch (err) {
-        setFirstName("User");
         setFullName("User");
-        setUserEmail("");
         setUserContact("");
+        setUserEmail("");
       }
-    } else {
-      router.push("/login");
     }
-  }, [router]);
+    fetchPatient();
+  }, [patientId]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove JWT
-    window.location.replace("/login"); // Force reload to clear cached state
+    localStorage.removeItem("token");
+    window.location.replace("/login");
   }
 
   return (
@@ -71,14 +63,14 @@ export default function PatientRecord() {
               </div>
               {/* Profile Key Values*/}
               <div className="flex flex-col gap-4">
-                <span className="px-4 py-2 rounded-2xl font-medium text-dark">{fullName}</span>
+                <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userEmail}</span>
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userContact}</span>
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">year</span>
                 <span className="px-4 py-2 rounded-2xl font-medium text-green-600">Active</span>
               </div>
             </div>
 
-            {/* Profile Picture (to be replaced by user's set profile picture) */}
+            {/* Profile Picture */}
             <div className="justify-end">
                 <Image
                   src="/images/img-profile-default.png"

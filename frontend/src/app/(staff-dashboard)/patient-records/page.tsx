@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useParams } from "next/navigation";
 
 const frameworks = [
   { value: "ascending", label: "Ascending (A-Z)" },
@@ -100,7 +101,7 @@ export default function PatientRecords() {
                 {filtered.map((patient) => (
                   <li key={patient.id} className="py-2 border-b">
                     <Link
-                      href={`/staff-dashboard/patient/${patient.id}`}
+                      href={`/patient/${patient.id}`}
                       className="text-blue-700 hover:underline"
                     >
                       {patient.last_name}, {patient.first_name} {patient.middle_name}
