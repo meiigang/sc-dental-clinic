@@ -61,8 +61,24 @@ export default function StaffServices() {
   const [filterOption, setFilterOption] = useState("");
   const [error, setError] = useState("");
 
+  // error states for add form
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const validateAddForm = () => {
+    let newErrors: { [key: string]: string } = {};
+
+    if (!newName.trim()) newErrors.name = "Please input in this field";
+    if (!newType.trim()) newErrors.type = "Please input in this field";
+    if (!hours.trim()) newErrors.hours = "Please input in this field";
+    if (!minutes.trim()) newErrors.minutes = "Please input in this field";
+    if (!newPrice.trim()) newErrors.price = "Please input in this field";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const addService = () => {
-    if (!newName.trim() || !newPrice.trim() || !newType) return;
+    if (!validateAddForm()) return;
 
     // duplicate check (case-insensitive)
     const isDuplicate = services.some(
@@ -104,8 +120,21 @@ export default function StaffServices() {
     setError("");
   };
 
+  const validateEditForm = () => {
+    let newErrors: { [key: string]: string } = {};
+
+    if (!editingService?.name.trim()) newErrors.name = "Please input in this field";
+    if (!editingService?.type.trim()) newErrors.type = "Please input in this field";
+    if (!editingService?.price.trim()) newErrors.price = "Please input in this field";
+    if (!editingService?.duration.trim()) newErrors.duration = "Please input in this field";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const saveEdit = () => {
     if (!editingService) return;
+    if (!validateEditForm()) return;
 
     // check duplicates excluding current
     const isDuplicate = services.some(
@@ -151,179 +180,193 @@ export default function StaffServices() {
     });
 
   return (
-    <main className="bg-blue-100 min-h-screen flex flex-col items-center">
+    <main className="bg-blue-light min-h-screen flex flex-col items-center">
       {/* Top bar */}
-      <section className="w-full max-w-7xl px-6 py-10 flex flex-col md:flex-row items-start justify-between gap-8">
-        <div className="md:w-1/2 text-center md:text-left space-y-6">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-blue-900 leading-snug">
-            Staff Services
-          </h1>
-        </div>
+      <section className="w-full max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        {/* Title */}
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-blue-dark leading-snug">
+          Staff Services
+        </h1>
 
-        <div className="md:w-1/2 flex justify-center md:justify-end">
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Sort */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <ArrowUpDown className="h-4 w-4" />
-                  Sort
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setSortOption("lowToHigh")}>
-                  Price: Low to High
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortOption("highToLow")}>
-                  Price: High to Low
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        {/* Controls */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Sort */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="bg-blue-primary text-white flex items-center gap-2 w-[170px] justify-start"
+              >
+                <ArrowUpDown className="h-4 w-4" />
+                {sortOption === "lowToHigh"
+                  ? "Price: Low to High"
+                  : sortOption === "highToLow"
+                  ? "Price: High to Low"
+                  : "Sort"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setSortOption("lowToHigh")}>
+                Price: Low to High
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOption("highToLow")}>
+                Price: High to Low
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            {/* Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  Filter
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setFilterOption("")}>
-                  All
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterOption("Available")}>
-                  Available
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilterOption("Unavailable")}>
-                  Unavailable
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {/* Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="bg-blue-primary text-white flex items-center gap-2 w-[150px] justify-start"
+              >
+                <Filter className="h-4 w-4" />
+                {filterOption === "Available"
+                  ? "Available"
+                  : filterOption === "Unavailable"
+                  ? "Unavailable"
+                  : "All"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setFilterOption("")}>All</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterOption("Available")}>
+                Available
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterOption("Unavailable")}>
+                Unavailable
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search..."
-                className="pl-8 w-40 md:w-56"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search..."
+              className="bg-white pl-8 w-40 md:w-56"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-            {/* Add Service Modal */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
+          {/* Add Service Modal */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-primary text-white hover:bg-white hover:text-black flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add Service
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="w-full sm:max-w-lg md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-blue-900">
                   Add Service
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg h-xl">
-                <DialogHeader>
-                  <DialogTitle className="text-2xl font-bold text-blue-900">
-                    Add Service
-                  </DialogTitle>
-                </DialogHeader>
+                </DialogTitle>
+              </DialogHeader>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                  {/* Name */}
-                  <div className="flex flex-col gap-2 md:col-span-2">
-                    <label className="font-medium">Name of Service *</label>
-                    <Input
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                    />
-                    {error && (
-                      <p className="text-red-600 text-sm mt-1">{error}</p>
-                    )}
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                {/* Name */}
+                <div className="flex flex-col gap-2 md:col-span-2">
+                  <label className="font-medium">Name of Service *</label>
+                  <Input
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                  />
+                  {errors.name && (
+                    <p className="text-red-600 text-sm">{errors.name}</p>
+                  )}
+                </div>
 
-                  {/* Type */}
-                  <div className="flex flex-col gap-2">
-                    <label className="font-medium">Type *</label>
-                    <Select value={newType} onValueChange={setNewType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Surgery">Surgery</SelectItem>
-                        <SelectItem value="Cleaning">Cleaning</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Type */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-medium">Type *</label>
+                  <Select value={newType} onValueChange={setNewType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Surgery">Surgery</SelectItem>
+                      <SelectItem value="Cleaning">Cleaning</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.type && (
+                    <p className="text-red-600 text-sm">{errors.type}</p>
+                  )}
+                </div>
 
-                  {/* Duration */}
-                  <div className="flex flex-col gap-2 md:col-span-2">
-                    <label className="font-medium">Estimated Duration *</label>
-                    <div className="flex gap-3 items-center">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="999"
-                        value={hours}
-                        onChange={(e) => setHours(e.target.value)}
-                        className="w-[100px] text-center"
-                      />
-                      <span>hours</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="59"
-                        value={minutes}
-                        onChange={(e) => setMinutes(e.target.value)}
-                        className="w-[100px] text-center"
-                      />
-                      <span>minutes</span>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="flex flex-col gap-2 md:col-span-2">
-                    <label className="font-medium">Description</label>
-                    <Textarea
-                      value={newDescription}
-                      onChange={(e) => setNewDescription(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex flex-col gap-2">
-                    <label className="font-medium">Price *</label>
+                {/* Duration */}
+                <div className="flex flex-col gap-2 md:col-span-2">
+                  <label className="font-medium">Estimated Duration *</label>
+                  <div className="flex gap-3 items-center">
                     <Input
                       type="number"
                       min="0"
-                      step="0.01"
-                      placeholder="₱0.00"
-                      value={newPrice}
-                      onChange={(e) => setNewPrice(e.target.value)}
+                      max="999"
+                      value={hours}
+                      onChange={(e) => setHours(e.target.value)}
+                      className="w-[100px] text-center"
                     />
-                  </div>
-
-                  {/* Status */}
-                  <div className="flex flex-col gap-2">
-                    <label className="font-medium">Status *</label>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={status}
-                        onCheckedChange={setStatus}
-                      />
-                      <span>{status ? "Available" : "Unavailable"}</span>
-                    </div>
+                    <span>hours</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={minutes}
+                      onChange={(e) => setMinutes(e.target.value)}
+                      className="w-[100px] text-center"
+                    />
+                    <span>minutes</span>
                   </div>
                 </div>
 
-                <DialogFooter>
-                  <Button onClick={addService} className="bg-blue-600">
-                    Add Service
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
+                {/* Description */}
+                <div className="flex flex-col gap-2 md:col-span-2">
+                  <label className="font-medium">Description</label>
+                  <Textarea
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                {/* Price */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-medium">Price *</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="₱0.00"
+                    value={newPrice}
+                    onChange={(e) => setNewPrice(e.target.value)}
+                  />
+                  {errors.type && (
+                    <p className="text-red-600 text-sm">{errors.type}</p>
+                  )}
+                </div>
+
+                {/* Status */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-medium">Status *</label>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={status} onCheckedChange={setStatus} />
+                    <span>{status ? "Available" : "Unavailable"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button onClick={addService} className="bg-blue-600">
+                  Add Service
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </section>
 
@@ -371,7 +414,7 @@ export default function StaffServices() {
 
       {/* Edit Service Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-3xl w-full">
+        <DialogContent className="w-full sm:max-w-lg md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-blue-900">
               Edit Service
@@ -389,9 +432,7 @@ export default function StaffServices() {
                     setEditingService({ ...editingService, name: e.target.value })
                   }
                 />
-                {error && (
-                  <p className="text-red-600 text-sm mt-1">{error}</p>
-                )}
+                {errors.type && <p className="text-red-600 text-sm">{errors.type}</p>}
               </div>
 
               {/* Type */}
@@ -411,6 +452,7 @@ export default function StaffServices() {
                   <SelectItem value="Cleaning">Cleaning</SelectItem>
                   </SelectContent>
                 </Select>
+                {errors.type && <p className="text-red-600 text-sm">{errors.type}</p>}
               </div>
 
               {/* Duration */}
@@ -458,6 +500,7 @@ export default function StaffServices() {
                   }
                   placeholder="₱0.00"
                 />
+                {errors.type && <p className="text-red-600 text-sm">{errors.type}</p>}
               </div>
 
               {/* Status */}
