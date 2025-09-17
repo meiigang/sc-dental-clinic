@@ -1,4 +1,5 @@
 import { body, validationResult } from "express-validator";
+import { z } from "zod";
 
 export default async function registerHandler(req, res) {
     console.log("Incoming registration data:", req.body);
@@ -64,3 +65,68 @@ export const loginValidation = [
     next();
   }
 ];
+
+//Validation schema for patient personal info
+export const personalInfoSchema = z.object({
+    firstName: z.string().min(1, "Required"),
+    lastName: z.string().min(1, "Required"),
+    middleName: z.string().optional(),
+    suffix: z.enum(["none", "Jr", "Sr", "II", "III"]).optional(),
+    birthDate: z.string().refine(
+      val => !isNaN(Date.parse(val)),
+      { message: "Invalid date" }
+    ),
+    age: z.string().min(1, "Required"),
+    sex: z.string().min(1, "Required"),
+    religion: z.string().min(1, "Required"),
+    nationality: z.string().min(1, "Required"),
+    nickname: z.string().optional(),
+    homeAddress: z.string().min(1, "Required"),
+    occupation: z.string().optional(),
+    dentalInsurance: z.string().optional(),
+    effectiveDate: z.string().refine(
+      val => !isNaN(Date.parse(val)),
+      { message: "Invalid date" }
+    ),
+    patientSince: z.string().refine(
+      val => !isNaN(Date.parse(val)),
+      { message: "Invalid date" }
+    ),
+    emergencyContactName: z.string().min(1, "Required"),
+    emergencyContactOccupation: z.string().min(1, "Required"),
+    emergencyContactNumber: z.string().min(1, "Required").max(11, "Invalid contact number"),
+})
+
+export const dentalHistorySchema = z.object({
+   previousDentist: z.string().optional(),
+    lastDentalVisit: z.string().refine(
+      val => !isNaN(Date.parse(val)),
+      { message: "Invalid date" }
+    ),
+})
+
+export const medicalHistorySchema = z.object({
+    physicianName: z.string().optional(),
+    officeAddress: z.string().optional(),
+    specialty: z.string().optional(),
+    officeNumber: z.string().optional(),
+    goodHealth: z.boolean(),
+    underMedicalTreatment: z.boolean(),
+    medicalTreatmentCondition: z.string().optional(),
+    hadSurgery: z.boolean(),
+    surgeryDetails: z.string().optional(),
+    wasHospitalized: z.boolean(),
+    hospitalizationDetails: z.string().optional(),
+    onMedication: z.boolean(),
+    medicationDetails: z.string().optional(),
+    usesTobacco: z.boolean(),
+    usesDrugs: z.boolean(),
+    allergies: z.array(z.string()),
+    bleedingTime: z.string().optional(),
+    isPregnant: z.boolean(),
+    isNursing: z.boolean(),
+    isTakingBirthControl: z.boolean(),
+    bloodType: z.string().min(1, "Required"),
+    bloodPressure: z.string().optional(),
+    diseases: z.array(z.string())
+});

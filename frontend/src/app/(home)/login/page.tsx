@@ -81,12 +81,12 @@ export default function Login () {
 
                     {/* Email input div */}
                     <div className="email-input flex flex-col space-y-1">
-                        <label htmlFor="email-contact" className='text-sm text-[#151515]'><b>Email Address or Contact Number</b></label>
+                        <label htmlFor="email-contact" className='text-sm text-black'><b>Email Address or Contact Number</b></label>
                         <input 
                         type="text" 
                         id="email-contact" 
                         name="email" 
-                        className='p-3 rounded-lg w-84 bg-[#DAE3F6]' 
+                        className='p-3 rounded-lg w-84 bg-blue-light' 
                         value={form.email}
                         onChange={handleChange}
                         onFocus={() => setError("")}
@@ -96,12 +96,12 @@ export default function Login () {
 
                     {/* Password input div */}
                     <div className="password-input flex flex-col space-y-1">
-                        <label htmlFor="password" className='text-sm text-[#151515]'><b>Password</b></label>
+                        <label htmlFor="password" className='text-sm text-black'><b>Password</b></label>
                         <input 
                         type="password" 
                         id="password" 
                         name="password" 
-                        className='p-3 rounded-lg w-84 bg-[#DAE3F6]' 
+                        className='p-3 rounded-lg w-84 bg-blue-light' 
                         value={form.password}
                         onChange={handleChange}
                         onFocus={() => setError("")}

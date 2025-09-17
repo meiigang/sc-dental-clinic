@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { RiPencilFill } from "react-icons/ri"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
-import { EditProfileForm } from "@/components/EditProfileForm"
+import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
 
 export default function StaffDashboard() {
   // Extract token variables
@@ -70,14 +70,14 @@ export default function StaffDashboard() {
 
 
   return (
-    <main className="bg-blue-light">
+    <main>
       <div className="page-container px-50 py-20 space-y-6 min-h-screen">
         {/* User Profile */}
         <div className="mt-4 justify-center">
           <h1 className="inline-block whitespace-nowrap text-3xl font-bold text-blue-dark">Welcome, {firstName}</h1>
-
+          
+          {/* Profile Details*/}
           <div className="flex gap-90 mt-8">
-            {/* Profile Details*/}
             <div className="flex flex-row gap-4">
               {/* Profile Detail Labels */}
               <div className="flex flex-col gap-4">
@@ -114,7 +114,7 @@ export default function StaffDashboard() {
                     <RiPencilFill />Edit Profile
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl">
+                <DialogContent className="max-w-3xl">
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-blue-dark">Edit Profile</DialogTitle>
                   </DialogHeader>
@@ -137,7 +137,7 @@ export default function StaffDashboard() {
           <h1 className="text-3xl font-bold text-blue-dark">Availability</h1>
 
           {/* Calendar */ }
-          <div className="bg-white p-5 rounded-2xl mt-4 w-96 h-96 flex items-center justify-center">
+          <div className="bg-blue-light p-5 rounded-2xl mt-4 w-96 h-96 flex items-center justify-center">
             <p className="text-blue-dark">Calendar Component Placeholder</p>
           </div>
         </div>
@@ -148,8 +148,7 @@ export default function StaffDashboard() {
           </div>
 
           {/* Recently Viewed Patient Records */ }
-          <div className="bg-white p-5 rounded-2xl mt-4 w-96 h-96 flex items-center justify-center">
-            <p className="text-blue-dark">Recently Viewed Patient Records Component Placeholder</p>
+          <div className="bg-[#DAE3F6] p-5 rounded-2xl mt-4 w-full h-128 flex items-center justify-center overflow-y-auto">
           </div>
       </div>
     </main>

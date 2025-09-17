@@ -180,7 +180,7 @@ export default function StaffServices() {
     });
 
   return (
-    <main className="bg-blue-light min-h-screen flex flex-col items-center">
+    <main className="min-h-screen flex flex-col items-center">
       {/* Top bar */}
       <section className="w-full max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Title */}
