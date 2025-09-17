@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { RiPencilFill } from "react-icons/ri"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
-import { EditProfileForm } from "@/components/EditProfileForm"
+import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
 
 export default function StaffDashboard() {
   // Extract token variables
