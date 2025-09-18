@@ -18,11 +18,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { personalSchema } from "@/components/patientForms/formSchemas/schemas"
 
 
-export default function PersonalInfoForm({ readOnly = false }) {
+type PersonalInfoFormProps = {
+  initialValues?: z.infer<typeof personalSchema>;
+  readOnly?: boolean;
+};
+
+export default function PersonalInfoForm({ initialValues, readOnly = false }: PersonalInfoFormProps) {
   const personalForm = useForm<z.infer<typeof personalSchema>>({
     resolver: zodResolver(personalSchema),
     mode: "onSubmit",
-    defaultValues: {
+    defaultValues: initialValues || {
       firstName: "",
       lastName: "",
       middleName: "",
@@ -42,12 +47,24 @@ export default function PersonalInfoForm({ readOnly = false }) {
       emergencyContactOccupation: "",
       emergencyContactNumber: "",
     }
-  })
+  });
+
+  // Reset form when initialValues change (for read-only display)
+  useEffect(() => {
+    if (initialValues) {
+      personalForm.reset(initialValues);
+    }
+  }, [initialValues]);
 
   const [ isEditing, setIsEditing ] = useState(false);
   const [ hasSubmitted, setHasSubmitted ] = useState(false);
   const [ userId, setUserId ] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
+
+  // If readOnly, force isEditing to false
+  useEffect(() => {
+    if (readOnly) setIsEditing(false);
+  }, [readOnly]);
 
   const birthDate = personalForm.watch("birthDate");
 
@@ -262,7 +279,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormControl>
                   <Input
                     {...field}
-                    disabled={!isEditing}
+                    disabled={readOnly || !isEditing}
                     className={`${isEditing && hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""}
                     ${isEditing ? "bg-background" : "bg-blue-light"}`}
                   />
@@ -301,7 +318,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                       const val = e.target.value;
                       field.onChange(val ? new Date(val) : undefined);
                     }}
-                    disabled={!isEditing}
+                    disabled={readOnly || !isEditing}
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
@@ -361,7 +378,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormControl>
                   <Input
                     {...field}
-                    disabled={!isEditing}
+                    disabled={readOnly || !isEditing}
                     className={`${isEditing && hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""}
                     ${isEditing ? "bg-background" : "bg-blue-light"}`}
                   />
@@ -378,7 +395,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormControl>
                   <Input
                     {...field}
-                    disabled={!isEditing}
+                    disabled={readOnly || !isEditing}
                     className={`${isEditing && hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""}
                     ${isEditing ? "bg-background" : "bg-blue-light"}`}
                   />
@@ -394,7 +411,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormLabel className="text-blue-dark">Home Address *</FormLabel>
                 <Input
                   {...field}
-                  disabled={!isEditing}
+                  disabled={readOnly || !isEditing}
                   className={`${isEditing && hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""}
                   ${isEditing ? "bg-background" : "bg-blue-light"} w-full`}
                 />
@@ -409,7 +426,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormLabel className="text-blue-dark">Occupation</FormLabel>
                 <Input 
                   {...field}
-                  disabled={!isEditing}
+                  disabled={readOnly || !isEditing}
                   className={`${isEditing && hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""}
                   ${isEditing ? "bg-background" : "bg-blue-light"}`}
                 />
@@ -424,7 +441,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormLabel className="text-blue-dark">Dental Insurance</FormLabel>
                 <Input
                   {...field}
-                  disabled={!isEditing}
+                  disabled={readOnly || !isEditing}
                   className={`${isEditing && hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""}
                   ${isEditing ? "bg-background" : "bg-blue-light"}`}
                 />
@@ -440,7 +457,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormControl>
                   <Input
                     type="date"
-                    disabled={!isEditing}
+                    disabled={readOnly || !isEditing}
                     placeholder="MM/DD/YYYY"
                     value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                     onChange={e => {
@@ -466,7 +483,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormControl>
                   <Input
                     type="date"
-                    disabled={!isEditing}
+                    disabled={readOnly || !isEditing}
                     placeholder="MM/DD/YYYY"
                     value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                     onChange={e => {
@@ -495,7 +512,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormLabel className="text-blue-dark">Full Name *</FormLabel>
                 <FormControl>
                   <Input placeholder="Juan Dela Cruz" {...field} 
-                    disabled={!isEditing}
+                    disabled={readOnly || !isEditing}
                     className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""}
                     ${isEditing ? "bg-background" : "bg-blue-light"}`} />
                 </FormControl>
@@ -510,7 +527,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormLabel className="text-blue-dark">Occupation *</FormLabel>
                 <Input 
                   {...field}
-                  disabled={!isEditing}
+                  disabled={readOnly || !isEditing}
                   className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""}
                     ${isEditing ? "bg-background" : "bg-blue-light"}`}
                 />
@@ -526,7 +543,7 @@ export default function PersonalInfoForm({ readOnly = false }) {
                 <FormControl>
                   <Input
                   {...field} 
-                  disabled={!isEditing}
+                  disabled={readOnly || !isEditing}
                   className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""}
                     ${isEditing ? "bg-background" : "bg-blue-light"}`} />
                 </FormControl>
@@ -534,26 +551,26 @@ export default function PersonalInfoForm({ readOnly = false }) {
             )}
           />
           {!readOnly && (
-          isEditing ? (
-            <Button
-              type="button"
-              className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
-              onClick={() => formRef.current?.requestSubmit()}>
-              Save Changes
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
-              onClick={() => {
-                setIsEditing(true);
-                personalForm.reset(personalForm.getValues())
-              }}
-            >
-              Edit Changes
-            </Button>
-          )
-        )}
+            isEditing ? (
+              <Button
+                type="button"
+                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
+                onClick={() => formRef.current?.requestSubmit()}>
+                Save Changes
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
+                onClick={() => {
+                  setIsEditing(true);
+                  personalForm.reset(personalForm.getValues())
+                }}
+              >
+                Edit Changes
+              </Button>
+            )
+          )}
           
         </form>
       </Form>

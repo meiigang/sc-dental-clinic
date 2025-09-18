@@ -18,7 +18,12 @@ import { Input } from "@/components/ui/input"
 import { jwtDecode } from "jwt-decode"
 import { medicalSchema } from "@/components/patientForms/formSchemas/schemas"
 
-export default function medicalHistoryForm({ readOnly = false }) {
+type MedicalHistoryFormProps = {
+  initialValues?: z.infer<typeof medicalSchema>;
+  readOnly?: boolean;
+};
+
+export default function MedicalHistoryForm({ initialValues, readOnly = false }: MedicalHistoryFormProps) {
   // Instantiate medical form
   const medicalForm = useForm<z.infer<typeof medicalSchema>>({
     defaultValues: {

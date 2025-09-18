@@ -16,20 +16,37 @@ import { Input } from "@/components/ui/input"
 import { dentistSchema } from "@/components/patientForms/formSchemas/schemas"
 import { jwtDecode } from "jwt-decode"
 
-export default function DentalHistoryForm({ readOnly = false }) {
+type dentalHistoryFormProps = {
+  initialValues?: z.infer<typeof dentistSchema>;
+  readOnly?: boolean;
+};
+
+export default function DentalHistoryForm({ initialValues, readOnly = false }: dentalHistoryFormProps) {
   // Instantiate dental form
   const dentalForm = useForm<z.infer<typeof dentistSchema>>({
-    defaultValues: {
+    defaultValues: initialValues || {
       previousDentist: "",
       lastDentalVisit: undefined
     }
-  })
+  });
+
+  // Reset form when initialValues change (for read-only display)
+  useEffect(() => {
+    if (initialValues) {
+      dentalForm.reset(initialValues);
+    }
+  }, [initialValues]);
 
   const [ isEditing, setIsEditing ] = useState(false);
   const [ userId, setUserId ] = useState<string>("");
   const [patientId, setPatientId] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [ dentalHistoryId, setDentalHistoryId ] = useState<number | null>(null);
+
+  // If readOnly, force isEditing to false
+  useEffect(() => {
+    if (readOnly) setIsEditing(false);
+  }, [readOnly]);
 
   useEffect(() => {
     console.log("DentalHistoryForm mounted");
@@ -203,7 +220,7 @@ export default function DentalHistoryForm({ readOnly = false }) {
                   <Input
                     placeholder="Jane" {...field} 
                     className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
-                    readOnly={!isEditing}
+                    readOnly={readOnly || !isEditing}
                   />
                 </FormControl>
                 <FormMessage />
@@ -228,7 +245,7 @@ export default function DentalHistoryForm({ readOnly = false }) {
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    disabled ={!isEditing}
+                    disabled={readOnly || !isEditing}
                     className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
                   />
                 </FormControl>
@@ -238,25 +255,24 @@ export default function DentalHistoryForm({ readOnly = false }) {
           />
           {
             !readOnly && (
-            !isEditing ? (
-              <Button
-                type="button"
-                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
-                onClick={() => formRef.current?.requestSubmit()}>
-                Save Changes
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
-                onClick={() => {setIsEditing(true)
-                }}
-              >
-                Edit changes
-              </Button>
+              !isEditing ? (
+                <Button
+                  type="button"
+                  className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
+                  onClick={() => {setIsEditing(true)}}
+                >
+                  Edit changes
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
+                  onClick={() => formRef.current?.requestSubmit()}>
+                  Save Changes
+                </Button>
+              )
             )
-          )
-        }
+          }
         </form>
       </Form>
     </div>

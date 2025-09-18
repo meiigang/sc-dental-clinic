@@ -177,7 +177,7 @@ export async function getPatientMedicalHistory(req, res) {
 
     //Fetch the latest medical history record for this patient
     const { data: medicalHistoryArr, error: historyError } = await req.supabase
-        .from("medical-history")
+        .from("medical_history")
         .select("*, id")
         .eq("patient_id", patientId)
         .order("id", { ascending: false })

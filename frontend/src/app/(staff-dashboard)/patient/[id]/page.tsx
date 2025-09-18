@@ -10,6 +10,10 @@ import DentalHistoryForm from "@/components/patientForms/dentalHistoryForm";
 import MedicalHistoryForm from "@/components/patientForms/medicalHistoryForm";
 
 export default function PatientRecord() {
+
+  const [personalInfo, setPersonalInfo] = useState<any>(null);
+  const [dentalHistory, setDentalHistory] = useState<any>(null);
+  const [medicalHistory, setMedicalHistory] = useState<any>(null);
   const [fullName, setFullName] = useState("User");
   const [userContact, setUserContact] = useState("");
   const [userEmail, setUserEmail] = useState("");
@@ -19,23 +23,44 @@ export default function PatientRecord() {
 
   useEffect(() => {
     if (!patientId) return;
-    async function fetchPatient() {
+    async function fetchAllPatientData() {
       try {
-        const res = await fetch(`http://localhost:4000/api/patients/${patientId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setFullName(
-          `${data.last_name} ${data.first_name} ${data.middle_name}`.trim()
-        );
-        setUserContact(data.contact_number || "");
-        setUserEmail(data.email || "");
+        // Fetch patient profile details for header
+        const profileRes = await fetch(`http://localhost:4000/api/patients/${patientId}`);
+        const profileData = profileRes.ok ? await profileRes.json() : null;
+        if (profileData) {
+          setFullName(
+            `${profileData.last_name || ''} ${profileData.first_name || ''} ${profileData.middle_name || ''}`.trim()
+          );
+          setUserContact(profileData.contact_number || "");
+          setUserEmail(profileData.email || "");
+        } else {
+          setFullName("User");
+          setUserContact("");
+          setUserEmail("");
+        }
+
+        // Fetch personal info for form
+        const personalRes = await fetch(`http://localhost:4000/api/patients/patientPersonalInfo/${patientId}`);
+        const personalData = personalRes.ok ? await personalRes.json() : null;
+        setPersonalInfo(personalData);
+
+        // Fetch dental history
+        const dentalRes = await fetch(`http://localhost:4000/api/patients/patientDentalHistory/${patientId}`);
+        const dentalData = dentalRes.ok ? await dentalRes.json() : null;
+        setDentalHistory(dentalData);
+
+        // Fetch medical history
+        const medicalRes = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${patientId}`);
+        const medicalData = medicalRes.ok ? await medicalRes.json() : null;
+        setMedicalHistory(medicalData);
       } catch (err) {
         setFullName("User");
         setUserContact("");
         setUserEmail("");
       }
     }
-    fetchPatient();
+    fetchAllPatientData();
   }, [patientId]);
 
   const handleLogout = () => {
@@ -90,19 +115,25 @@ export default function PatientRecord() {
             <AccordionItem value="item-1">
               <AccordionTrigger className="text-blue-dark text-xl font-semibold">Personal Information</AccordionTrigger>
               <AccordionContent className="flex flex-col gap-4 text-balance">
-                <p>Personal Information</p>
+                {personalInfo && personalInfo.patient && (
+                  <PersonalInfoForm initialValues={personalInfo.patient} readOnly={true} />
+                )}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2">
               <AccordionTrigger className="text-blue-dark text-xl font-semibold">Dental History</AccordionTrigger>
               <AccordionContent className="flex flex-col gap-4 text-balance">
-                <p>Dental History</p>
+                {dentalHistory && dentalHistory.dentalHistory && (
+                  <DentalHistoryForm initialValues={dentalHistory.dentalHistory[0]} readOnly={true} />
+                )}
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-3">
               <AccordionTrigger className="text-blue-dark text-xl font-semibold">Medical History</AccordionTrigger>
               <AccordionContent className="flex flex-col gap-4 text-balance">
-                <p>Medical History</p>
+                {medicalHistory && medicalHistory.medicalHistory && (
+                  <MedicalHistoryForm initialValues={medicalHistory.medicalHistory[0]} readOnly={true} />
+                )}
               </AccordionContent>
             </AccordionItem>
           </Accordion>

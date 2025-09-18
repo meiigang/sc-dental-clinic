@@ -59,7 +59,11 @@ export default function StaffServices() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("");
   const [filterOption, setFilterOption] = useState("");
+
+
+  // error states for add form
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     async function fetchServices() {
@@ -76,24 +80,21 @@ export default function StaffServices() {
     fetchServices();
   }, []);
 
+  const validateAddForm = () => {
+    let newErrors: { [key: string]: string } = {};
+
+    if (!newName.trim()) newErrors.name = "Please input in this field";
+    if (!newType.trim()) newErrors.type = "Please input in this field";
+    if (!hours.trim()) newErrors.hours = "Please input in this field";
+    if (!minutes.trim()) newErrors.minutes = "Please input in this field";
+    if (!newPrice.trim()) newErrors.price = "Please input in this field";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const addService = async () => {
-    if (!newName.trim() || !newPrice.trim() || !newType) return;
-
-    // error states for add form
-    const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-    const validateAddForm = () => {
-      let newErrors: { [key: string]: string } = {};
-
-      if (!newName.trim()) newErrors.name = "Please input in this field";
-      if (!newType.trim()) newErrors.type = "Please input in this field";
-      if (!hours.trim()) newErrors.hours = "Please input in this field";
-      if (!minutes.trim()) newErrors.minutes = "Please input in this field";
-      if (!newPrice.trim()) newErrors.price = "Please input in this field";
-
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
-    };
+    if (!validateAddForm()) return;
 
     // duplicate check (case-insensitive)
     const isDuplicate = services.some(
@@ -132,6 +133,7 @@ export default function StaffServices() {
         setNewType("");
         setStatus(true);
         setError("");
+        setErrors({});
       } else {
         setError(result.message || "Failed to add service.");
       }
@@ -151,8 +153,14 @@ export default function StaffServices() {
 
     if (!editingService?.name.trim()) newErrors.name = "Please input in this field";
     if (!editingService?.type.trim()) newErrors.type = "Please input in this field";
-    if (!editingService?.price.trim()) newErrors.price = "Please input in this field";
-    if (!editingService?.duration.trim()) newErrors.duration = "Please input in this field";
+    if (
+      editingService?.price === undefined ||
+      editingService?.price === null ||
+      String(editingService.price).trim() === ""
+    ) {
+      newErrors.price = "Please input in this field";
+    }
+    if (!editingService?.duration || String(editingService.duration).trim() === "") newErrors.duration = "Please input in this field";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -368,6 +376,11 @@ export default function StaffServices() {
                     />
                     <span>minutes</span>
                   </div>
+                  {(errors.hours || errors.minutes) && (
+                    <p className="text-red-600 text-sm">
+                      {errors.hours || errors.minutes}
+                    </p>
+                  )}
                 </div>
 
                 {/* Description */}
@@ -391,8 +404,8 @@ export default function StaffServices() {
                     value={newPrice}
                     onChange={(e) => setNewPrice(e.target.value)}
                   />
-                  {errors.type && (
-                    <p className="text-red-600 text-sm">{errors.type}</p>
+                  {errors.price && (
+                    <p className="text-red-600 text-sm">{errors.price}</p>
                   )}
                 </div>
 
