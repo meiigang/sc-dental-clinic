@@ -3,9 +3,19 @@ import { useForm } from "react-hook-form"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { z } from "zod"
-import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useRef } from "react"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { jwtDecode } from "jwt-decode"
 import { medicalSchema } from "@/components/patientForms/formSchemas/schemas"
 
 export default function medicalHistoryForm({ readOnly = false }) {
@@ -38,20 +48,250 @@ export default function medicalHistoryForm({ readOnly = false }) {
     }
   })
 
-  // Use state for buttons and fields
+  //Use state for buttons and fields
   const [isEditing, setIsEditing] = useState(false);
+  const [userId, setUserId] = useState<string>("");
+  const [patientId, setPatientId] = useState<number | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [medicalHistoryId, setMedicalHistoryId] = useState<number | null>(null);
 
-  // When submitting form
-  function onMedicalSubmit (values: z.infer<typeof medicalSchema>) {
+  //When submitting form
+  async function onMedicalSubmit (values: z.infer<typeof medicalSchema>) {
     console.log("Medical History Info:", values)
+      if (medicalHistoryId) {
+        await updateMedicalForm(values, medicalHistoryId); // PATCH if record exists
+      } else {
+        await submitMedicalForm(values); // POST if new
+      }
     setIsEditing(false);
+  }
+    
+  //Retrieve patient id from JWT
+  useEffect(() => {
+    // 1. Get user ID from JWT
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (token) {
+      const decoded: any = jwtDecode(token);
+      const userId = decoded.id; // or decoded.userId or decoded.sub, depending on your JWT
+      setUserId(userId);
+
+      // 2. Fetch patient record using user ID
+      fetch(`http://localhost:4000/api/patients/patientPersonalInfo/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.patient && data.patient.id) {
+            setPatientId(data.patient.id); // 3. Save patient primary key
+          }
+        })
+        .catch(err => console.error("Failed to fetch patient record:", err));
+    }
+  }, []);
+    
+  //Fetch and set medicalHistoryId
+  useEffect(() => {
+    if (!patientId) return;
+    async function fetchMedicalHistory() {
+        try { 
+          const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+          const res = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${patientId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          console.log("Fetched patient medical history:", data);
+          if (data.medicalHistory) {
+            const record = data.medicalHistory;
+            setMedicalHistoryId(record.id); // <-- Save the id for PATCH
+            medicalForm.reset({
+              physicianName: record.physician_name || "",
+              officeAddress: record.office_address || "",
+              specialty: record.specialty || "",
+              officeNumber: record.office_number || "",
+              goodHealth: record.good_health ? "yes" : "no",
+              underMedicalTreatment: record.under_medical_treatment ? "yes" : "no",
+              medicalTreatmentCondition: record.medical_treatment_condition || "",
+              hadSurgery: record.had_surgery ? "yes" : "no",
+              surgeryDetails: record.surgery_details || "",
+              wasHospitalized: record.was_hospitalized ? "yes" : "no",
+              hospitalizationDetails: record.hospitalization_details || "",
+              onMedication: record.on_medication ? "yes" : "no",
+              medicationDetails: record.medication_details || "",
+              usesTobacco: record.uses_tobacco ? "yes" : "no",
+              usesDrugs: record.uses_drugs ? "yes" : "no",
+              allergies: record.allergies || [],
+              bleedingTime: record.bleeding_time || "",
+              isPregnant: record.is_pregnant ? "yes" : "no",
+              isNursing: record.is_nursing ? "yes" : "no",
+              isTakingBirthControl: record.is_taking_birth_control ? "yes" : "no",
+              bloodType: record.blood_type || "",
+              bloodPressure: record.blood_pressure || "",
+              diseases: record.diseases || []
+            });
+          } else {
+            setMedicalHistoryId(null);
+          }
+        } catch (err) {
+          console.error("Error fetching medical history:", err);
+        }
+    }
+    fetchMedicalHistory();
+  }, [patientId, medicalForm]);
+
+  //Submit data to backend
+  async function submitMedicalForm(data: z.infer<typeof medicalSchema>) {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const payload = {
+        patientId,
+        physicianName: data.physicianName,
+        officeAddress: data.officeAddress,
+        specialty: data.specialty,
+        officeNumber: data.officeNumber,
+        goodHealth: data.goodHealth === "yes",
+        underMedicalTreatment: data.underMedicalTreatment === "yes",
+        medicalTreatmentCondition: data.medicalTreatmentCondition,
+        hadSurgery: data.hadSurgery === "yes",
+        surgeryDetails: data.surgeryDetails,
+        wasHospitalized: data.wasHospitalized === "yes",
+        hospitalizationDetails: data.hospitalizationDetails,
+        onMedication: data.onMedication === "yes",
+        medicationDetails: data.medicationDetails,
+        usesTobacco: data.usesTobacco === "yes",
+        usesDrugs: data.usesDrugs === "yes",
+        allergies: data.allergies,
+        bleedingTime: data.bleedingTime,
+        isPregnant: data.isPregnant === "yes",
+        isNursing: data.isNursing === "yes",
+        isTakingBirthControl: data.isTakingBirthControl === "yes",
+        bloodType: data.bloodType,
+        bloodPressure: data.bloodPressure,
+        diseases: data.diseases
+      };
+      const res = await fetch("http://localhost:4000/api/patients/patientMedicalHistory", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+      return result;
+    } catch (error) {
+      console.error("Error submitting medical info:", error);
+      return null;
+    }
+  }
+
+  //Fetch data from backend
+  useEffect(() => {
+    if (!patientId) return;
+      
+    async function fetchMedicalHistory() {
+      try { 
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+        // Prepare request to backend
+        const res = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${patientId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        console.log("Fetched patient medical history:", data);
+        if (data.medicalHistory && data.medicalHistory.length > 0) {
+          const record = data.medicalHistory[0];
+          medicalForm.reset({
+            physicianName: record.physician_name || "",
+            officeAddress: record.office_address || "",
+            specialty: record.specialty || "",
+            officeNumber: record.office_number || "",
+            goodHealth: record.good_health ? "yes" : "no",
+            underMedicalTreatment: record.under_medical_treatment ? "yes" : "no",
+            medicalTreatmentCondition: record.medical_treatment_condition || "",
+            hadSurgery: record.had_surgery ? "yes" : "no",
+            surgeryDetails: record.surgery_details || "",
+            wasHospitalized: record.was_hospitalized ? "yes" : "no",
+            hospitalizationDetails: record.hospitalization_details || "",
+            onMedication: record.on_medication ? "yes" : "no",
+            medicationDetails: record.medication_details || "",
+            usesTobacco: record.uses_tobacco ? "yes" : "no",
+            usesDrugs: record.uses_drugs ? "yes" : "no",
+            allergies: record.allergies || [],
+            bleedingTime: record.bleeding_time || "",
+            isPregnant: record.is_pregnant ? "yes" : "no",
+            isNursing: record.is_nursing ? "yes" : "no",
+            isTakingBirthControl: record.is_taking_birth_control ? "yes" : "no",
+            bloodType: record.blood_type || "",
+            bloodPressure: record.blood_pressure || "",
+            diseases: record.diseases || []
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching medical history:", err);
+      }
+    } fetchMedicalHistory();
+  }, [patientId, medicalForm])
+
+
+  //Update data and send to backend
+  async function updateMedicalForm(data: z.infer<typeof medicalSchema>, medicalHistoryId: number) {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const payload = {
+        physicianName: data.physicianName,
+        officeAddress: data.officeAddress,
+        specialty: data.specialty,
+        officeNumber: data.officeNumber,
+        goodHealth: data.goodHealth === "yes",
+        underMedicalTreatment: data.underMedicalTreatment === "yes",
+        medicalTreatmentCondition: data.medicalTreatmentCondition,
+        hadSurgery: data.hadSurgery === "yes",
+        surgeryDetails: data.surgeryDetails,
+        wasHospitalized: data.wasHospitalized === "yes",
+        hospitalizationDetails: data.hospitalizationDetails,
+        onMedication: data.onMedication === "yes",
+        medicationDetails: data.medicationDetails,
+        usesTobacco: data.usesTobacco === "yes",
+        usesDrugs: data.usesDrugs === "yes",
+        allergies: data.allergies,
+        bleedingTime: data.bleedingTime,
+        isPregnant: data.isPregnant === "yes",
+        isNursing: data.isNursing === "yes",
+        isTakingBirthControl: data.isTakingBirthControl === "yes",
+        bloodType: data.bloodType,
+        bloodPressure: data.bloodPressure,
+        diseases: data.diseases
+      };
+      const res = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${medicalHistoryId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+      return result;
+    } catch (error) {
+      console.error("Error updating medical info:", error);
+      return null;
+    }
   }
 
   return (
     <div className="form-container bg-blue-light justify-center mt-10 p-10 rounded-xl">
       <h3 className="text-xl font-semibold text-blue-dark mb-5">Medical History</h3>
       <Form {...medicalForm}>
-        <form action="medical-history" className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl">
+        <form action="medical-history" className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl"
+        ref={formRef} onSubmit={medicalForm.handleSubmit(onMedicalSubmit)}>
           {/* Physician Name */}
           <FormField
             control={medicalForm.control}
@@ -60,7 +300,8 @@ export default function medicalHistoryForm({ readOnly = false }) {
               <FormItem>
                 <FormLabel className="text-blue-dark">Physician Name</FormLabel>
                 <FormControl>
-                  <Input {...field} readOnly={!isEditing}
+                  <Input {...field}
+                    readOnly={!isEditing}
                     placeholder="Dr. Juan Dela Cruz"
                     className= {`${isEditing ? "bg-background" : "bg-blue-light"}`} />
                 </FormControl>
@@ -76,7 +317,8 @@ export default function medicalHistoryForm({ readOnly = false }) {
               <FormItem className="col-span-2">
                 <FormLabel className="text-blue-dark">Office Address</FormLabel>
                 <FormControl>
-                  <Input {...field} readOnly={!isEditing}
+                  <Input {...field}
+                    readOnly={!isEditing}
                     className={`${isEditing ? "bg-background" : "bg-blue-light"}`}/>
                 </FormControl>
                 <FormMessage />
@@ -91,7 +333,8 @@ export default function medicalHistoryForm({ readOnly = false }) {
               <FormItem>
                 <FormLabel className="text-blue-dark">Specialty</FormLabel>
                 <FormControl>
-                  <Input {...field} readOnly= {!isEditing}
+                  <Input {...field}
+                    readOnly= {!isEditing}
                     className={`${isEditing ? "bg-background" : "bg-blue-light"}`}/>
                 </FormControl>
                 <FormMessage />
@@ -106,7 +349,8 @@ export default function medicalHistoryForm({ readOnly = false }) {
               <FormItem>
                 <FormLabel className="text-blue-dark">Office Number</FormLabel>
                 <FormControl>
-                  <Input {...field} readOnly={!isEditing}
+                  <Input {...field}
+                    readOnly={!isEditing}
                     className={`${isEditing ? "bg-background" : "bg-blue-light"}`}/>
                 </FormControl>
                 <FormMessage />
@@ -858,13 +1102,18 @@ export default function medicalHistoryForm({ readOnly = false }) {
             !readOnly && (
             !isEditing ? (
               <Button
+                type="button"
                 className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
                 onClick={() => setIsEditing(true)}
               >
                 Edit changes
               </Button>
             ) : (
-              <Button className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark">
+              <Button
+              type="button"
+              className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
+              onClick={() => formRef.current?.requestSubmit()}
+              >
                 Save Changes
               </Button>
             ))
