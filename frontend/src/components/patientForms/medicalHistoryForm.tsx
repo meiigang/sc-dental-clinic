@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { jwtDecode } from "jwt-decode"
 import { medicalSchema } from "@/components/patientForms/formSchemas/schemas"
 
-export default function medicalHistoryForm() {
+export default function medicalHistoryForm({ readOnly = false }) {
   // Instantiate medical form
   const medicalForm = useForm<z.infer<typeof medicalSchema>>({
     defaultValues: {
@@ -1099,6 +1099,7 @@ export default function medicalHistoryForm() {
             </table>
           </div>
           {
+            !readOnly && (
             !isEditing ? (
               <Button
                 type="button"
@@ -1115,7 +1116,7 @@ export default function medicalHistoryForm() {
               >
                 Save Changes
               </Button>
-            )
+            ))
           }
         </form>
       </Form>

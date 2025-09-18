@@ -1,6 +1,8 @@
 import { Router } from "express";
 import checkPatientRecordHandler from "../api/patients/checkPatientRecord.mjs";
 import { supabaseMiddleware } from "../utils/middleware/middleware.mjs";
+import { getAllPatientsHandler } from "../api/patients/getAllPatients.mjs";
+import { getPatientByIdHandler } from "../api/patients/getPatientById.mjs";
 import patientPersonalInfoHandler  from "../api/patients/patientPersonalInfo.mjs";
 import {getPatientPersonalInfoHandler} from "../api/patients/patientPersonalInfo.mjs";
 import {updatePatientPersonalInfoHandler} from "../api/patients/patientPersonalInfo.mjs";
@@ -17,6 +19,10 @@ router.use(supabaseMiddleware);
 
 //Example: GET to check patient record in database
 router.get("/check-record/:userId", checkPatientRecordHandler);
+
+router.get("/all", getAllPatientsHandler);
+
+router.get("/:id", getPatientByIdHandler);
 
 //POST to create patient personal info
 router.post("/patientPersonalInfo", patientPersonalInfoHandler);

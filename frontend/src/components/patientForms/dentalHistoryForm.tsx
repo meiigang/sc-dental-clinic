@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { dentistSchema } from "@/components/patientForms/formSchemas/schemas"
 import { jwtDecode } from "jwt-decode"
 
-export default function DentalHistoryForm() {
+export default function DentalHistoryForm({ readOnly = false }) {
   // Instantiate dental form
   const dentalForm = useForm<z.infer<typeof dentistSchema>>({
     defaultValues: {
@@ -236,7 +236,9 @@ export default function DentalHistoryForm() {
               </FormItem>
             )}
           />
-          { isEditing ? (
+          {
+            !readOnly && (
+            !isEditing ? (
               <Button
                 type="button"
                 className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
@@ -253,7 +255,8 @@ export default function DentalHistoryForm() {
                 Edit changes
               </Button>
             )
-          }
+          )
+        }
         </form>
       </Form>
     </div>
