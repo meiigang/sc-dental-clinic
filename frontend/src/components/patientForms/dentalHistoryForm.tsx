@@ -1,21 +1,14 @@
 "use client"
 import { useForm } from "react-hook-form"
 import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
 import { z } from "zod"
-import { useRef } from "react";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { useRef } from "react"
 import { Input } from "@/components/ui/input"
-import { dentistSchema } from "@/components/patientForms/formSchemas/schemas"
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { jwtDecode } from "jwt-decode"
+import { dentistSchema } from "@/components/patientForms/formSchemas/schemas"
 
 type dentalHistoryFormProps = {
   initialValues?: z.infer<typeof dentistSchema>;
@@ -38,14 +31,12 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
     }
   }, [initialValues]);
 
-  // State for cancel confirmation modal
+  // Use states for buttons and fields
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [ userId, setUserId ] = useState<string>("");
   const [patientId, setPatientId] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [ dentalHistoryId, setDentalHistoryId ] = useState<number | null>(null);
-
-
 
   useEffect(() => {
     console.log("DentalHistoryForm mounted");
@@ -107,7 +98,7 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
 
   const lastDentalVisit = dentalForm.watch("lastDentalVisit");
 
-  //Log info on screen to catch any errors
+  //When submitting form
   async function onDentalSubmit (values: z.infer<typeof dentistSchema>) {
     console.log("Dental History Info:", values);
     if (dentalHistoryId) {
@@ -115,10 +106,8 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
     } else {
       await submitDentalHistory(values); // POST if new
     }
-    // After save, form will not be dirty anymore
+    dentalForm.reset(values); // Reset form to clear dirty state and hide Save/Discard buttons
   }
-  //Use effect for when checkbox is clicked
-    //Disable when patient is an existing patient
   
   //Post form to backend
   //Submit data to backend
@@ -253,7 +242,7 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
           {/* Save/Cancel Buttons: Only show if form is dirty and not readOnly */}
           { !readOnly && dentalForm.formState.isDirty && (
             <div className="col-span-1 md:col-span-5 flex justify-end gap-2 mt-4">
-              <Button type="submit" className="bg-blue-primary hover:bg-blue-dark">
+              <Button type="button" className="bg-blue-primary hover:bg-blue-dark" onClick={() => formRef.current?.requestSubmit()}>
                 Save Changes
               </Button>
               <Button
