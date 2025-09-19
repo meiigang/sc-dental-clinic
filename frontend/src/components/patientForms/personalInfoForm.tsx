@@ -236,7 +236,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input {...field}
                   readOnly
-                  className="bg-blue-light" />
+                  className="bg-background" />
                 </FormControl>
                 <FormMessage className="min-h-[20px]"/>
               </FormItem>
@@ -251,7 +251,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input {...field} 
                   readOnly
-                  className="bg-blue-light" />
+                  className="bg-background" />
                 </FormControl>
               </FormItem>
             )}
@@ -263,9 +263,9 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
               <FormItem>
                 <FormLabel className="text-blue-dark">Last Name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Dela Cruz" {...field}
+                  <Input {...field}
                   readOnly
-                  className="bg-blue-light" />
+                  className="bg-background" />
                 </FormControl>
               </FormItem>
             )}
@@ -279,9 +279,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                     {...field}
-                    disabled={readOnly || !isEditing}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""}
-                    ${isEditing ? "bg-background" : "bg-blue-light"}`}
+                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -297,7 +295,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                   <Input
                     {...field}
                     readOnly
-                    className="bg-blue-light"
+                    className="bg-background"
                   />
                 </FormControl>
               </FormItem>
@@ -318,12 +316,10 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                       const val = e.target.value;
                       field.onChange(val ? new Date(val) : undefined);
                     }}
-                    disabled={readOnly || !isEditing}
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.birthDate ? "border-red-500" : ""}
-                    ${isEditing ? "bg-background" : "bg-blue-light"}`}
+                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.birthDate ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -340,7 +336,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                   <Input
                     {...field}
                     readOnly
-                    className="bg-blue-light w-20"
+                    className="bg-background w-20"
                   />
                 </FormControl>
               </FormItem>
@@ -354,9 +350,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Sex *</FormLabel>
                 <FormControl>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={`${isEditing && hasSubmitted && personalForm.formState.errors.sex ? "border-red-500" : ""}
-                      ${isEditing ? "bg-background" : "bg-blue-light"} w-30`}
-                      disabled={!isEditing}>
+                    <SelectTrigger className={`${isEditing && hasSubmitted && personalForm.formState.errors.sex ? "border-red-500" : ""} bg-background w-20`}>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
@@ -378,9 +372,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                     {...field}
-                    disabled={readOnly || !isEditing}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""}
-                    ${isEditing ? "bg-background" : "bg-blue-light"}`}
+                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""}bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -395,9 +387,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                     {...field}
-                    disabled={readOnly || !isEditing}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""}
-                    ${isEditing ? "bg-background" : "bg-blue-light"}`}
+                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -411,9 +401,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Home Address *</FormLabel>
                 <Input
                   {...field}
-                  disabled={readOnly || !isEditing}
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""}
-                  ${isEditing ? "bg-background" : "bg-blue-light"} w-full`}
+                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""} bg-background w-full`}
                 />
               </FormItem>
             )}
@@ -426,9 +414,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Occupation</FormLabel>
                 <Input 
                   {...field}
-                  disabled={readOnly || !isEditing}
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""}
-                  ${isEditing ? "bg-background" : "bg-blue-light"}`}
+                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""} bg-background`}
                 />
               </FormItem>
             )}
@@ -441,9 +427,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Dental Insurance</FormLabel>
                 <Input
                   {...field}
-                  disabled={readOnly || !isEditing}
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""}
-                  ${isEditing ? "bg-background" : "bg-blue-light"}`}
+                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""} bg-background`}
                 />
               </FormItem>
             )}
@@ -457,7 +441,6 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                     type="date"
-                    disabled={readOnly || !isEditing}
                     placeholder="MM/DD/YYYY"
                     value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                     onChange={e => {
@@ -467,8 +450,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""}
-                      ${isEditing ? "bg-background" : "bg-blue-light"}`}
+                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -483,7 +465,6 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                     type="date"
-                    disabled={readOnly || !isEditing}
                     placeholder="MM/DD/YYYY"
                     value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                     onChange={e => {
@@ -493,8 +474,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""}
-                      ${isEditing ? "bg-background" : "bg-blue-light"}`}
+                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -511,10 +491,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
               <FormItem>
                 <FormLabel className="text-blue-dark">Full Name *</FormLabel>
                 <FormControl>
-                  <Input placeholder="Juan Dela Cruz" {...field} 
-                    disabled={readOnly || !isEditing}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""}
-                    ${isEditing ? "bg-background" : "bg-blue-light"}`} />
+                  <Input placeholder="Juan Dela Cruz" {...field}
+                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""} bg-background`} />
                 </FormControl>
               </FormItem>
             )}
@@ -527,9 +505,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Occupation *</FormLabel>
                 <Input 
                   {...field}
-                  disabled={readOnly || !isEditing}
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""}
-                    ${isEditing ? "bg-background" : "bg-blue-light"}`}
+                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""} bg-background`}
                 />
               </FormItem>
             )}
@@ -543,9 +519,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                   {...field} 
-                  disabled={readOnly || !isEditing}
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""}
-                    ${isEditing ? "bg-background" : "bg-blue-light"}`} />
+                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""} bg-background`} />
                 </FormControl>
               </FormItem>
             )}

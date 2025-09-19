@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { dentistSchema } from "@/components/patientForms/formSchemas/schemas"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { jwtDecode } from "jwt-decode"
 
 type dentalHistoryFormProps = {
@@ -37,16 +38,14 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
     }
   }, [initialValues]);
 
-  const [ isEditing, setIsEditing ] = useState(false);
+  // State for cancel confirmation modal
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [ userId, setUserId ] = useState<string>("");
   const [patientId, setPatientId] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [ dentalHistoryId, setDentalHistoryId ] = useState<number | null>(null);
 
-  // If readOnly, force isEditing to false
-  useEffect(() => {
-    if (readOnly) setIsEditing(false);
-  }, [readOnly]);
+
 
   useEffect(() => {
     console.log("DentalHistoryForm mounted");
@@ -112,11 +111,11 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
   async function onDentalSubmit (values: z.infer<typeof dentistSchema>) {
     console.log("Dental History Info:", values);
     if (dentalHistoryId) {
-    await patchDentalHistory(values, dentalHistoryId); // PATCH if record exists
-  } else {
-    await submitDentalHistory(values); // POST if new
-  }
-    setIsEditing(false);
+      await patchDentalHistory(values, dentalHistoryId); // PATCH if record exists
+    } else {
+      await submitDentalHistory(values); // POST if new
+    }
+    // After save, form will not be dirty anymore
   }
   //Use effect for when checkbox is clicked
     //Disable when patient is an existing patient
@@ -219,8 +218,7 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
                 <FormControl>
                   <Input
                     placeholder="Jane" {...field} 
-                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
-                    readOnly={readOnly || !isEditing}
+                    className="bg-background"
                   />
                 </FormControl>
                 <FormMessage />
@@ -245,34 +243,52 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    disabled={readOnly || !isEditing}
-                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                    className="bg-background"
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          {
-            !readOnly && (
-              !isEditing ? (
+          {/* Save/Cancel Buttons: Only show if form is dirty and not readOnly */}
+          { !readOnly && dentalForm.formState.isDirty && (
+            <div className="col-span-1 md:col-span-5 flex justify-end gap-2 mt-4">
+              <Button type="submit" className="bg-blue-primary hover:bg-blue-dark">
+                Save Changes
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="border-blue-primary text-blue-primary hover:bg-blue-100 hover:text-blue-dark"
+                onClick={() => setShowCancelModal(true)}
+              >
+                Discard Changes
+              </Button>
+            </div>
+          )}
+          {/* Cancel Confirmation Modal */}
+          <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+            <DialogContent className="w-2xl">
+              <DialogHeader>
+                <DialogTitle>Discard changes?</DialogTitle>
+              </DialogHeader>
+              <div>Are you sure you want to discard all unsaved changes?</div>
+              <DialogFooter className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" className="hover:bg-gray-200" onClick={() => setShowCancelModal(false)}>
+                  {"No, keep editing"}
+                </Button>
                 <Button
-                  type="button"
-                  className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
-                  onClick={() => {setIsEditing(true)}}
+                  className="bg-red-500 hover:bg-red-700 text-white"
+                  onClick={() => {
+                    dentalForm.reset();
+                    setShowCancelModal(false);
+                  }}
                 >
-                  Edit changes
+                  {"Yes, discard changes"}
                 </Button>
-              ) : (
-                <Button
-                  type="button"
-                  className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4"
-                  onClick={() => formRef.current?.requestSubmit()}>
-                  Save Changes
-                </Button>
-              )
-            )
-          }
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </form>
       </Form>
     </div>
