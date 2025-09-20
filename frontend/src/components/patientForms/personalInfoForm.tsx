@@ -2,21 +2,14 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useEffect, useState, useRef } from "react"
-import { Button } from "@/components/ui/button"
 import { z } from "zod"
 import { jwtDecode } from "jwt-decode"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { personalSchema } from "@/components/patientForms/formSchemas/schemas"
-
 
 type PersonalInfoFormProps = {
   initialValues?: z.infer<typeof personalSchema>;
@@ -56,16 +49,11 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
     }
   }, [initialValues]);
 
-  const [ isEditing, setIsEditing ] = useState(false);
+  // Use states for buttons and fields
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [ hasSubmitted, setHasSubmitted ] = useState(false);
   const [ userId, setUserId ] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
-
-  // If readOnly, force isEditing to false
-  useEffect(() => {
-    if (readOnly) setIsEditing(false);
-  }, [readOnly]);
-
   const birthDate = personalForm.watch("birthDate");
 
   // Calculate age from birth date
@@ -83,17 +71,9 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
     } 
   }, [birthDate, personalForm]);
 
-  //Reset form when toggling edit mode
+  // Populate form with user data from JWT
   useEffect(() => {
-    if (isEditing) {
-      setHasSubmitted(false);
-      personalForm.clearErrors();
-    }
-  }, [isEditing]);
-
-  //Populate form with user data from JWT
-  useEffect(() => {
-    //Decode JWT
+    // Decode JWT
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     
     if (token) {
@@ -124,7 +104,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
 
   console.log("Current userId state:", userId);
 
-  //When form is submitted
+  // When form is submitted
   function onPersonalSubmit(values: z.infer<typeof personalSchema>) {
     console.log("Personal Info:", values)
     setHasSubmitted(true);
@@ -133,10 +113,10 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
     } else {
         submitPersonalInfo(values);
     }
-    setIsEditing(false);
+    personalForm.reset(values); // Reset form to clear dirty state and hide Save/Discard buttons
   }
 
-  //Submit data to backend
+  // Submit data to backend
   async function submitPersonalInfo(data: z.infer<typeof personalSchema>) {
     try {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -156,7 +136,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
     }
   }
 
-  //Fetch existing personal info from backend
+  // Fetch existing personal info from backend
   useEffect(() => {
     if (!userId) return;
 
@@ -201,7 +181,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
     fetchPatientInfo();
   }, [userId, personalForm]);
 
-  //PATCH or update personal info
+  // PATCH or update personal info
   async function updatePersonalInfo(data: z.infer<typeof personalSchema>, userId: string) {
     try {
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -279,7 +259,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                     {...field}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""} bg-background`}
+                    className={`${hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -319,7 +299,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.birthDate ? "border-red-500" : ""} bg-background`}
+                    className={`${hasSubmitted && personalForm.formState.errors.birthDate ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -350,7 +330,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Sex *</FormLabel>
                 <FormControl>
                   <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={`${isEditing && hasSubmitted && personalForm.formState.errors.sex ? "border-red-500" : ""} bg-background w-20`}>
+                    <SelectTrigger className={`${hasSubmitted && personalForm.formState.errors.sex ? "border-red-500" : ""} bg-background w-20`}>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
@@ -372,7 +352,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                     {...field}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""}bg-background`}
+                    className={`${hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""}bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -387,7 +367,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                     {...field}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""} bg-background`}
+                    className={`${hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -401,7 +381,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Home Address *</FormLabel>
                 <Input
                   {...field}
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""} bg-background w-full`}
+                  className={`${hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""} bg-background w-full`}
                 />
               </FormItem>
             )}
@@ -414,7 +394,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Occupation</FormLabel>
                 <Input 
                   {...field}
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""} bg-background`}
+                  className={`${hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""} bg-background`}
                 />
               </FormItem>
             )}
@@ -427,7 +407,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Dental Insurance</FormLabel>
                 <Input
                   {...field}
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""} bg-background`}
+                  className={`${hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""} bg-background`}
                 />
               </FormItem>
             )}
@@ -450,7 +430,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""} bg-background`}
+                    className={`${hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -474,7 +454,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""} bg-background`}
+                    className={`${hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""} bg-background`}
                   />
                 </FormControl>
               </FormItem>
@@ -492,7 +472,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Full Name *</FormLabel>
                 <FormControl>
                   <Input placeholder="Juan Dela Cruz" {...field}
-                    className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""} bg-background`} />
+                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""} bg-background`} />
                 </FormControl>
               </FormItem>
             )}
@@ -505,7 +485,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormLabel className="text-blue-dark">Occupation *</FormLabel>
                 <Input 
                   {...field}
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""} bg-background`}
+                  className={`${hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""} bg-background`}
                 />
               </FormItem>
             )}
@@ -519,33 +499,50 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
                 <FormControl>
                   <Input
                   {...field} 
-                  className={`${isEditing && hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""} bg-background`} />
+                  className={`${hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""} bg-background`} />
                 </FormControl>
               </FormItem>
             )}
           />
-          {!readOnly && (
-            isEditing ? (
-              <Button
-                type="button"
-                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
-                onClick={() => formRef.current?.requestSubmit()}>
+          {/* Save/Cancel Buttons: Only show if form is dirty and not readOnly */}
+          { !readOnly && personalForm.formState.isDirty && (
+            <div className="col-span-1 md:col-span-5 flex justify-end gap-2 mt-4">
+              <Button type="button" className="bg-blue-primary hover:bg-blue-dark" onClick={() => formRef.current?.requestSubmit()}>
                 Save Changes
               </Button>
-            ) : (
               <Button
                 type="button"
-                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
-                onClick={() => {
-                  setIsEditing(true);
-                  personalForm.reset(personalForm.getValues())
-                }}
+                variant="outline"
+                className="border-blue-primary text-blue-primary hover:bg-blue-100 hover:text-blue-dark"
+                onClick={() => setShowCancelModal(true)}
               >
-                Edit Changes
+                Discard Changes
               </Button>
-            )
+            </div>
           )}
-          
+          {/* Cancel Confirmation Modal */}
+          <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+            <DialogContent className="w-2xl">
+              <DialogHeader>
+                <DialogTitle>Discard changes?</DialogTitle>
+              </DialogHeader>
+              <div>Are you sure you want to discard all unsaved changes?</div>
+              <DialogFooter className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" className="hover:bg-gray-200" onClick={() => setShowCancelModal(false)}>
+                  {"No, keep editing"}
+                </Button>
+                <Button
+                  className="bg-red-500 hover:bg-red-700 text-white"
+                  onClick={() => {
+                    personalForm.reset();
+                    setShowCancelModal(false);
+                  }}
+                >
+                  {"Yes, discard changes"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </form>
       </Form>
     </div>
