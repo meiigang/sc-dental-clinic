@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Filter, ArrowUpDown, Search } from "lucide-react";
+import { Plus, Filter, ArrowUpDown, Search, Trash2, Undo2 } from "lucide-react";
 
 type Service = {
   id: number;
@@ -41,6 +41,7 @@ type Service = {
 export default function StaffServices() {
   // services state
   const [services, setServices] = useState<Service[]>([]);
+  const [archivedServices, setArchivedServices] = useState<Service[]>([]);
 
   // add form states
   const [newName, setNewName] = useState("");
@@ -60,6 +61,8 @@ export default function StaffServices() {
   const [sortOption, setSortOption] = useState("");
   const [filterOption, setFilterOption] = useState("");
 
+  // trash modal state
+  const [isTrashOpen, setIsTrashOpen] = useState(false);
 
   // error states for add form
   const [error, setError] = useState("");
@@ -210,6 +213,18 @@ export default function StaffServices() {
     }
   };
 
+  // archive service (move to trash)
+  const archiveService = (service: Service) => {
+    setServices((prev) => prev.filter((s) => s.id !== service.id));
+    setArchivedServices((prev) => [service, ...prev]);
+  };
+
+  // restore service from trash
+  const restoreService = (service: Service) => {
+    setArchivedServices((prev) => prev.filter((s) => s.id !== service.id));
+    setServices((prev) => [service, ...prev]);
+  };
+
   // search + filter + sort combined
   const displayedServices = [...services]
     .filter((s) => {
@@ -306,6 +321,58 @@ export default function StaffServices() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          
+          {/* Trash Button */}
+          <Dialog open={isTrashOpen} onOpenChange={setIsTrashOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="bg-red-600 text-white flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Trash ({archivedServices.length})
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold text-red-600">
+                  Archived Services
+                </DialogTitle>
+              </DialogHeader>
+              {archivedServices.length === 0 ? (
+                <p className="text-gray-500">No archived services.</p>
+              ) : (
+                <table className="w-full text-sm text-left mt-4">
+                  <thead className="bg-gray-200 text-gray-800">
+                    <tr>
+                      <th className="px-4 py-2">Service</th>
+                      <th className="px-4 py-2">Type</th>
+                      <th className="px-4 py-2">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {archivedServices.map((service) => (
+                      <tr key={service.id} className="border-b">
+                        <td className="px-4 py-2">{service.name}</td>
+                        <td className="px-4 py-2">{service.type}</td>
+                        <td className="px-4 py-2">
+                          <Button
+                            variant="outline"
+                            className="cursor-pointer hover:text-green-600"
+                            size="sm"
+                            onClick={() => restoreService(service)}
+                          >
+                            <Undo2 className="h-4 w-4 mr-1" />
+                            Restore
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Add Service Modal */}
           <Dialog>
@@ -441,6 +508,7 @@ export default function StaffServices() {
                 <th className="px-6 py-3">Estimated Duration</th>
                 <th className="px-6 py-3">Type</th>
                 <th className="px-6 py-3">Status</th>
+                <th className="px-6 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -463,6 +531,20 @@ export default function StaffServices() {
                     }`}
                   >
                     {service.status}
+                  </td>
+                  <td className="px-6 py-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation(); // ✅ prevents opening edit modal
+                        archiveService(service);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Archive
+                    </Button>
                   </td>
                 </tr>
               ))}
