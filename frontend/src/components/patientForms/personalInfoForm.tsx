@@ -18,12 +18,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { personalSchema } from "@/components/patientForms/formSchemas/schemas"
 
 
+type FormMode = "register" | "edit";
+
 type PersonalInfoFormProps = {
   initialValues?: z.infer<typeof personalSchema>;
   readOnly?: boolean;
+  onSubmit?: (data: z.infer<typeof personalSchema>) => void;
+  onPrev?: () => void; // Register stepper
+  mode?: FormMode;
 };
 
-export default function PersonalInfoForm({ initialValues, readOnly = false }: PersonalInfoFormProps) {
+export default function PersonalInfoForm({ initialValues, readOnly = false, onPrev, mode }: PersonalInfoFormProps) {
   const personalForm = useForm<z.infer<typeof personalSchema>>({
     resolver: zodResolver(personalSchema),
     mode: "onSubmit",
@@ -222,11 +227,23 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
     }
   }
 
+  //Button Handler -> Button modes for when rendering on the register page vs update profile info button
+  type FormMode = "register" | "edit";
+
+  type PersonalInfoFormProps = {
+    initialValues?: z.infer<typeof personalSchema>;
+    readOnly?: boolean;
+    onSubmit?: (data: z.infer<typeof personalSchema>) => void;
+    onPrev?: () => void; //Register stepper
+    mode?: FormMode;
+  }
+
+
   return (
     <div className="form-container bg-blue-light justify-center mt-10 p-10 rounded-xl">
       <h3 className="text-xl font-semibold text-blue-dark mb-5">Personal Information</h3>
       <Form {...personalForm}>
-        <form ref={formRef} onSubmit={personalForm.handleSubmit(onPersonalSubmit)} className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6">
+        <form ref={formRef} onSubmit={personalForm.handleSubmit(onPersonalSubmit)} className="col-span-5 grid grid-cols-1 md:grid-cols-4 gap-6">
           <FormField
             control={personalForm.control}
             name="firstName"
@@ -550,28 +567,42 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
               </FormItem>
             )}
           />
-          {!readOnly && (
-            isEditing ? (
-              <Button
-                type="button"
-                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
-                onClick={() => formRef.current?.requestSubmit()}>
-                Save Changes
+          {mode === "register" ? (
+            <div className="flex gap-2 mt-4">
+              {onPrev && (
+                <Button type="button" onClick={onPrev}>
+                  Previous
+                </Button>
+              )}
+              <Button type="submit">
+                Next
               </Button>
-            ) : (
-              <Button
-                type="button"
-                className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
-                onClick={() => {
-                  setIsEditing(true);
-                  personalForm.reset(personalForm.getValues())
-                }}
-              >
-                Edit Changes
-              </Button>
+            </div>
+          ) : 
+          (
+              !readOnly && (
+              isEditing ? (
+                <Button
+                  type="button"
+                  className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
+                  onClick={() => formRef.current?.requestSubmit()}>
+                  Save Changes
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
+                  onClick={() => {
+                    setIsEditing(true);
+                    personalForm.reset(personalForm.getValues())
+                  }}
+                >
+                  Edit Changes
+                </Button>
+              )
             )
-          )}
-          
+          )
+          }
         </form>
       </Form>
     </div>

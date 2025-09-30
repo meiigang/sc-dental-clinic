@@ -16,12 +16,18 @@ import { Input } from "@/components/ui/input"
 import { dentistSchema } from "@/components/patientForms/formSchemas/schemas"
 import { jwtDecode } from "jwt-decode"
 
+type FormMode = "register" | "edit";
+
 type dentalHistoryFormProps = {
   initialValues?: z.infer<typeof dentistSchema>;
   readOnly?: boolean;
+  onSubmit?: (data: z.infer<typeof dentistSchema>) => void;
+  onPrev?: () => void; // Register stepper
+  mode?: FormMode;
 };
 
-export default function DentalHistoryForm({ initialValues, readOnly = false }: dentalHistoryFormProps) {
+export default function DentalHistoryForm({ initialValues, readOnly = false, onPrev, mode }: dentalHistoryFormProps) {
+
   // Instantiate dental form
   const dentalForm = useForm<z.infer<typeof dentistSchema>>({
     defaultValues: initialValues || {
@@ -253,7 +259,18 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
               </FormItem>
             )}
           />
-          {
+          {mode === "register" ? (
+            <div className="flex gap-2 mt-4">
+              {onPrev && (
+                <Button type="button" onClick={onPrev}>
+                  Previous
+                </Button>
+              )}
+              <Button type="submit">
+                Next
+              </Button>
+            </div>
+          ) : (
             !readOnly && (
               !isEditing ? (
                 <Button
@@ -272,7 +289,9 @@ export default function DentalHistoryForm({ initialValues, readOnly = false }: d
                 </Button>
               )
             )
-          }
+          ) 
+        }
+
         </form>
       </Form>
     </div>

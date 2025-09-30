@@ -188,3 +188,21 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .stepper{
+    @apply flex relative flex-col justify-center items-center w-full
+  }
+  .stepper:not(:first-child):before{
+    @apply text-blue-light absolute right-2/4 top-1/3 translate-y-2/4 w-full h-[3px] content-['']
+  }
+  .step{
+    @apply rounded-full w-10 h-10 items-center flex justify-center z-10 relative bg-blue-dark text-white font-semibold
+  }
+  .complete .step{
+    @apply bg-green-400
+  }
+  .active .step{
+   @apply bg-blue-dark
+  }
+}

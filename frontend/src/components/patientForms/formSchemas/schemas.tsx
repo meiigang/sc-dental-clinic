@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+export const accountInfoSchema = z.object({
+    first_name: z.string().min(1, "First name is required"),
+    last_name: z.string().min(1, "Last name is required"),
+    middle_name: z.string().optional(),
+    suffix: z.string().optional(),
+    email: z.string().email("Invalid email address"),
+    contact_number: z.string().min(1, "Contact number is required"),
+    password: z.string().min(6, "Password must be at least 6 characters long"),
+    confirm_password: z.string().min(1, "Please confirm your password"),
+    }).refine((data) => data.password === data.confirm_password, {
+    message: "Passwords don't match",
+    path: ["confirm_password"],
+})
+
 export const personalSchema = z.object({
   firstName: z.string().min(1, "Required"),
   lastName: z.string().min(1, "Required"),

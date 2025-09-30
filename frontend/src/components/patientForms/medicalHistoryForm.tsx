@@ -110,7 +110,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
           console.log("Fetched patient medical history:", data);
           if (data.medicalHistory) {
             const record = data.medicalHistory;
-            setMedicalHistoryId(record.id); // <-- Save the id for PATCH
+            setMedicalHistoryId(record.id);
             medicalForm.reset({
               physicianName: record.physician_name || "",
               officeAddress: record.office_address || "",
@@ -275,7 +275,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
         bloodPressure: data.bloodPressure,
         diseases: data.diseases
       };
-      const res = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${medicalHistoryId}`, {
+      const res = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${medicalHistoryId}`, { 
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -545,7 +545,9 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
                           <FormItem className="flex">
                             <FormLabel className="font-normal">What illness or operation?</FormLabel>
                             <FormControl>
-                            <input {...field}  className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
+                            <input {...field}  
+                            disabled={!isEditing}
+                            className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
                             </FormControl>
                           </FormItem>
                         )}
@@ -611,7 +613,9 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
                       <FormItem className="flex">
                         <FormLabel className="font-normal">When, and why?</FormLabel>
                         <FormControl>
-                        <input {...field}  className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
+                        <input {...field}
+                        disabled={!isEditing}
+                        className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
                         </FormControl>
                       </FormItem>
                       )}
@@ -677,7 +681,9 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
                       <FormItem className="flex">
                         <FormLabel className="font-normal">Current medication:</FormLabel>
                         <FormControl>
-                        <input {...field}  className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
+                        <input {...field}
+                        disabled={!isEditing}
+                        className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
                         </FormControl>
                       </FormItem>
                       )}
