@@ -28,5 +28,5 @@ You can start editing by modifying any `page.tsx` file. The page auto-updates as
 ### Sprint 2: Service Management, Patient Record Management
 - Staff-side Services page is fully functioning.
 - Ongoing bug fixes for staff-side Patient Record data retrievals.
-### Sprint 3: TBD
+### Sprint 3: Appointment Management, Booking Management, Dental Chart Management
 - Sprint begins
