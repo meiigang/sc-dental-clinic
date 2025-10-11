@@ -1,36 +1,47 @@
-import { Dispatch, SetStateAction } from "react";
-import { createContext, useContext, useState } from "react";
+"use client";
+import { createContext, useContext, useState, Dispatch, SetStateAction, ReactNode } from 'react';
 
-interface FormValuesType {
-  formValues: {};
-  updateFormValues: (x: any) => void;
+// 1. Make the main context type generic
+interface FormContextType<T> {
+  formValues: T;
+  updateFormValues: (updatedData: Partial<T>) => void;
   currentStep: number;
   setCurrentStep: Dispatch<SetStateAction<number>>;
 }
-interface Props {
-  children: React.ReactNode;
+
+// 2. Use <any> here as a placeholder for the generic context
+const FormContext = createContext<FormContextType<any> | null>(null);
+
+// 3. Make the Provider props generic
+interface FormProviderProps<T> {
+  children: ReactNode;
+  initialValues: T;
 }
-const FormContext = createContext<FormValuesType | null>(null);
 
-export const FormProvider = ({ children }: Props) => {
-  const [formValues, setFormValues] = useState({});
+// 4. Make the Provider function generic
+export function FormProvider<T extends Record<string, any>>({ children, initialValues }: FormProviderProps<T>) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [formValues, setFormValues] = useState<T>(initialValues);
 
-  const updateFormValues = (updatedData: any) => {
-    setFormValues((prevData) => ({ ...prevData, ...updatedData }));
+  const updateFormValues = (updatedData: Partial<T>) => {
+    setFormValues(prevValues => ({
+      ...prevValues,
+      ...updatedData,
+    }));
   };
-  const values = {
-    formValues,
-    updateFormValues,
-    currentStep,
-    setCurrentStep,
-  };
-  return <FormContext.Provider value={values}>{children}</FormContext.Provider>;
-};
-export const useFormContext = () => {
-  const context = useContext(FormContext);
-  if (context === null) {
-    throw new Error("context must be used within the context provider");
+
+  return (
+    <FormContext.Provider value={{ currentStep, setCurrentStep, formValues, updateFormValues }}>
+      {children}
+    </FormContext.Provider>
+  );
+}
+
+// 5. Make the hook generic
+export function useFormContext<T>() {
+  const context = useContext(FormContext as React.Context<FormContextType<T> | null>);
+  if (!context) {
+    throw new Error("useFormContext must be used within a FormProvider");
   }
   return context;
-};
+}

@@ -26,7 +26,7 @@ type dentalHistoryFormProps = {
   mode?: FormMode;
 };
 
-export default function DentalHistoryForm({ initialValues, readOnly = false, onPrev, mode }: dentalHistoryFormProps) {
+export default function DentalHistoryForm({ initialValues, readOnly = false, onSubmit, onPrev, mode }: dentalHistoryFormProps) {
 
   // Instantiate dental form
   const dentalForm = useForm<z.infer<typeof dentistSchema>>({
@@ -43,7 +43,7 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onP
     }
   }, [initialValues]);
 
-  const [ isEditing, setIsEditing ] = useState(false);
+  const [ isEditing, setIsEditing ] = useState(mode==='register');
   const [ userId, setUserId ] = useState<string>("");
   const [patientId, setPatientId] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -215,7 +215,9 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onP
     <div className="form-container bg-blue-light justify-center mt-10 p-10 rounded-xl">
       <h3 className="text-xl font-semibold text-blue-dark mb-5">Dental History</h3>
       <Form {...dentalForm}>
-        <form ref={formRef} onSubmit={dentalForm.handleSubmit(onDentalSubmit)} className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl">
+        <form ref={formRef} 
+          onSubmit={dentalForm.handleSubmit(mode === 'register' && onSubmit ? onSubmit : onDentalSubmit)} 
+          className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl">
           <FormField
             control={dentalForm.control}
             name="previousDentist"
@@ -260,13 +262,13 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onP
             )}
           />
           {mode === "register" ? (
-            <div className="flex gap-2 mt-4">
+            <div className="md:col-span-5 flex justify-end gap-2">
               {onPrev && (
-                <Button type="button" onClick={onPrev}>
+                <Button type="button" onClick={onPrev} className="bg-blue-primary">
                   Previous
                 </Button>
               )}
-              <Button type="submit">
+              <Button type="submit" className="bg-blue-dark">
                 Next
               </Button>
             </div>

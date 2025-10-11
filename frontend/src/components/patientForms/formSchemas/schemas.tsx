@@ -15,10 +15,6 @@ export const accountInfoSchema = z.object({
 })
 
 export const personalSchema = z.object({
-  firstName: z.string().min(1, "Required"),
-  lastName: z.string().min(1, "Required"),
-  middleName: z.string().optional(),
-  suffix: z.enum(["none", "Jr", "Sr", "II", "III"]).optional(),
   birthDate: z.date().min(new Date("1900-01-01"), "Invalid date").max(new Date(), "Invalid date"),
   age: z.string().min(1, "Required"),
   sex: z.string().min(1, "Required"),

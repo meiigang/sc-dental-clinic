@@ -18,12 +18,17 @@ import { Input } from "@/components/ui/input"
 import { jwtDecode } from "jwt-decode"
 import { medicalSchema } from "@/components/patientForms/formSchemas/schemas"
 
+type FormMode = "register" | "edit";
+
 type MedicalHistoryFormProps = {
   initialValues?: z.infer<typeof medicalSchema>;
   readOnly?: boolean;
+  onSubmit?: (data: z.infer<typeof medicalSchema>) => void;
+    onPrev?: () => void; // Register stepper
+    mode?: FormMode;
 };
 
-export default function MedicalHistoryForm({ initialValues, readOnly = false }: MedicalHistoryFormProps) {
+export default function MedicalHistoryForm({ initialValues, readOnly = false, onSubmit, onPrev, mode }: MedicalHistoryFormProps) {
   // Instantiate medical form
   const medicalForm = useForm<z.infer<typeof medicalSchema>>({
     defaultValues: {
@@ -54,7 +59,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
   })
 
   //Use state for buttons and fields
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(mode === 'register');
   const [userId, setUserId] = useState<string>("");
   const [patientId, setPatientId] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -145,6 +150,10 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
     }
     fetchMedicalHistory();
   }, [patientId, medicalForm]);
+
+  useEffect(() => {
+    if (readOnly) setIsEditing(false);
+  }, [readOnly]);
 
   //Submit data to backend
   async function submitMedicalForm(data: z.infer<typeof medicalSchema>) {
@@ -296,7 +305,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
       <h3 className="text-xl font-semibold text-blue-dark mb-5">Medical History</h3>
       <Form {...medicalForm}>
         <form action="medical-history" className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl"
-        ref={formRef} onSubmit={medicalForm.handleSubmit(onMedicalSubmit)}>
+        ref={formRef} onSubmit={medicalForm.handleSubmit(mode === 'register' && onSubmit ? onSubmit : onMedicalSubmit)}>
           {/* Physician Name */}
           <FormField
             control={medicalForm.control}
@@ -1109,13 +1118,24 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
               </tbody>
             </table>
           </div>
-          {
+          {mode === "register" ? (
+            <div className="md:col-span-5 flex justify-end gap-2 mt-4">
+              {onPrev && (
+                <Button type="button" className="bg-blue-primary" onClick={onPrev}>
+                  Previous
+                </Button>
+              )}
+              <Button className="bg-blue-dark" type="submit">
+                Next
+              </Button>
+            </div>
+          ): (
             !readOnly && (
             !isEditing ? (
               <Button
                 type="button"
                 className="bg-blue-primary col-span-1 md:col-span-5 justify-self-end mt-4 hover:bg-blue-dark"
-                onClick={() => setIsEditing(true)}
+                onClick={() => {setIsEditing(true)}}
               >
                 Edit changes
               </Button>
@@ -1128,7 +1148,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
                 Save Changes
               </Button>
             ))
-          }
+          )}
         </form>
       </Form>
     </div>

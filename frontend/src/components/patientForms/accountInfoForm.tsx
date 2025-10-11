@@ -17,7 +17,19 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export default function AccountInfoForm({ initialValues, onSubmit }: { initialValues?: z.infer<typeof accountInfoSchema>, onSubmit: (data: z.infer<typeof accountInfoSchema>) => void }) {
+interface AccountInfoFormProps {
+  initialValues?: z.infer<typeof accountInfoSchema>;
+  onSubmit: (data: z.infer<typeof accountInfoSchema>) => void;
+  readOnly?: boolean;
+}
+
+export default function AccountInfoForm({ initialValues, onSubmit, readOnly=false}: AccountInfoFormProps) {
+    const [isEditing, setIsEditing] = useState(!readOnly);
+
+    useEffect(() => {
+        setIsEditing(!readOnly);
+    }, [readOnly]);
+
     const registerForm = useForm<z.infer<typeof  accountInfoSchema>>({
         resolver: zodResolver(accountInfoSchema),
         mode: "onSubmit",
@@ -34,14 +46,21 @@ export default function AccountInfoForm({ initialValues, onSubmit }: { initialVa
     });
 
     const router = useRouter();
-    const onSubmitHandler = (data: z.infer<typeof accountInfoSchema>) => {
-        router.push("/personalInfoForm")
-    }
+
+    const handleFormSubmit = (data: z.infer<typeof accountInfoSchema>) => {
+        const processedData = {
+            ...data,
+            suffix: data.suffix === "NONE_VALUE" ? "" : data.suffix,
+        };
+        if (onSubmit) {
+            onSubmit(processedData);
+        }
+    };
 
     return (
         <div className="form-container bg-blue-light justify-center mt-10 p-10 rounded-xl">
             <Form {...registerForm}>
-                <form onSubmit={registerForm.handleSubmit(onSubmit)} className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6">
+                <form onSubmit={registerForm.handleSubmit(handleFormSubmit)} className="col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
                     <FormField
                         control={registerForm.control}
                         name="first_name"
@@ -50,7 +69,8 @@ export default function AccountInfoForm({ initialValues, onSubmit }: { initialVa
                                 <FormLabel>First Name *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    className="bg-blue-light"
+                                    readOnly ={readOnly}
+                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -65,7 +85,8 @@ export default function AccountInfoForm({ initialValues, onSubmit }: { initialVa
                                 <FormLabel>Middle Name *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    className="bg-blue-light"
+                                    readOnly={readOnly}
+                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -80,7 +101,8 @@ export default function AccountInfoForm({ initialValues, onSubmit }: { initialVa
                                 <FormLabel>Last Name *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    className="bg-blue-light"
+                                    readOnly={readOnly}
+                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -92,17 +114,18 @@ export default function AccountInfoForm({ initialValues, onSubmit }: { initialVa
                         name="suffix"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Suffix *</FormLabel>
-                                <Select>
-                                    <SelectTrigger className="bg-blue-light">
-                                        <SelectValue placeholder="Select..." {...field} />
+                                <FormLabel>Suffix</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}>
+                                    <SelectTrigger className={`${isEditing ? "bg-background" : "bg-blue-light"}`}>
+                                        <SelectValue placeholder="Select..." />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="NONE_VALUE">None</SelectItem>
                                         <SelectItem value="Jr.">Jr.</SelectItem>
                                         <SelectItem value="Sr.">Sr.</SelectItem>
                                         <SelectItem value="II">II</SelectItem>
                                         <SelectItem value="III">III</SelectItem>
-                                        <SelectItem value="III">IV</SelectItem>
+                                        <SelectItem value="IV">IV</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage/>
@@ -117,7 +140,8 @@ export default function AccountInfoForm({ initialValues, onSubmit }: { initialVa
                                 <FormLabel>Email Address *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    className="bg-blue-light"
+                                    readOnly={!isEditing}
+                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -132,7 +156,8 @@ export default function AccountInfoForm({ initialValues, onSubmit }: { initialVa
                                 <FormLabel>Contact Number *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    className="bg-blue-light"
+                                    readOnly={!isEditing}
+                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -147,16 +172,35 @@ export default function AccountInfoForm({ initialValues, onSubmit }: { initialVa
                                 <FormLabel>Password *</FormLabel>
                                 <FormControl>
                                     <Input {...field} type="password"
-                                    className="bg-blue-light"
+                                    readOnly={!isEditing}
+                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
                         )}
                     />
-                    <div className="button-container">
+                    <FormField
+                        control={registerForm.control}
+                        name="confirm_password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Confirm Password *</FormLabel>
+                                <FormControl>
+                                    <Input {...field} type="password"
+                                    readOnly={!isEditing}
+                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                                    />
+                                </FormControl>
+                                <FormMessage/>
+                            </FormItem>
+                        )}
+                    />
+                    {isEditing && (
+                    <div className="button-container md:col-span-4 flex justify-end">
                         <Button type="submit" className="bg-blue-dark hover:bg-blue-darker text-white mt-6">Next</Button>
                     </div>
+                    )}
                 </form>
             </Form>
         </div>
