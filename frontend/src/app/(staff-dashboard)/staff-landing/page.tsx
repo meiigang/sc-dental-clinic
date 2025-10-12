@@ -8,7 +8,7 @@ import { RiPencilFill } from "react-icons/ri"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
-import AvailabilityInputs from "@/components/AvailabilityForm"
+import AvailabilityInputs from "@/components/availability-inputs"
 
 export default function StaffDashboard() {
   // Extract token variables
