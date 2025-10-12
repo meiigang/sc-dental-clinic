@@ -194,21 +194,21 @@ export async function getPatientMedicalHistory(req, res) {
 
     //Fetch allergies for this medical_history_id
     const { data: allergiesArr, error: allergiesError } = await req.supabase
-        .from("medical-allergies")
-        .select("allergies")
+        .from("medical_allergies")
+        .select("allergy")
         .eq("medical_history_id", medicalHistory.id)
         .single();
 
     // Fetch diseases for this medical_history_id
     const { data: diseasesArr, error: diseasesError } = await req.supabase
-        .from("medical-diseases")
-        .select("diseases")
+        .from("medical_diseases")
+        .select("disease")
         .eq("medical_history_id", medicalHistory.id)
         .single();
 
     // Attach allergies and diseases arrays if found
-    medicalHistory.allergies = allergiesArr?.allergies || [];
-    medicalHistory.diseases = diseasesArr?.diseases || [];
+    medicalHistory.allergies = allergiesArr?.allergy || [];
+    medicalHistory.diseases = diseasesArr?.disease || [];
 
     // Log for debugging
     console.log("Medical history retrieved: ", medicalHistory);

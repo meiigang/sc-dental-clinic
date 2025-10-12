@@ -11,12 +11,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { jwtDecode } from "jwt-decode"
 import { medicalSchema } from "@/components/patientForms/formSchemas/schemas"
 
+type FormMode = "register" | "edit";
+
 type MedicalHistoryFormProps = {
   initialValues?: z.infer<typeof medicalSchema>;
   readOnly?: boolean;
+  onSubmit?: (data: z.infer<typeof medicalSchema>) => void;
+    onPrev?: () => void; // Register stepper
+    mode?: FormMode;
 };
 
-export default function MedicalHistoryForm({ initialValues, readOnly = false }: MedicalHistoryFormProps) {
+export default function MedicalHistoryForm({ initialValues, readOnly = false, onSubmit, onPrev, mode }: MedicalHistoryFormProps) {
   // Instantiate medical form
   const medicalForm = useForm<z.infer<typeof medicalSchema>>({
     defaultValues: {
@@ -48,6 +53,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
 
   // Use states for buttons and fields
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(mode === 'register');
   const [userId, setUserId] = useState<string>("");
   const [patientId, setPatientId] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -103,7 +109,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
           console.log("Fetched patient medical history:", data);
           if (data.medicalHistory) {
             const record = data.medicalHistory;
-            setMedicalHistoryId(record.id); // <-- Save the id for PATCH
+            setMedicalHistoryId(record.id);
             medicalForm.reset({
               physicianName: record.physician_name || "",
               officeAddress: record.office_address || "",
@@ -268,7 +274,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
         bloodPressure: data.bloodPressure,
         diseases: data.diseases
       };
-      const res = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${medicalHistoryId}`, {
+      const res = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${medicalHistoryId}`, { 
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -289,7 +295,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
       <h3 className="text-xl font-semibold text-blue-dark mb-5">Medical History</h3>
       <Form {...medicalForm}>
         <form action="medical-history" className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl"
-        ref={formRef} onSubmit={medicalForm.handleSubmit(onMedicalSubmit)}>
+        ref={formRef} onSubmit={medicalForm.handleSubmit(mode === 'register' && onSubmit ? onSubmit : onMedicalSubmit)}>
           {/* Physician Name */}
           <FormField
             control={medicalForm.control}
@@ -528,7 +534,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
                           <FormItem className="flex">
                             <FormLabel className="font-normal">What illness or operation?</FormLabel>
                             <FormControl>
-                            <input {...field}  className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
+                            <input {...field} className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
                             </FormControl>
                           </FormItem>
                         )}
@@ -592,7 +598,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
                       <FormItem className="flex">
                         <FormLabel className="font-normal">When, and why?</FormLabel>
                         <FormControl>
-                        <input {...field}  className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
+                        <input {...field} className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
                         </FormControl>
                       </FormItem>
                       )}
@@ -656,7 +662,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
                       <FormItem className="flex">
                         <FormLabel className="font-normal">Current medication:</FormLabel>
                         <FormControl>
-                        <input {...field} className="bg-background text-sm w-64 rounded-sm px-3 ml-2" />
+                        <input {...field} className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
                         </FormControl>
                       </FormItem>
                       )}
@@ -1068,21 +1074,35 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false }: 
               </tbody>
             </table>
           </div>
-          {/* Save/Cancel Buttons: Only show if form is dirty and not readOnly */}
-          { !readOnly && medicalForm.formState.isDirty && (
-            <div className="col-span-1 md:col-span-5 flex justify-end gap-2 mt-4">
-              <Button type="button" className="bg-blue-primary hover:bg-blue-dark" onClick={() => formRef.current?.requestSubmit()}>
-                Save Changes
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="border-blue-primary text-blue-primary hover:bg-blue-100 hover:text-blue-dark"
-                onClick={() => setShowCancelModal(true)}
-              >
-                Discard Changes
+          {/* If form is in the Register page, Previous and Next buttons appear */}
+          {mode === "register" ? (
+            <div className="md:col-span-5 flex justify-end gap-2 mt-4">
+              {onPrev && (
+                <Button type="button" className="bg-blue-primary" onClick={onPrev}>
+                  Previous
+                </Button>
+              )}
+              <Button className="bg-blue-dark" type="submit">
+                Next
               </Button>
             </div>
+          ): (
+            // If form is in the Profile page, Save Changes and Discard Changes buttons appear
+            !readOnly && medicalForm.formState.isDirty && (
+              <div className="col-span-1 md:col-span-5 flex justify-end gap-2 mt-4">
+                <Button type="button" className="bg-blue-primary hover:bg-blue-dark" onClick={() => formRef.current?.requestSubmit()}>
+                  Save Changes
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-blue-primary text-blue-primary hover:bg-blue-100 hover:text-blue-dark"
+                  onClick={() => setShowCancelModal(true)}
+                >
+                  Discard Changes
+                </Button>
+              </div>
+            )
           )}
           {/* Cancel Confirmation Modal */}
           <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>

@@ -11,20 +11,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { personalSchema } from "@/components/patientForms/formSchemas/schemas"
 
+type FormMode = "register" | "edit";
+
 type PersonalInfoFormProps = {
   initialValues?: z.infer<typeof personalSchema>;
   readOnly?: boolean;
+  onSubmit?: (data: z.infer<typeof personalSchema>) => void;
+  onPrev?: () => void; // Register stepper
+  mode?: FormMode;
 };
 
-export default function PersonalInfoForm({ initialValues, readOnly = false }: PersonalInfoFormProps) {
+export default function PersonalInfoForm({ initialValues, readOnly = false, onSubmit, onPrev, mode }: PersonalInfoFormProps) {
   const personalForm = useForm<z.infer<typeof personalSchema>>({
     resolver: zodResolver(personalSchema),
     mode: "onSubmit",
     defaultValues: initialValues || {
-      firstName: "",
-      lastName: "",
-      middleName: "",
-      suffix: "none",
       birthDate: undefined,
       age: "",
       sex: "",
@@ -51,6 +52,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
 
   // Use states for buttons and fields
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [ isEditing, setIsEditing ] = useState(mode==='register');
   const [ hasSubmitted, setHasSubmitted ] = useState(false);
   const [ userId, setUserId ] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
@@ -70,37 +72,6 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
       personalForm.setValue("age", "", { shouldValidate: true });
     } 
   }, [birthDate, personalForm]);
-
-  // Populate form with user data from JWT
-  useEffect(() => {
-    // Decode JWT
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    
-    if (token) {
-    try {
-      type UserJwtPayload = {
-        id?: string;
-        firstName?: string;
-        middleName?: string;
-        lastName?: string;
-        suffix?: string;
-        [key: string]: any;
-      };
-      const user = jwtDecode<UserJwtPayload>(token);
-      personalForm.setValue("firstName", user.firstName || "");
-      personalForm.setValue("middleName", user.middleName || "");
-      personalForm.setValue("lastName", user.lastName || "");
-      const allowedSuffixes = ["none", "Jr", "Sr", "II", "III"] as const;
-      const suffix = allowedSuffixes.includes(user.suffix as any) ? user.suffix : "none";
-      personalForm.setValue("suffix", suffix as typeof allowedSuffixes[number]);
-      setUserId(user.id || user.sub || "");
-      console.log("Decoded JWT:", user); // For debugging
-      console.log("userId to send:", user.id); // For debugging
-    } catch (err) {
-      console.error("Invalid token:", err);
-    } 
-    }
-  }, [personalForm]);
 
   console.log("Current userId state:", userId);
 
@@ -157,7 +128,6 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
           personalForm.reset({
             ...personalForm.getValues(),
             nickname: data.patient.nickname || "",
-            suffix: data.patient.suffix || "none",
             birthDate: data.patient.birth_date ? new Date(data.patient.birth_date) : undefined,
             age: data.patient.age || "",
             sex: data.patient.sex || "",
@@ -202,323 +172,292 @@ export default function PersonalInfoForm({ initialValues, readOnly = false }: Pe
     }
   }
 
+  //Button Handler -> Button modes for when rendering on the register page vs update profile info button
+  type FormMode = "register" | "edit";
+
+  type PersonalInfoFormProps = {
+    initialValues?: z.infer<typeof personalSchema>;
+    readOnly?: boolean;
+    onSubmit?: (data: z.infer<typeof personalSchema>) => void;
+    onPrev?: () => void; //Register stepper
+    mode?: FormMode;
+  }
+
+
   return (
     <div className="form-container bg-blue-light justify-center mt-10 p-10 rounded-xl">
       <h3 className="text-xl font-semibold text-blue-dark mb-5">Personal Information</h3>
-      <Form {...personalForm}>
-        <form ref={formRef} onSubmit={personalForm.handleSubmit(onPersonalSubmit)} className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6">
-          <FormField
-            control={personalForm.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">First Name *</FormLabel>
-                <FormControl>
-                  <Input {...field}
-                  readOnly
-                  className="bg-background" />
-                </FormControl>
-                <FormMessage className="min-h-[20px]"/>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="middleName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Middle Name</FormLabel>
-                <FormControl>
-                  <Input {...field} 
-                  readOnly
-                  className="bg-background" />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Last Name *</FormLabel>
-                <FormControl>
-                  <Input {...field}
-                  readOnly
-                  className="bg-background" />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="nickname"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Nickname</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    className={`${hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""} bg-background`}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="suffix"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Suffix</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    readOnly
-                    className="bg-background"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="birthDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Birthdate *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    placeholder="MM/DD/YYYY"
-                    value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
-                    onChange={e => {
-                      const val = e.target.value;
-                      field.onChange(val ? new Date(val) : undefined);
-                    }}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    ref={field.ref}
-                    className={`${hasSubmitted && personalForm.formState.errors.birthDate ? "border-red-500" : ""} bg-background`}
-                  />
-                </FormControl>
-              </FormItem>
-            )} 
-          />
-          <div className="col-span-1 flex gap-2 items-end">
+        <Form {...personalForm}>
+          <form ref={formRef} 
+          onSubmit={personalForm.handleSubmit(mode === 'register' && onSubmit ? onSubmit : onPersonalSubmit)} 
+          className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl">
             <FormField
-            control={personalForm.control}
-            name="age"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Age *</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    readOnly
-                    className="bg-background w-20"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="sex"
-            render={({field}) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Sex *</FormLabel>
-                <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className={`${hasSubmitted && personalForm.formState.errors.sex ? "border-red-500" : ""} bg-background w-20`}>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">M</SelectItem>
-                      <SelectItem value="female">F</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          </div>
-          <FormField
-            control={personalForm.control}
-            name="religion"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Religion *</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    className={`${hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""}bg-background`}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="nationality"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Nationality *</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    className={`${hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""} bg-background`}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="homeAddress"
-            render={({ field }) => (
-              <FormItem className="col-span-3 md:col-start-1">
-                <FormLabel className="text-blue-dark">Home Address *</FormLabel>
-                <Input
-                  {...field}
-                  className={`${hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""} bg-background w-full`}
-                />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="occupation"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Occupation</FormLabel>
-                <Input 
-                  {...field}
-                  className={`${hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""} bg-background`}
-                />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="dentalInsurance"
-            render={({field}) => (
-              <FormItem className="col-span-1 md:col-start-1">
-                <FormLabel className="text-blue-dark">Dental Insurance</FormLabel>
-                <Input
-                  {...field}
-                  className={`${hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""} bg-background`}
-                />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="effectiveDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Effective Date *</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    placeholder="MM/DD/YYYY"
-                    value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
-                    onChange={e => {
-                      const val = e.target.value;
-                      field.onChange(val ? new Date(val) : undefined);
-                    }}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    ref={field.ref}
-                    className={`${hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""} bg-background`}
-                  />
-                </FormControl>
-              </FormItem>
-            )} 
-          />
-          <FormField
-            control={personalForm.control}
-            name="patientSince"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Patient Since</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    placeholder="MM/DD/YYYY"
-                    value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
-                    onChange={e => {
-                      const val = e.target.value;
-                      field.onChange(val ? new Date(val) : undefined);
-                    }}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    ref={field.ref}
-                    className={`${hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""} bg-background`}
-                  />
-                </FormControl>
-              </FormItem>
-            )} 
-          />
-          <div className="emergency-contact col-span-5 mt-2">
-            <h5 
-            className="text-blue-dark font-semibold">Emergency Contact</h5>
-          </div>
-          <FormField
-            control={personalForm.control}
-            name="emergencyContactName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Full Name *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Juan Dela Cruz" {...field}
-                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""} bg-background`} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="emergencyContactOccupation"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Occupation *</FormLabel>
-                <Input 
-                  {...field}
-                  className={`${hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""} bg-background`}
-                />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={personalForm.control}
-            name="emergencyContactNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-blue-dark">Contact Number *</FormLabel>
-                <FormControl>
-                  <Input
-                  {...field} 
-                  className={`${hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""} bg-background`} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          {/* Save/Cancel Buttons: Only show if form is dirty and not readOnly */}
-          { !readOnly && personalForm.formState.isDirty && (
-            <div className="col-span-1 md:col-span-5 flex justify-end gap-2 mt-4">
-              <Button type="button" className="bg-blue-primary hover:bg-blue-dark" onClick={() => formRef.current?.requestSubmit()}>
-                Save Changes
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="border-blue-primary text-blue-primary hover:bg-blue-100 hover:text-blue-dark"
-                onClick={() => setShowCancelModal(true)}
-              >
-                Discard Changes
-              </Button>
+              control={personalForm.control}
+              name="nickname"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Nickname</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      className={`${hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""} bg-background`}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="birthDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Birthdate *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      placeholder="MM/DD/YYYY"
+                      value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
+                      onChange={e => {
+                        const val = e.target.value;
+                        field.onChange(val ? new Date(val) : undefined);
+                      }}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      className={`${hasSubmitted && personalForm.formState.errors.birthDate ? "border-red-500" : ""} bg-background`}
+                    />
+                  </FormControl>
+                </FormItem>
+              )} 
+            />
+            <div className="col-span-1 flex gap-2 items-end">
+              <FormField
+              control={personalForm.control}
+              name="age"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Age *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      readOnly
+                      className="bg-blue-light w-20"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="sex"
+              render={({field}) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Sex *</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className={`${hasSubmitted && personalForm.formState.errors.sex ? "border-red-500" : ""} bg-background`}>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">M</SelectItem>
+                        <SelectItem value="female">F</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
             </div>
+            <FormField
+              control={personalForm.control}
+              name="religion"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Religion *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      className={`${hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""} bg-background`}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="nationality"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Nationality *</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      className={`${hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""} bg-background`}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="homeAddress"
+              render={({ field }) => (
+                <FormItem className="col-span-3 md:col-start-1">
+                  <FormLabel className="text-blue-dark">Home Address *</FormLabel>
+                  <Input
+                    {...field}
+                    className={`${hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""} bg-background w-full`}
+                  />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="occupation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Occupation</FormLabel>
+                  <Input 
+                    {...field}
+                    className={`${hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""} bg-background`}
+                  />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="dentalInsurance"
+              render={({field}) => (
+                <FormItem className="col-span-1 md:col-start-1">
+                  <FormLabel className="text-blue-dark">Dental Insurance</FormLabel>
+                  <Input
+                    {...field}
+                    className={`${hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""} bg-background`}
+                  />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="effectiveDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Effective Date *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      placeholder="MM/DD/YYYY"
+                      value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
+                      onChange={e => {
+                        const val = e.target.value;
+                        field.onChange(val ? new Date(val) : undefined);
+                      }}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      className={`${hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""} bg-background`}
+                    />
+                  </FormControl>
+                </FormItem>
+              )} 
+            />
+            <FormField
+              control={personalForm.control}
+              name="patientSince"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Patient Since</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      placeholder="MM/DD/YYYY"
+                      value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
+                      onChange={e => {
+                        const val = e.target.value;
+                        field.onChange(val ? new Date(val) : undefined);
+                      }}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      className={`${hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""} bg-background`}
+                    />
+                  </FormControl>
+                </FormItem>
+              )} 
+            />
+            <div className="emergency-contact col-span-5 mt-2">
+              <h5 
+              className="text-blue-dark font-semibold">Emergency Contact</h5>
+            </div>
+            <FormField
+              control={personalForm.control}
+              name="emergencyContactName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Full Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Juan Dela Cruz" {...field} 
+                      className={`${hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""} bg-background`} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="emergencyContactOccupation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Occupation *</FormLabel>
+                  <Input 
+                    {...field}
+                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""} bg-background`}
+                  />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="emergencyContactNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Contact Number *</FormLabel>
+                  <FormControl>
+                    <Input
+                    {...field} 
+                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""} bg-background`} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            {/* If form is in the Register page, Previous and Next buttons appear */}
+            {mode === "register" ? (
+              <div className="md:col-span-5 flex justify-end gap-2">
+                {onPrev && (
+                  <Button type="button" onClick={onPrev} className="bg-blue-primary">
+                    Previous
+                  </Button>
+                )}
+                <Button type="submit" className="bg-blue-dark">
+                  Next
+                </Button>
+              </div>
+            ) : (
+              // If form is in the Profile page, Save Changes and Discard Changes buttons appear
+              !readOnly && personalForm.formState.isDirty && (
+              <div className="col-span-1 md:col-span-5 flex justify-end gap-2 mt-4">
+                <Button type="button" className="bg-blue-primary hover:bg-blue-dark" onClick={() => formRef.current?.requestSubmit()}>
+                  Save Changes
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-blue-primary text-blue-primary hover:bg-blue-100 hover:text-blue-dark"
+                  onClick={() => setShowCancelModal(true)}
+                >
+                  Discard Changes
+                </Button>
+              </div>
+            )
           )}
           {/* Cancel Confirmation Modal */}
           <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>

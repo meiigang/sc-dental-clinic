@@ -49,6 +49,6 @@ router.post("/patientMedicalHistory", patientMedicalHistoryHandler);
 router.get("/patientMedicalHistory/:patientId", getPatientMedicalHistory);
 
 //PATCH patient medical info
-router.patch("/patientMedicalHistory/:patientId", updatePatientMedicalHistory);
+router.patch("/patientMedicalHistory/:medicalHistoryId", updatePatientMedicalHistory);
 
 export default router;
