@@ -6,6 +6,7 @@ export async function createServiceHandler(req, res){
         name,
         description,
         price,
+        unit,
         duration,
         type,
         status
@@ -22,6 +23,7 @@ export async function createServiceHandler(req, res){
         .insert([{
             description: description,
             price: price,
+            unit: unit,
             service_name: name,
             estimated_duration: duration,
             service_type: type,
@@ -41,6 +43,7 @@ export async function createServiceHandler(req, res){
         name: data.service_name,
         description: data.description,
         price: data.price,
+        unit: data.unit,
         duration: data.estimated_duration,
         type: data.service_type,
         status: data.status
@@ -61,6 +64,7 @@ export async function getServicesHandler(req, res) {
         name: s.service_name,
         description: s.description,
         price: s.price,
+        unit: s.unit,
         duration: s.estimated_duration,
         type: s.service_type,
         status: s.status
@@ -80,6 +84,7 @@ export async function updateServiceHandler(req, res) {
         name,
         description,
         price,
+        unit,
         duration,
         type,
         status
@@ -90,6 +95,7 @@ export async function updateServiceHandler(req, res) {
     if (name !== undefined) updateObj.service_name = name;
     if (description !== undefined) updateObj.description = description;
     if (price !== undefined) updateObj.price = price;
+    if (unit !== undefined) updateObj.unit = unit;
     if (duration !== undefined) updateObj.estimated_duration = duration;
     if (type !== undefined) updateObj.service_type = type;
     if (status !== undefined) updateObj.status = status;
@@ -116,6 +122,7 @@ export async function updateServiceHandler(req, res) {
         name: data.service_name,
         description: data.description,
         price: data.price,
+        unit: data.unit,
         duration: data.estimated_duration,
         type: data.service_type,
         status: data.status

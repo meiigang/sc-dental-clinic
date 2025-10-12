@@ -8,8 +8,7 @@ import { RiPencilFill } from "react-icons/ri"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
-import AvailabilityForm from "@/components/AvailabilityForm"
-import Availability from "@/components/Availability"
+import AvailabilityInputs from "@/components/availability-inputs"
 
 export default function StaffDashboard() {
   // Extract token variables
@@ -137,9 +136,7 @@ export default function StaffDashboard() {
         {/* Availability */}
         <div className="py-20">
           <h1 className="text-3xl font-bold text-blue-dark">Availability</h1>
-          {/* Availability Form */}
-          <AvailabilityForm />
-          <Availability />
+          <AvailabilityInputs />
         </div>
 
           { /* Recently Viewed Patient Records */ }
@@ -148,7 +145,7 @@ export default function StaffDashboard() {
           </div>
 
           {/* Recently Viewed Patient Records */ }
-          <div className="bg-[#DAE3F6] p-5 rounded-2xl mt-4 w-full h-128 flex items-center justify-center overflow-y-auto">
+          <div className="bg-blue-light p-5 rounded-2xl mt-4 w-full h-128 flex items-center justify-center overflow-y-auto">
           </div>
       </div>
     </main>

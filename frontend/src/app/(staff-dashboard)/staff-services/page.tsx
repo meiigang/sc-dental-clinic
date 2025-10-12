@@ -33,10 +33,31 @@ type Service = {
   name: string;
   description: string;
   price: string;
+  unit: string;
   duration: string;
   type: string;
   status: "Available" | "Unavailable";
 };
+
+const serviceTypes = [
+  "Basic Services",
+  "Restoration/Prevention",
+  "Surgery",
+  "Endodontics",
+  "Prosthodontics",
+  "Orthodontics",
+  "Miscellaneous/Adjunct Management",
+];
+
+const serviceUnits = [
+  "/Arch",
+  "/Quadrant",
+  "/Tooth",
+  "/Pontic",
+  "/Clasp",
+  "/Carpule",
+  "U/L"
+];
 
 export default function StaffServices() {
   // services state
@@ -47,6 +68,7 @@ export default function StaffServices() {
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newPrice, setNewPrice] = useState("");
+  const [newUnit, setNewUnit] = useState("");
   const [newType, setNewType] = useState("");
   const [hours, setHours] = useState("1");
   const [minutes, setMinutes] = useState("0");
@@ -91,6 +113,7 @@ export default function StaffServices() {
     if (!hours.trim()) newErrors.hours = "Please input in this field";
     if (!minutes.trim()) newErrors.minutes = "Please input in this field";
     if (!newPrice.trim()) newErrors.price = "Please input in this field";
+    if (!newUnit.trim()) newErrors.unit = "Please input in this field";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -119,6 +142,7 @@ export default function StaffServices() {
           name: newName.trim(),
           description: newDescription.trim(),
           price: newPrice,
+          unit: newUnit,
           duration,
           type: newType,
           status: status ? "Available" : "Unavailable",
@@ -131,6 +155,7 @@ export default function StaffServices() {
         setNewName("");
         setNewDescription("");
         setNewPrice("");
+        setNewUnit("");
         setHours("1");
         setMinutes("0");
         setNewType("");
@@ -163,6 +188,7 @@ export default function StaffServices() {
     ) {
       newErrors.price = "Please input in this field";
     }
+    if (!editingService?.unit.trim()) newErrors.unit = "Please input in this field";
     if (!editingService?.duration || String(editingService.duration).trim() === "") newErrors.duration = "Please input in this field";
 
     setErrors(newErrors);
@@ -411,8 +437,9 @@ export default function StaffServices() {
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Surgery">Surgery</SelectItem>
-                      <SelectItem value="Cleaning">Cleaning</SelectItem>
+                      {serviceTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {errors.type && (
@@ -476,6 +503,24 @@ export default function StaffServices() {
                   )}
                 </div>
 
+                {/* Unit */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-medium">Unit *</label>
+                  <Select value={newUnit} onValueChange={setNewUnit}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {serviceUnits.map(unit => (
+                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.unit && (
+                    <p className="text-red-600 text-sm">{errors.unit}</p>
+                  )}
+                </div>
+
                 {/* Status */}
                 <div className="flex flex-col gap-2">
                   <label className="font-medium">Status *</label>
@@ -505,6 +550,7 @@ export default function StaffServices() {
                 <th className="px-6 py-3">Service</th>
                 <th className="px-6 py-3">Description</th>
                 <th className="px-6 py-3">Price</th>
+                <th className="px-6 py-3">Unit</th>
                 <th className="px-6 py-3">Estimated Duration</th>
                 <th className="px-6 py-3">Type</th>
                 <th className="px-6 py-3">Status</th>
@@ -521,6 +567,7 @@ export default function StaffServices() {
                   <td className="px-6 py-3">{service.name}</td>
                   <td className="px-6 py-3">{service.description}</td>
                   <td className="px-6 py-3">₱{service.price}</td>
+                  <td className="px-6 py-3">{service.unit}</td>
                   <td className="px-6 py-3">{service.duration}</td>
                   <td className="px-6 py-3">{service.type}</td>
                   <td
@@ -586,11 +633,12 @@ export default function StaffServices() {
                   }
                 >
                   <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                    <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                  <SelectItem value="Surgery">Surgery</SelectItem>
-                  <SelectItem value="Cleaning">Cleaning</SelectItem>
+                    {serviceTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {errors.type && <p className="text-red-600 text-sm">{errors.type}</p>}
@@ -642,6 +690,29 @@ export default function StaffServices() {
                   placeholder="₱0.00"
                 />
                 {errors.type && <p className="text-red-600 text-sm">{errors.type}</p>}
+              </div>
+
+              {/* Unit */}
+              <div className="flex flex-col gap-2">
+                <label className="font-medium">Unit *</label>
+                <Select
+                  value={editingService.unit}
+                  onValueChange={(value: string) =>
+                    setEditingService({ ...editingService, unit: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {serviceUnits.map(unit => (
+                      <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.unit && (
+                  <p className="text-red-600 text-sm">{errors.unit}</p>
+                )}
               </div>
 
               {/* Status */}
