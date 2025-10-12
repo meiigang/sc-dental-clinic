@@ -54,7 +54,7 @@ function isDateSpecificEqual(a: DateSlot[], b: DateSlot[]) {
   );
 }
 
-export default function AvailabilityForm() {
+export default function staffAvailability() {
     // Initial state for dirty checking
     const [initialAvailability, setInitialAvailability] = useState<WeeklyAvailability>({ ...defaultTimes });
     const [initialDateSpecific, setInitialDateSpecific] = useState<DateSlot[]>([]);
@@ -215,7 +215,7 @@ export default function AvailabilityForm() {
           {/* Add Availability Dialog */}
           <Dialog open={dateDialogOpen} onOpenChange={setDateDialogOpen}>
             <DialogTrigger asChild>
-              <Button type="button" variant="outline" className="text-blue-primary border-blue-primary hover:text-blue-dark px-3 py-1 h-8" onClick={() => setDateDialogOpen(true)}>
+              <Button type="button" variant="outline" className="text-blue-primary border-blue-primary hover:bg-blue-100 hover:text-blue-dark px-3 py-1 h-8" onClick={() => setDateDialogOpen(true)}>
                 Add Availability
               </Button>
             </DialogTrigger>

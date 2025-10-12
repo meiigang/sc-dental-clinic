@@ -139,9 +139,17 @@ export default function PatientDashboard() {
         </div>
         )}        
 
-        {/* Appointments Table */}
+        {/* Appointments */}
         <div className="mt-50">
           <h1 className="text-3xl font-bold text-blue-dark">Appointments</h1>
+
+          {/* Appointments Table */}
+          <div className="flex justify-center mt-10">
+            {/* put table here */}
+            <Link href="/appointment-reserve">
+              <Button className="bg-blue-primary text-white hover:bg-blue-dark">Reserve Appointment</Button>
+            </Link>
+          </div>
         </div>
       </div>
     </main>

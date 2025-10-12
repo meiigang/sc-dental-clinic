@@ -116,7 +116,7 @@ export default function PatientRecord() {
               <AccordionTrigger className="text-blue-dark text-xl font-semibold">Personal Information</AccordionTrigger>
               <AccordionContent className="flex flex-col gap-4 text-balance">
                 {personalInfo && personalInfo.patient && (
-                  <PersonalInfoForm initialValues={personalInfo.patient} readOnly={true} />
+                  <PersonalInfoForm initialValues={personalInfo.patient[0]} readOnly={true} />
                 )}
               </AccordionContent>
             </AccordionItem>
