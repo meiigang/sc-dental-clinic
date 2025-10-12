@@ -22,9 +22,11 @@ You can start editing by modifying any `page.tsx` file. The page auto-updates as
 
 ## Current Progress
 ### Sprint 1: User Management
-- Landing and dashboard pages have been created.
+- Landing pages are fully functioning.
+- Dashboard pages for staff-side and patient-side have been created, with some features to be implemented in upcoming sprints.
 - Update user account information and Sort/Search Patient backend functions are needed.
 ### Sprint 2: Service Management, Patient Record Management
-- Staff-side Services backend functions are needed.
-- Staff-side Individual Patient Record template backend functions are needed.
-- Patient-side Patient Information Record backend functions are needed. 
+- Staff-side Services page is fully functioning.
+- Ongoing bug fixes for staff-side Patient Record data retrievals.
+### Sprint 3: Appointment Management, Booking Management, Dental Chart Management
+- Sprint begins

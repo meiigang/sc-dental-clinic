@@ -2,11 +2,14 @@
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { RiPencilFill } from "react-icons/ri"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
+import AvailabilityForm from "@/components/AvailabilityForm"
+import Availability from "@/components/Availability"
 
 export default function StaffDashboard() {
   // Extract token variables
@@ -67,7 +70,6 @@ export default function StaffDashboard() {
     localStorage.removeItem("token"); // Remove JWT
     window.location.replace("/login"); // Force reload to clear cached state
   }
-
 
   return (
     <main>
@@ -132,14 +134,12 @@ export default function StaffDashboard() {
           </div>
         </div>
 
-        {/* Availability Calendar */}
-        <div className="mt-50">
+        {/* Availability */}
+        <div className="py-20">
           <h1 className="text-3xl font-bold text-blue-dark">Availability</h1>
-
-          {/* Calendar */ }
-          <div className="bg-blue-light p-5 rounded-2xl mt-4 w-96 h-96 flex items-center justify-center">
-            <p className="text-blue-dark">Calendar Component Placeholder</p>
-          </div>
+          {/* Availability Form */}
+          <AvailabilityForm />
+          <Availability />
         </div>
 
           { /* Recently Viewed Patient Records */ }
