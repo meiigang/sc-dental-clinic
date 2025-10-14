@@ -206,3 +206,43 @@ body {
    @apply bg-blue-dark
   }
 }
+
+.scroll-indicator {
+  position: relative;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Up and down arrows */
+.scroll-indicator::before,
+.scroll-indicator::after {
+  content: "↓";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(0, 0, 0, 0.3);
+  font-size: 1.2rem;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.scroll-indicator::before {
+  top: 6px;
+  content: "↑";
+  opacity: 0;
+}
+
+.scroll-indicator::after {
+  bottom: 6px;
+}
+
+/* Hide top arrow when at top */
+.scroll-indicator.at-top::before {
+  opacity: 0;
+}
+
+/* Hide bottom arrow when scrolled to bottom */
+.scroll-indicator.at-bottom::after {
+  opacity: 0;
+}

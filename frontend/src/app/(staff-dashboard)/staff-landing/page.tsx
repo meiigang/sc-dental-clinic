@@ -9,6 +9,7 @@ import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
 import AvailabilityInputs from "@/components/availability-inputs"
+import UpcomingAppointments from "../appointments/UpcomingAppointments";
 
 export default function StaffDashboard() {
   // Extract token variables
@@ -138,6 +139,12 @@ export default function StaffDashboard() {
           <h1 className="text-3xl font-bold text-blue-dark">Availability</h1>
           <AvailabilityInputs />
         </div>
+
+        {/* Upcoming Appointments */}
+        <div className="mt-50">
+          <UpcomingAppointments />
+        </div>
+
 
           { /* Recently Viewed Patient Records */ }
           <div className="mt-50">
