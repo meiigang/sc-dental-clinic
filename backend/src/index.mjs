@@ -19,14 +19,16 @@ const supabaseKey = process.env.SUPABASE_KEY;   //From .env file
 const supabase = createClient(supabaseUrl, supabaseKey); //Connect backend to database
 
 //Middleware
+app.use(cors({origin: CLIENT_ORIGIN }))
 app.use(express.json());
 app.use(supabaseMiddleware);
-app.use(cors({origin: CLIENT_ORIGIN }))
+
+//Routes
 app.use('/api/users', userRouter);
 app.use("/api/patients", patientsRouter);
 app.use("/api/services", servicesRouter);
 app.use("/api/availability", availabilityRouter);
-app.use("api/reservation", reservationRouter);
+app.use("/api/reservation", reservationRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

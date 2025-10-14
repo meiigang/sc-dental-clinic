@@ -1,14 +1,21 @@
-import {Router} from "express";
-import updateAvailabilityHandler from "../api/availability/availabilityHandler.mjs";
-import { getAvailabilityHandler } from "../api/availability/availabilityHandler.mjs";
+import { Router } from "express";
+import updateAvailabilityHandler from "../api/availability/availabilityHandler.mjs"
+import { 
+    getAvailabilityHandler,
+    getBookedDatesHandler,
+    getUnavailableSlotsHandler 
+} from "../api/availability/availabilityHandler.mjs";
 import { authenticateToken } from "../utils/middleware/middleware.mjs";
 
 const router = Router();
 
-//PUT REQUEST
+// Staff-only routes (protected)
+router.get("/", authenticateToken, getAvailabilityHandler);
 router.put("/", authenticateToken, updateAvailabilityHandler);
 
-//GET REQUEST
-router.get("/", authenticateToken, getAvailabilityHandler);
+// --- NEW PUBLIC ROUTES FOR RESERVATION FORM ---
+// These are public because any visitor needs to see what's available.
+router.get("/booked-dates", getBookedDatesHandler);
+router.get("/unavailable-slots", getUnavailableSlotsHandler); // 2. Add the new route
 
 export default router;

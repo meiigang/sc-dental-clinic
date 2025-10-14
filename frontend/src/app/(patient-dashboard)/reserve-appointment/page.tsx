@@ -48,6 +48,7 @@ function NavigationButtons({
 }) {
   return (
     <div className="flex justify-end gap-4 mt-8">
+      {/* Show Previous button on steps 2 and 3 */}
       {currentStep > 1 && currentStep < totalSteps && (
         <Button
           variant="outline"
@@ -58,8 +59,8 @@ function NavigationButtons({
           Previous
         </Button>
       )}
-      {/* Show "Next" on steps 1 and 2 */}
-      {currentStep < totalSteps - 1 && (
+      {/* FIX: Show "Next" button only on steps 1 and 2. */}
+      {currentStep < 3 && (
         <Button
           className="bg-blue-primary hover:bg-blue-dark text-white rounded-lg px-6 py-2"
           onClick={() => setCurrentStep(currentStep + 1)}
@@ -68,8 +69,8 @@ function NavigationButtons({
           Next
         </Button>
       )}
-      {/* Show "Confirm Reservation" only on step 3 */}
-      {currentStep === totalSteps - 1 && onFinalSubmit && (
+      {/* FIX: Show "Confirm Reservation" button only on step 3. */}
+      {currentStep === 3 && onFinalSubmit && (
         <Button
           className="bg-blue-primary hover:bg-blue-dark text-white rounded-lg px-6 py-2"
           onClick={onFinalSubmit}
@@ -93,7 +94,7 @@ function ReserveAppointmentSteps() {
       <NavigationButtons
         currentStep={currentStep}
         setCurrentStep={setCurrentStep}
-        totalSteps={4}
+        totalSteps={4} // This is correct, as there are 4 total states
         isNextDisabled={
           (currentStep === 1 && (!formValues.date || !formValues.selectedTime)) ||
           (currentStep === 2 && !formValues.selectedService)
@@ -102,42 +103,45 @@ function ReserveAppointmentSteps() {
         //BACKEND CALL
         onFinalSubmit={async () => {
           try {
-            //Retrieve user ID
-            const userId = localStorage.getItem("userId");
-            if (!userId){
+            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+            if (!token){
               throw new Error("You must be logged in to make an appointment.");
             }
 
-            //Construct payload from formValues
             const payload = {
-              user_id: parseInt(userId, 10),
               service_id: formValues.selectedService?.id,
               appointment_date: formValues.date,
               appointment_time: formValues.selectedTime,
             };
 
-            //Send request with correct payload
+            // --- FRONTEND LOG ---
+            // Log the payload right before sending it to the backend.
+            console.log("Frontend: Sending reservation payload:", payload);
+
             const res = await fetch("http://localhost:4000/api/reservation/reserve-appointment", {
               method:"POST",
-              headers:{"Content-Type": "application/json"},
+              headers:{
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
               body: JSON.stringify(payload),
             });
 
-            //Check if request is successful
+            // --- DEBUGGING STEP ---
+            // If the response is not OK, log the raw text to see the HTML error page
             if (!res.ok){
-              const errorData = await res.json();
-              throw new Error(errorData.message || "Failed to confirm reservation.")
+              const errorText = await res.text();
+              console.error("Backend returned an error page:", errorText);
+              throw new Error(`Request failed with status ${res.status}`);
             }
-            
-            //On success
-            updateFormValues({ reservationStatus: "success" });
-            setCurrentStep(4);
-          } catch (err: any) {
-            //On failure
-            updateFormValues({
-              errorMessage: err.message || "Unknown error",
-              reservationStatus: "failed",
-            });
+
+            const data = await res.json();
+            updateFormValues({ reservationStatus: "success", errorMessage: "" });
+
+          } catch (error: any) {
+            console.error("onFinalSubmit Error:", error);
+            updateFormValues({ reservationStatus: "failed", errorMessage: error.message });
+          } finally {
             setCurrentStep(4);
           }
         }}
