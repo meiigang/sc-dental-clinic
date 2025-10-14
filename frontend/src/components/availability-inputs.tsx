@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
@@ -19,6 +19,26 @@ const days = [
 	{ key: "FRI", label: "Friday" },
 	{ key: "SAT", label: "Saturday" },
 ];
+
+const dayKeyToNumber: {[key: string]: number} = {
+  SUN: 0,
+  MON: 1,
+  TUE: 2,
+  WED: 3,
+  THU: 4,
+  FRI: 5,
+  SAT: 6,
+};
+
+const numberToDayKey: { [key: number]: string } = {
+  0: "SUN",
+  1: "MON",
+  2: "TUE",
+  3: "WED",
+  4: "THU",
+  5: "FRI",
+  6: "SAT",
+};
 
 type TimeSlot = { from: string; to: string };
 type WeeklyAvailability = {
@@ -64,12 +84,135 @@ export default function staffAvailability() {
     const [dateDialogOpen, setDateDialogOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [dateSlots, setDateSlots] = useState<TimeSlot[]>([{ from: "09:00", to: "17:00" }]);
+    const [isLoading, setIsLoading] = useState(false);
     const [dateSpecific, setDateSpecific] = useState<DateSlot[]>([]);
+
+    useEffect(() => {
+      const fetchAvailability = async () => {
+        //Fetch existing availability from database
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        
+        if (!token ) return;
+
+       try {
+          const response = await fetch("http://localhost:4000/api/availability", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch availability data.");
+          }
+          
+          const data = await response.json();
+
+          // --- Transform Backend Data to Frontend State ---
+
+          // 1. Transform Weekly Data
+          const weeklyData = { ...defaultTimes };
+          data.weekly.forEach((item: any) => {
+            const dayKey = numberToDayKey[item.day_of_week];
+            if (dayKey) {
+              weeklyData[dayKey].push({ from: item.start_time, to: item.end_time });
+            }
+          });
+
+          // 2. Transform Overrides Data
+          const overridesData = data.overrides.map((item: any) => {
+            // Supabase returns date as 'YYYY-MM-DD'. Need to parse it correctly.
+            const [year, month, day] = item.override_date.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+
+            return {
+              date: date,
+              slots: item.is_unavailable ? [] : [{ from: item.start_time, to: item.end_time }]
+            };
+          });
+
+          // 3. Set all state variables
+          setAvailability(weeklyData);
+          setDateSpecific(overridesData);
+          
+          // CRUCIAL: Set the initial state for dirty checking
+          setInitialAvailability(weeklyData);
+          setInitialDateSpecific(overridesData);
+
+        } catch (error) {
+          console.error("Error fetching availability:", error);
+          alert("Could not load your saved availability.");
+        }
+      };
+
+      fetchAvailability();
+    }, []);
 
     // Dirty state
     const isDirty =
       !isWeeklyAvailabilityEqual(availability, initialAvailability) ||
       !isDateSpecificEqual(dateSpecific, initialDateSpecific);
+
+      //Backend call
+    const handleSaveAvailability = async () => {
+      setIsLoading(true);
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token){
+        console.log("Authentication error. Please log in again.");
+        setIsLoading(false);
+        return;
+      }
+
+      //1. Transform Weekly Availability data for backend
+      const weeklyPayload = Object.entries(availability)
+      .flatMap(([dayKey, slots]) => 
+        slots.map(slot => ({
+          day_of_the_week: dayKeyToNumber[dayKey],
+          start_time: slot.from,
+          end_time: slot.to,
+        }))
+      );
+
+      //2. Transform Date-Specific Overrides for the backend
+      const overridesPayload = dateSpecific.map( ds => ({
+        override_date: format(ds.date, "yyyy-MM-dd"),
+        start_time: ds.slots[0]?.from || null,
+        end_time: ds.slots[0]?.to || null,
+        is_unavailable: ds.slots.length === 0,
+      }));
+
+      const payload = {
+        weekly: weeklyPayload,
+        overrides: overridesPayload,
+      };
+
+      console.log("Frontend payload: ", JSON.stringify(payload, null, 2));
+
+      try {
+        const response = await fetch("http://localhost:4000/api/availability", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to save availability.");
+          }
+
+          // 3. On success, update the initial state to reset dirty checking
+          setInitialAvailability(availability);
+          setInitialDateSpecific(dateSpecific);
+          alert("Availability updated successfully!");
+
+      } catch (error) {
+        console.error("Error saving availability:", error);
+          console.log(`An error occurred: ${error instanceof Error ? error.message : "Unknown error"}`);
+        } finally {
+          setIsLoading(false);
+        }
+    };
+
 	// Add a new date-specific slot
   const handleApplyDateSlot = () => {
     if (!selectedDate) return;
@@ -337,12 +480,10 @@ export default function staffAvailability() {
           <div className="flex justify-end mt-8">
             <Button
               className="bg-blue-primary text-white hover:bg-blue-dark"
-              onClick={() => {
-                setInitialAvailability(availability);
-                setInitialDateSpecific(dateSpecific);
-              }}
+              onClick={handleSaveAvailability}
+              disabled={isLoading}
             >
-              Update availability
+              {isLoading ? "Saving..." : "Update availability"}
             </Button>
           </div>
         )}

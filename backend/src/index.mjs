@@ -7,6 +7,7 @@ import { supabaseMiddleware } from "./utils/middleware/middleware.mjs";
 import patientsRouter from "./routes/patients.mjs";
 import servicesRouter from "./routes/services.mjs";
 import availabilityRouter from "./routes/availability.mjs"
+import reservationRouter from "./routes/reservation.mjs";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -25,6 +26,7 @@ app.use('/api/users', userRouter);
 app.use("/api/patients", patientsRouter);
 app.use("/api/services", servicesRouter);
 app.use("/api/availability", availabilityRouter);
+app.use("api/reservation", reservationRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
