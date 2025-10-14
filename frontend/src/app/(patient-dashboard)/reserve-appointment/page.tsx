@@ -14,10 +14,17 @@ const stepTitles = [
   "Reservation Status",
 ];
 
+interface Service {
+  id: number;
+  name: string;
+  price: number;
+  description: string;
+}
+
 const reservationInitialState = {
   date: new Date(),
   selectedTime: undefined,
-  selectedService: null,
+  selectedService: null as Service | null,
   reservationStatus: null as "success" | "failed" | null,
   errorMessage: "",
 };
@@ -91,13 +98,42 @@ function ReserveAppointmentSteps() {
           (currentStep === 1 && (!formValues.date || !formValues.selectedTime)) ||
           (currentStep === 2 && !formValues.selectedService)
         }
+
+        //BACKEND CALL
         onFinalSubmit={async () => {
           try {
-            // Replace with your actual reservation API call
-            // await reserveAppointment({ ...formValues });
+            //Retrieve user ID
+            const userId = localStorage.getItem("userId");
+            if (!userId){
+              throw new Error("You must be logged in to make an appointment.");
+            }
+
+            //Construct payload from formValues
+            const payload = {
+              user_id: parseInt(userId, 10),
+              service_id: formValues.selectedService?.id,
+              appointment_date: formValues.date,
+              appointment_time: formValues.selectedTime,
+            };
+
+            //Send request with correct payload
+            const res = await fetch("http://localhost:4000/api/reservation/reserve-appointment", {
+              method:"POST",
+              headers:{"Content-Type": "application/json"},
+              body: JSON.stringify(payload),
+            });
+
+            //Check if request is successful
+            if (!res.ok){
+              const errorData = await res.json();
+              throw new Error(errorData.message || "Failed to confirm reservation.")
+            }
+            
+            //On success
             updateFormValues({ reservationStatus: "success" });
             setCurrentStep(4);
           } catch (err: any) {
+            //On failure
             updateFormValues({
               errorMessage: err.message || "Unknown error",
               reservationStatus: "failed",

@@ -6,6 +6,7 @@ import cors from "cors";
 import { supabaseMiddleware } from "./utils/middleware/middleware.mjs";
 import patientsRouter from "./routes/patients.mjs";
 import servicesRouter from "./routes/services.mjs";
+import availabilityRouter from "./routes/availability.mjs"
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -23,6 +24,7 @@ app.use(cors({origin: CLIENT_ORIGIN }))
 app.use('/api/users', userRouter);
 app.use("/api/patients", patientsRouter);
 app.use("/api/services", servicesRouter);
+app.use("/api/availability", availabilityRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
