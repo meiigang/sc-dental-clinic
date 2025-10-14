@@ -359,7 +359,11 @@ export default function StaffServices() {
                 Trash ({archivedServices.length})
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+              max-w-3xl w-full max-h-[90vh] overflow-y-auto 
+              bg-white rounded-xl shadow-xl"
+            >
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold text-red-600">
                   Archived Services
