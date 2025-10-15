@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { authenticateToken } from "../utils/middleware/middleware.mjs";
-import { updateAppointmentStatusHandler, getAllAppointmentsHandler, updateAppointmentDetailsHandler } from "../api/appointments/appointmentHandler.mjs";
+import { updateAppointmentStatusHandler, 
+    getAllAppointmentsHandler, 
+    updateAppointmentDetailsHandler,
+    getMyAppointmentsHandler } from "../api/appointments/appointmentHandler.mjs";
 
 const router = Router();
 
@@ -14,5 +17,8 @@ router.get("/", authenticateToken, getAllAppointmentsHandler);
 
 //GENERAL UPDATE
 router.patch("/:id", authenticateToken, updateAppointmentDetailsHandler);
+
+//Patient-side: GET APPOINTMENTS
+router.get("/my-appointments", authenticateToken, getMyAppointmentsHandler)
 
 export default router;

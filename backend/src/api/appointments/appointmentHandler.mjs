@@ -202,3 +202,64 @@ export async function updateAppointmentDetailsHandler(req, res) {
         res.status(500).json({ message: "An internal server error occurred." });
     }
 }
+
+// --- NEW HANDLER (for Patients) ---
+// Handler for a patient to get their own appointments
+export async function getMyAppointmentsHandler(req, res) {
+    const userId = req.user?.id;
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: No user ID found in token." });
+    }
+
+    try {
+        // 1. Find the patient_id associated with the user_id
+        const { data: patientRecord, error: patientError } = await req.supabase
+            .from('patients')
+            .select('id')
+            .eq('user_id', userId)
+            .single();
+
+        if (patientError || !patientRecord) {
+            // This can happen if the user exists but has no patient record yet
+            return res.status(200).json([]); // Return empty array, not an error
+        }
+        const patientId = patientRecord.id;
+
+        // 2. Fetch all appointments for that patient_id
+        const { data, error } = await req.supabase
+            .from('appointments')
+            .select(`
+                id,
+                start_time,
+                end_time,
+                status,
+                service:services ( service_name ),
+                dentist:staff ( user:users ( firstName, lastName ) )
+            `)
+            .eq('patient_id', patientId);
+
+        if (error) throw error;
+
+        // 3. Format the data for the frontend
+        const formattedData = data.map(appt => {
+            const dentistUser = appt.dentist?.user;
+            const dentistName = dentistUser ? `Dr. ${dentistUser.firstName} ${dentistUser.lastName}` : 'TBA';
+            
+            return {
+                id: appt.id,
+                date: new Date(appt.start_time).toISOString().split('T')[0],
+                startTime: new Date(appt.start_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+                endTime: new Date(appt.end_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+                service: appt.service?.service_name || 'Unknown Service',
+                dentist: dentistName,
+                status: appt.status
+            };
+        });
+
+        res.status(200).json(formattedData);
+
+    } catch (error) {
+        console.error("Error fetching patient's appointments:", error);
+        res.status(500).json({ message: "An internal server error occurred.", error: error.message });
+    }
+}

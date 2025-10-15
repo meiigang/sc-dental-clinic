@@ -10,6 +10,7 @@ import { RiArrowRightUpLine } from "react-icons/ri"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
+import PatientAppointmentsTable from "@/components/PatientAppointmentsTable";
 
 export default function PatientDashboard() {
   // Extract token variables
@@ -145,7 +146,9 @@ export default function PatientDashboard() {
 
           {/* Appointments Table */}
           <div className="flex justify-center mt-10">
-            {/* put table here */}
+           <PatientAppointmentsTable/>
+          </div>
+          <div className="flex justify-center mt-5">
             <Link href="/reserve-appointment">
               <Button className="bg-blue-primary text-white hover:bg-blue-dark">Reserve Appointment</Button>
             </Link>
