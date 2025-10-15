@@ -280,7 +280,7 @@ export default function StaffServices() {
       <section className="w-full max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Title */}
         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-blue-dark leading-snug">
-          Staff Services
+          Services
         </h1>
 
         {/* Controls */}

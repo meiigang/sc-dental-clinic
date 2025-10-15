@@ -193,10 +193,10 @@ export default function UpcomingAppointments() {
                   Time
                 </th>
                 <th className="p-3 border border-blue-accent text-center">
-                  Patient Name
+                  Patient
                 </th>
                 <th className="p-3 border border-blue-accent text-center">
-                  Service/s
+                  Service
                 </th>
               </tr>
             </thead>

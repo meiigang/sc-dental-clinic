@@ -24,6 +24,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Filter, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogAppointment } from "./log-appointment";
 
 // Define  database statuses
 const DB_STATUSES = ["pending_approval", "confirmed", "completed", "cancelled", "no_show"] as const;
@@ -52,6 +53,7 @@ const formatStatusForDisplay = (status: Appt['status']) => {
 };
 
 export default function AppointmentsPage() {
+  const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
   const [filterOption, setFilterOption] = useState("All");
   const [sortOption, setSortOption] = useState("Date");
   const [bookedPage, setBookedPage] = useState(1);
@@ -255,7 +257,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
     }
   };
 
-  // send notification -> set status to PendingAcknowledgment (stay in reserved table)
+  // send notification -> set status to Pending Approval (stay in reserved table)
   const handleSendNotification = () => {
     if (!selectedAppointment) return;
     const { index, type, ...updated } = selectedAppointment;
@@ -337,6 +339,11 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
     const apptUpdated: Appt = { ...appt, status: "confirmed" };
     moveReservedToBooked(globalIdx, apptUpdated);
     // TODO: notify backend that patient acknowledged
+  };
+
+  // opens Log Appointment dialog
+  const handleLogAppointment = () => {
+    setIsLogDialogOpen(true);
   };
 
   // helper to parse "HH:MM" to minutes
@@ -489,7 +496,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
         <DialogContent className="max-w-[50vw] max-h-[80vh] overflow-y-auto p-6 space-y-4 rounded-2xl">
 
           <DialogHeader>
-            <DialogTitle>Edit Appointment (staff)</DialogTitle>
+            <DialogTitle>Edit Appointment</DialogTitle>
           </DialogHeader>
 
           {selectedAppointment && (
@@ -548,6 +555,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
               <div className="text-sm text-gray-500">
                 Tip: To require patient acknowledgement before finalizing, choose <strong>Send Notification</strong>. Or choose <strong>Override & Confirm Now</strong> to finalize immediately.
               </div>
+              <Button onClick={handleLogAppointment}>Log Appointment</Button>
             </div>
           )}
 
@@ -568,6 +576,17 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Log Appointment Dialog */}
+      <LogAppointment
+        open={isLogDialogOpen}
+        onOpenChange={setIsLogDialogOpen}
+        // exits both modals
+        onCancelLog={() => {
+          setIsLogDialogOpen(false);
+          setIsModalOpen(false);
+        }}
+      />
     </main>
   );
 }
