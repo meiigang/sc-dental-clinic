@@ -1,5 +1,4 @@
 import { format, parse, addMinutes } from 'date-fns';
-import { parse as parseUTC } from 'date-fns/fp';
 
 export default async function reserveAppointmentHandler(req, res){
     console.log("--- Reservation request received ---");
@@ -36,28 +35,29 @@ export default async function reserveAppointmentHandler(req, res){
 
         const { data: dentists, error: dentistsError} = await req.supabase.from("users").select("id").eq("role", "dentist");
         if (dentistsError) throw dentistsError;
-        console.log("Dentists found:", dentists);
         const dentistUserIds = dentists.map(d => d.id);
-
-        // --- FIX: Correctly get staff IDs (bigint) for the dentist UUIDs ---
+        
         const { data: staffRecords, error: staffRecordsError } = await req.supabase
             .from("staff")
             .select("id")
             .in("user_id", dentistUserIds);
         if (staffRecordsError) throw staffRecordsError;
         const dentistStaffIds = staffRecords.map(s => s.id);
-
-        // --- FIX: Use the correct staff IDs (bigint) to find conflicts ---
+        
+        // --- CONFLICT DETECTION LOGIC ---
+        // This prevents appointments that touch at the exact start/end time from being flagged as conflicts.
         const { data: conflictingAppointments, error: appointmentsError} = await req.supabase
             .from("appointments")
             .select("staff_id")
             .in("staff_id", dentistStaffIds)
-            .or(`and(start_time.lte.${endTime.toISOString()},end_time.gte.${startTime.toISOString()})`);
+            .or(`and(start_time.lt.${endTime.toISOString()},end_time.gt.${startTime.toISOString()})`);
+
         if (appointmentsError) throw appointmentsError;
         console.log("Conflicting appointments:", conflictingAppointments);
 
         const bookedStaffIds = conflictingAppointments.map(a => a.staff_id);
         const availableStaffId = dentistStaffIds.find(id => !bookedStaffIds.includes(id));
+        console.log("Available Staff ID:", availableStaffId);
 
         if (!availableStaffId) {
             return res.status(409).json({ message: "Sorry, no dentists are available at this time slot." });
