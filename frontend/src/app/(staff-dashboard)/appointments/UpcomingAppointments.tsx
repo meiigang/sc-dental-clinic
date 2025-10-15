@@ -81,10 +81,8 @@ export default function UpcomingAppointments() {
               <tr className="bg-blue-accent text-blue-dark font-semibold sticky top-0">
                 <th className="p-3 border border-blue-accent">Date</th>
                 <th className="p-3 border border-blue-accent">Time</th>
-                <th className="p-3 border border-blue-accent">Patient Name</th>
-                <th className="p-3 border border-blue-accent">Service/s</th>
-                <th className="p-3 border border-blue-accent">Payment Type</th>
-                <th className="p-3 border border-blue-accent">Payment Status</th>
+                <th className="p-3 border border-blue-accent">Patient</th>
+                <th className="p-3 border border-blue-accent">Service</th>
               </tr>
             </thead>
             <tbody>

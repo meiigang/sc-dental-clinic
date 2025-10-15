@@ -24,6 +24,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Filter, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogAppointment } from "./log-appointment";
 
 type Appt = {
   date: string; // YYYY-MM-DD (we'll accept both human strings and iso)
@@ -36,6 +37,7 @@ type Appt = {
 };
 
 export default function AppointmentsPage() {
+  const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
   const [filterOption, setFilterOption] = useState("All");
   const [sortOption, setSortOption] = useState("Date");
   const [bookedPage, setBookedPage] = useState(1);
@@ -92,7 +94,7 @@ export default function AppointmentsPage() {
         return "text-green-700 bg-green-100 px-2 py-0.5 rounded-md";
       case "Reserved":
         return "text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-md";
-      case "PendingAcknowledgment":
+      case "Pending Approval":
         return "text-orange-800 bg-orange-100 px-2 py-0.5 rounded-md";
       case "Completed":
         return "text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md";
@@ -213,12 +215,12 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
     setSelectedAppointment(null);
   };
 
-  // send notification -> set status to PendingAcknowledgment (stay in reserved table)
+  // send notification -> set status to Pending Approval (stay in reserved table)
   const handleSendNotification = () => {
     if (!selectedAppointment) return;
     const { index, type, ...updated } = selectedAppointment;
-    // mark PendingAcknowledgment
-    const apptUpdated: Appt = { ...(updated as Appt), status: "PendingAcknowledgment" };
+    // mark Pending Approval
+    const apptUpdated: Appt = { ...(updated as Appt), status: "Pending Approval" };
 
     if (type === "reserved") {
       setReservedAppointments((prev) => replaceInArray(prev, index, apptUpdated));
@@ -265,6 +267,11 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
     const apptUpdated: Appt = { ...appt, status: "Confirmed" };
     moveReservedToBooked(globalIdx, apptUpdated);
     // TODO: notify backend that patient acknowledged
+  };
+
+  // opens Log Appointment dialog
+  const handleLogAppointment = () => {
+    setIsLogDialogOpen(true);
   };
 
   // helper to parse "HH:MM" to minutes
@@ -387,7 +394,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
                     <span className={statusClass(appt.status)}>{appt.status}</span>
                   </td>
                   <td className="p-3 border border-blue-accent">
-                    {appt.status === "PendingAcknowledgment" ? (
+                    {appt.status === "Pending Approval" ? (
                       <Button onClick={() => handleSimulateAcknowledge(i)} className="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
                         Acknowledge (simulate)
                       </Button>
@@ -421,7 +428,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
         <DialogContent className="max-w-[50vw] max-h-[80vh] overflow-y-auto p-6 space-y-4 rounded-2xl">
 
           <DialogHeader>
-            <DialogTitle>Edit Appointment (staff)</DialogTitle>
+            <DialogTitle>Edit Appointment</DialogTitle>
           </DialogHeader>
 
           {selectedAppointment && (
@@ -465,7 +472,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {["Reserved", "PendingAcknowledgment", "Confirmed", "Completed", "Cancelled"].map((status) => (
+                  {["Reserved", "Pending Approval", "Confirmed", "Completed", "Cancelled"].map((status) => (
                     <SelectItem key={status} value={status}>{status}</SelectItem>
                   ))}
                 </SelectContent>
@@ -474,6 +481,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
               <div className="text-sm text-gray-500">
                 Tip: To require patient acknowledgement before finalizing, choose <strong>Send Notification</strong>. Or choose <strong>Override & Confirm Now</strong> to finalize immediately.
               </div>
+              <Button onClick={handleLogAppointment}>Log Appointment</Button>
             </div>
           )}
 
@@ -494,6 +502,17 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Log Appointment Dialog */}
+      <LogAppointment
+        open={isLogDialogOpen}
+        onOpenChange={setIsLogDialogOpen}
+        // exits both modals
+        onCancelLog={() => {
+          setIsLogDialogOpen(false);
+          setIsModalOpen(false);
+        }}
+      />
     </main>
   );
 }
