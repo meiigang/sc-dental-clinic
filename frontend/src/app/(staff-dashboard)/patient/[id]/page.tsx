@@ -8,9 +8,9 @@ import { AppointmentHistoryTable } from "@/components/AppointmentHistoryTable"
 import PersonalInfoForm from "@/components/patientForms/personalInfoForm";
 import DentalHistoryForm from "@/components/patientForms/dentalHistoryForm";
 import MedicalHistoryForm from "@/components/patientForms/medicalHistoryForm";
+import DentalChart from "@/components/dental-chart"
 
 export default function PatientRecord() {
-
   const [personalInfo, setPersonalInfo] = useState<any>(null);
   const [dentalHistory, setDentalHistory] = useState<any>(null);
   const [medicalHistory, setMedicalHistory] = useState<any>(null);
@@ -147,8 +147,8 @@ export default function PatientRecord() {
 
         {/* Dental Chart */}
         <div className="py-20">
-          <h1 className="text-3xl font-bold text-blue-dark">Dental Chart</h1>
-          {/* Dental Chart here */}
+          <h1 className="text-3xl font-bold text-blue-dark mb-4">Dental Chart</h1>
+          <DentalChart />
         </div>
       </div>
     </main>
