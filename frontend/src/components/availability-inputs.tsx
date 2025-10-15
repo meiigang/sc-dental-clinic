@@ -1,40 +1,45 @@
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Plus, X } from "lucide-react"
-import { format } from "date-fns"
+'use client'
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Plus, X } from "lucide-react";
+import { format } from "date-fns";
+
+// --- TYPE DEFINITIONS ---
+type TimeSlot = { from: string; to: string };
+
+// This is the structure your backend sends/receives for the weekly schedule
+type WeeklySlot = {
+  day_of_the_week: number;
+  start_time: string;
+  end_time: string;
+};
+
+// This is the structure your UI uses for the weekly schedule
+type WeeklyAvailability = {
+    [day: string]: TimeSlot[];
+};
+
+// This is the structure for overrides
 type DateSlot = { date: Date; slots: TimeSlot[] };
+
+// --- HELPER FUNCTIONS (Your existing helpers are great) ---
 function formatDate(date: Date) {
-	return format(date, "MMM d, yyyy");
+    return format(date, "MMM d, yyyy");
 }
 
 const days = [
-	{ key: "SUN", label: "Sunday" },
-	{ key: "MON", label: "Monday" },
-	{ key: "TUE", label: "Tuesday" },
-	{ key: "WED", label: "Wednesday" },
-	{ key: "THU", label: "Thursday" },
-	{ key: "FRI", label: "Friday" },
-	{ key: "SAT", label: "Saturday" },
+    { key: "SUN", label: "Sunday" }, { key: "MON", label: "Monday" }, { key: "TUE", label: "Tuesday" },
+    { key: "WED", label: "Wednesday" }, { key: "THU", label: "Thursday" }, { key: "FRI", label: "Friday" },
+    { key: "SAT", label: "Saturday" },
 ];
 
-type TimeSlot = { from: string; to: string };
-type WeeklyAvailability = {
-	[day: string]: TimeSlot[];
-};
+const dayKeyToNumber: {[key: string]: number} = { SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6 };
+const numberToDayKey: { [key: number]: string } = { 0: "SUN", 1: "MON", 2: "TUE", 3: "WED", 4: "THU", 5: "FRI", 6: "SAT" };
 
-
-const defaultTimes: WeeklyAvailability = {
-    SUN: [],
-    MON: [],
-    TUE: [],
-    WED: [],
-    THU: [],
-    FRI: [],
-    SAT: [],
-};
+const defaultTimes: WeeklyAvailability = { SUN: [], MON: [], TUE: [], WED: [], THU: [], FRI: [], SAT: [] };
 
 function isWeeklyAvailabilityEqual(a: WeeklyAvailability, b: WeeklyAvailability) {
   return Object.keys(a).every(day =>
@@ -54,77 +59,157 @@ function isDateSpecificEqual(a: DateSlot[], b: DateSlot[]) {
   );
 }
 
-export default function staffAvailability() {
-    // Initial state for dirty checking
+// --- COMPONENT ---
+export default function AvailabilityInputs() {
+    // State for the UI
+    const [availability, setAvailability] = useState<WeeklyAvailability>({ ...defaultTimes });
+    const [dateSpecific, setDateSpecific] = useState<DateSlot[]>([]);
+    
+    // State for dirty checking
     const [initialAvailability, setInitialAvailability] = useState<WeeklyAvailability>({ ...defaultTimes });
     const [initialDateSpecific, setInitialDateSpecific] = useState<DateSlot[]>([]);
 
-    const [availability, setAvailability] = useState<WeeklyAvailability>({ ...defaultTimes });
-    // Date-specific state
+    // UI control state
     const [dateDialogOpen, setDateDialogOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [dateSlots, setDateSlots] = useState<TimeSlot[]>([{ from: "09:00", to: "17:00" }]);
-    const [dateSpecific, setDateSpecific] = useState<DateSlot[]>([]);
+    const [isLoading, setIsLoading] = useState(true); // Changed initial state to true
 
-    // Dirty state
+    // FIX: This useEffect is now the single source of truth for fetching data.
+    useEffect(() => {
+      const fetchAvailability = async () => {
+        setIsLoading(true);
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (!token) {
+          setIsLoading(false);
+          return;
+        }
+
+       try {
+          const response = await fetch("http://localhost:4000/api/availability", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+
+          if (!response.ok) throw new Error("Failed to fetch availability data.");
+          
+          const data = await response.json();
+
+          // 1. Transform Weekly Data from backend format to UI format
+          const weeklyDataFromAPI = { ...defaultTimes };
+          if (data.weekly) {
+            data.weekly.forEach((item: WeeklySlot) => {
+              const dayKey = numberToDayKey[item.day_of_the_week];
+              if (dayKey) {
+                weeklyDataFromAPI[dayKey].push({ from: item.start_time, to: item.end_time });
+              }
+            });
+          }
+
+          // 2. Transform Overrides Data from backend format to UI format
+          const overridesDataFromAPI = data.overrides ? data.overrides.map((item: any) => {
+            const [year, month, day] = item.override_date.split('-').map(Number);
+            return {
+              date: new Date(year, month - 1, day),
+              slots: item.is_unavailable ? [] : [{ from: item.start_time, to: item.end_time }]
+            };
+          }) : [];
+
+          // 3. Set both the UI state and the initial state for dirty checking
+          setAvailability(weeklyDataFromAPI);
+          setDateSpecific(overridesDataFromAPI);
+          setInitialAvailability(weeklyDataFromAPI);
+          setInitialDateSpecific(overridesDataFromAPI);
+
+        } catch (error) {
+          console.error("Error fetching availability:", error);
+          alert("Could not load your saved availability.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchAvailability();
+    }, []);
+
+    // Dirty state calculation (your existing logic is correct)
     const isDirty =
       !isWeeklyAvailabilityEqual(availability, initialAvailability) ||
       !isDateSpecificEqual(dateSpecific, initialDateSpecific);
-	// Add a new date-specific slot
-  const handleApplyDateSlot = () => {
-    if (!selectedDate) return;
-    setDateSpecific(prev => [
-      ...prev.filter(ds => format(ds.date, "yyyy-MM-dd") !== format(selectedDate, "yyyy-MM-dd")),
-      { date: selectedDate, slots: [...dateSlots] }
-    ]);
-    setDateDialogOpen(false);
-    setSelectedDate(undefined);
-    setDateSlots([{ from: "09:00", to: "17:00" }]);
-  };
 
-	const handleRemoveDateSlot = (date: Date) => {
-		setDateSpecific(prev => prev.filter(ds => format(ds.date, "yyyy-MM-dd") !== format(date, "yyyy-MM-dd")));
-	};
+    // Backend call to save data (your existing logic is correct)
+    const handleSaveAvailability = async () => {
+      setIsLoading(true);
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token){
+        alert("Authentication error. Please log in again.");
+        setIsLoading(false);
+        return;
+      }
 
-	const handleAddDateSlot = () => {
-		setDateSlots(prev => [...prev, { from: "09:00", to: "17:00" }]);
-	};
-	const handleRemoveDateSlotField = (idx: number) => {
-		setDateSlots(prev => prev.filter((_, i) => i !== idx));
-	};
-	const handleChangeDateSlot = (idx: number, field: "from" | "to", value: string) => {
-		setDateSlots(prev => prev.map((slot, i) => i === idx ? { ...slot, [field]: value } : slot));
-	};
+      const weeklyPayload = Object.entries(availability)
+        .flatMap(([dayKey, slots]) => 
+          slots.map(slot => ({
+            day_of_the_week: dayKeyToNumber[dayKey],
+            start_time: slot.from,
+            end_time: slot.to,
+          }))
+        );
 
-	const handleAddSlot = (day: string) => {
-		setAvailability((prev) => ({
-			...prev,
-			[day]: [...prev[day], { from: "09:00", to: "17:00" }],
-		}));
-	};
+      const overridesPayload = dateSpecific.map( ds => ({
+        override_date: format(ds.date, "yyyy-MM-dd"),
+        start_time: ds.slots[0]?.from || null,
+        end_time: ds.slots[0]?.to || null,
+        is_unavailable: ds.slots.length === 0,
+      }));
 
-	const handleRemoveSlot = (day: string, idx: number) => {
-		setAvailability((prev) => {
-			const newSlots = prev[day].filter((_, i) => i !== idx);
-			return { ...prev, [day]: newSlots };
-		});
-	};
+      try {
+        const response = await fetch("http://localhost:4000/api/availability", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ weekly: weeklyPayload, overrides: overridesPayload }),
+          });
 
-	const handleChange = (day: string, idx: number, field: "from" | "to", value: string) => {
-		setAvailability((prev) => {
-			const slots = prev[day].map((slot, i) =>
-				i === idx ? { ...slot, [field]: value } : slot
-			);
-			return { ...prev, [day]: slots };
-		});
-	};
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to save availability.");
+          }
 
-	// Helper for day key to label
-	const getDayLabel = (key: string) => {
-		if (key === "T2") return "T";
-		if (key === "S2") return "S";
-		return key;
-	};
+          setInitialAvailability(availability);
+          setInitialDateSpecific(dateSpecific);
+          alert("Availability updated successfully!");
+
+      } catch (error) {
+        console.error("Error saving availability:", error);
+        alert(`An error occurred: ${error instanceof Error ? error.message : "Unknown error"}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // --- UI Handlers (Your existing handlers are correct) ---
+    const handleApplyDateSlot = () => {
+      if (!selectedDate) return;
+      setDateSpecific(prev => [
+        ...prev.filter(ds => format(ds.date, "yyyy-MM-dd") !== format(selectedDate, "yyyy-MM-dd")),
+        { date: selectedDate, slots: [...dateSlots] }
+      ]);
+      setDateDialogOpen(false);
+      setSelectedDate(undefined);
+      setDateSlots([{ from: "09:00", to: "17:00" }]);
+    };
+    const handleRemoveDateSlot = (date: Date) => { setDateSpecific(prev => prev.filter(ds => format(ds.date, "yyyy-MM-dd") !== format(date, "yyyy-MM-dd"))); };
+    const handleAddDateSlot = () => { setDateSlots(prev => [...prev, { from: "09:00", to: "17:00" }]); };
+    const handleRemoveDateSlotField = (idx: number) => { setDateSlots(prev => prev.filter((_, i) => i !== idx)); };
+    const handleChangeDateSlot = (idx: number, field: "from" | "to", value: string) => { setDateSlots(prev => prev.map((slot, i) => i === idx ? { ...slot, [field]: value } : slot)); };
+    const handleAddSlot = (day: string) => { setAvailability((prev) => ({ ...prev, [day]: [...prev[day], { from: "09:00", to: "17:00" }] })); };
+    const handleRemoveSlot = (day: string, idx: number) => { setAvailability((prev) => ({ ...prev, [day]: prev[day].filter((_, i) => i !== idx) })); };
+    const handleChange = (day: string, idx: number, field: "from" | "to", value: string) => { setAvailability((prev) => ({ ...prev, [day]: prev[day].map((slot, i) => i === idx ? { ...slot, [field]: value } : slot) })); };
+    const getDayLabel = (key: string) => { if (key === "T2") return "T"; if (key === "S2") return "S"; return key; };
+
+  // --- RENDER ---
+  if (isLoading) {
+    return <div className="text-center p-8">Loading your availability...</div>
+  }
 
   return (
     <div className="bg-blue-light p-8 rounded-2xl grid-cols-1 md:grid-cols-2 gap-24 mt-4 w-full h-full mx-auto grid">
@@ -337,16 +422,14 @@ export default function staffAvailability() {
           <div className="flex justify-end mt-8">
             <Button
               className="bg-blue-primary text-white hover:bg-blue-dark"
-              onClick={() => {
-                setInitialAvailability(availability);
-                setInitialDateSpecific(dateSpecific);
-              }}
+              onClick={handleSaveAvailability}
+              disabled={isLoading}
             >
-              Update availability
+              {isLoading ? "Saving..." : "Update availability"}
             </Button>
           </div>
         )}
       </div>
     </div>
-	);
+    );
 }

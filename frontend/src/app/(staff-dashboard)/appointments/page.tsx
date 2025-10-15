@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,14 +26,30 @@ import {
 import { Filter, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { LogAppointment } from "./log-appointment";
 
+// Define  database statuses
+const DB_STATUSES = ["pending_approval", "confirmed", "completed", "cancelled", "no_show"] as const;
+
+//Define appointment type
 type Appt = {
-  date: string; // YYYY-MM-DD (we'll accept both human strings and iso)
-  time?: string; // legacy single time text (kept if present)
-  startTime?: string; // "HH:MM"
-  endTime?: string; // "HH:MM"
+  id: number;
+  date: string;
+  startTime?: string;
+  endTime?: string;
   patient: string;
   service: string;
-  status: string; // Confirmed | Completed | Reserved | Cancelled | PendingAcknowledgment
+  status: typeof DB_STATUSES[number];
+};
+
+// --- NEW HELPER: To make DB statuses look nice in the UI ---
+const formatStatusForDisplay = (status: Appt['status']) => {
+  switch (status) {
+    case "pending_approval": return "Pending Approval";
+    case "confirmed": return "Confirmed";
+    case "completed": return "Completed";
+    case "cancelled": return "Cancelled";
+    case "no_show": return "No Show";
+    default: return "Unknown";
+  }
 };
 
 export default function AppointmentsPage() {
@@ -48,29 +64,43 @@ export default function AppointmentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const rowsPerPage = 10;
 
-  // ---------- initial mock data ----------
-  const [bookedAppointments, setBookedAppointments] = useState<Appt[]>(
-    [
-      { date: "2025-10-01", time: "09:00 AM", patient: "Juan Dela Cruz", service: "Dental Cleaning", status: "Confirmed", startTime: "09:00", endTime: "09:30" },
-      { date: "2025-10-02", time: "02:00 PM", patient: "Maria Santos", service: "Consultation", status: "Confirmed", startTime: "14:00", endTime: "14:30" },
-      { date: "2025-10-03", time: "10:30 AM", patient: "Carlos Reyes", service: "Tooth Extraction", status: "Completed", startTime: "10:30", endTime: "11:30" },
-      { date: "2025-10-04", time: "01:00 PM", patient: "Ana Cruz", service: "Whitening", status: "Confirmed", startTime: "13:00", endTime: "13:30" },
-      { date: "2025-10-05", time: "11:00 AM", patient: "John Lim", service: "Cleaning", status: "Confirmed", startTime: "11:00", endTime: "11:30" },
-      { date: "2025-10-06", time: "04:00 PM", patient: "Sofia Tan", service: "Consultation", status: "Completed", startTime: "16:00", endTime: "16:30" },
-      { date: "2025-10-07", time: "10:00 AM", patient: "Leo Gomez", service: "Tooth Extraction", status: "Confirmed", startTime: "10:00", endTime: "11:00" },
-      { date: "2025-10-08", time: "09:30 AM", patient: "Ella Cruz", service: "Cleaning", status: "Confirmed", startTime: "09:30", endTime: "10:00" },
-      { date: "2025-10-09", time: "03:00 PM", patient: "Ben Ramos", service: "Whitening", status: "Completed", startTime: "15:00", endTime: "15:30" },
-      { date: "2025-10-10", time: "01:00 PM", patient: "Clara Sy", service: "Consultation", status: "Confirmed", startTime: "13:00", endTime: "13:45" },
-    ] as Appt[]
-  );
 
-  const [reservedAppointments, setReservedAppointments] = useState<Appt[]>(
-    [
-      { date: "2025-10-16", time: "01:00 PM", patient: "Ana Cruz", service: "Whitening", status: "Reserved" },
-      { date: "2025-10-17", time: "03:00 PM", patient: "Mark dela Peña", service: "Check-up", status: "Reserved" },
-      { date: "2025-10-18", time: "11:30 AM", patient: "Lia Tan", service: "Consultation", status: "Reserved" },
-    ] as Appt[]
-  );
+  // ---------- initial data ----------
+  const [bookedAppointments, setBookedAppointments] = useState<Appt[]>([]);
+  const [reservedAppointments, setReservedAppointments] = useState<Appt[]>([]);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) {
+        console.error("No auth token found");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:4000/api/appointments", {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch appointments');
+
+        const allAppointments: Appt[] = await response.json();
+        
+        // Separate appointments based on correct database statuses
+        const booked = allAppointments.filter(a => ['confirmed', 'completed', 'cancelled', 'no_show'].includes(a.status));
+        const reserved = allAppointments.filter(a => a.status === 'pending_approval');
+
+        setBookedAppointments(booked);
+        setReservedAppointments(reserved);
+
+      } catch (error) {
+        console.error(error);
+        alert("Could not load appointment data.");
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   // ---------- helpers ----------
   const formatDisplayTime = (appt: Appt) => {
@@ -85,20 +115,21 @@ export default function AppointmentsPage() {
       };
       return `${to12(appt.startTime)} - ${to12(appt.endTime)}`;
     }
-    return appt.time ?? "-";
+    // FIX: The 'time' property does not exist. Return a placeholder if start/end times are missing.
+    return "-";
   };
 
-  const statusClass = (status: string) => {
+  const statusClass = (status: Appt['status']) => {
+    // FIX: Use correct database statuses for styling
     switch (status) {
-      case "Confirmed":
+      case "confirmed":
         return "text-green-700 bg-green-100 px-2 py-0.5 rounded-md";
-      case "Reserved":
+      case "pending_approval":
         return "text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-md";
-      case "Pending Approval":
-        return "text-orange-800 bg-orange-100 px-2 py-0.5 rounded-md";
-      case "Completed":
+      case "completed":
+      case "no_show":
         return "text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md";
-      case "Cancelled":
+      case "cancelled":
         return "text-red-700 bg-red-100 px-2 py-0.5 rounded-md";
       default:
         return "text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md";
@@ -156,20 +187,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
     type === "booked"
       ? (bookedPage - 1) * rowsPerPage + visibleIndex
       : (reservedPage - 1) * rowsPerPage + visibleIndex;
-
-  let startTime = appt.startTime;
-  let endTime = appt.endTime;
-
-  // If missing, try to parse from legacy time
-  if (!startTime && appt.time) {
-    startTime = parseLegacyTime(appt.time);
-    // Default duration: 30 mins
-    const [hh, mm] = startTime.split(":").map(Number);
-    const endDate = new Date(0, 0, 0, hh, mm + 30);
-    endTime = `${endDate.getHours().toString().padStart(2, "0")}:${endDate.getMinutes().toString().padStart(2, "0")}`;
-  }
-
-  setSelectedAppointment({ ...appt, startTime, endTime, index: globalIndex, type });
+  setSelectedAppointment({ ...appt, index: globalIndex, type });
   setIsModalOpen(true);
 };
 
@@ -191,36 +209,60 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
   };
 
   // save changes (edit modal)
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedAppointment) return;
-    const { index, type, ...updated } = selectedAppointment;
 
-    // Basic validation: if start/end present ensure end > start
-    if (updated.startTime && updated.endTime) {
-      const s = parseTimeToMinutes(updated.startTime);
-      const e = parseTimeToMinutes(updated.endTime);
-      if (e <= s) {
-        alert("End time must be after start time.");
-        return;
-      }
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) return alert("Authentication error.");
+
+    // We only need the appointment data itself, not the old index or type
+    const { index, type, ...updatedAppt } = selectedAppointment;
+
+    try {
+        // 1. Call the backend to save the changes
+        const response = await fetch(`http://localhost:4000/api/appointments/${updatedAppt.id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(updatedAppt)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to save changes');
+        }
+
+        const { appointment: savedAppt } = await response.json();
+
+        // 2. Remove the appointment from BOTH lists using its ID.
+        // This is safer and handles all cases.
+        setBookedAppointments(prev => prev.filter(appt => appt.id !== savedAppt.id));
+        setReservedAppointments(prev => prev.filter(appt => appt.id !== savedAppt.id));
+
+        // 3. Add the saved appointment (returned from the backend) to the correct new list.
+        if (savedAppt.status === 'pending_approval') {
+            setReservedAppointments(prev => [savedAppt, ...prev]);
+        } else {
+            setBookedAppointments(prev => [savedAppt, ...prev]);
+        }
+
+    } catch (error) {
+        console.error("Error saving appointment:", error);
+        if (error instanceof Error) alert(`Error: ${error.message}`);
+    } finally {
+        setIsModalOpen(false);
+        setSelectedAppointment(null);
     }
-
-    if (type === "booked") {
-      setBookedAppointments((prev) => replaceInArray(prev, index, updated as Appt));
-    } else {
-      setReservedAppointments((prev) => replaceInArray(prev, index, updated as Appt));
-    }
-
-    setIsModalOpen(false);
-    setSelectedAppointment(null);
   };
 
   // send notification -> set status to Pending Approval (stay in reserved table)
   const handleSendNotification = () => {
     if (!selectedAppointment) return;
     const { index, type, ...updated } = selectedAppointment;
-    // mark Pending Approval
-    const apptUpdated: Appt = { ...(updated as Appt), status: "Pending Approval" };
+    // mark PendingAcknowledgment
+    const apptUpdated: Appt = { ...(updated as Appt), status: "pending_approval" };
 
     if (type === "reserved") {
       setReservedAppointments((prev) => replaceInArray(prev, index, apptUpdated));
@@ -238,25 +280,55 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
   };
 
   // override & confirm now: move to booked (if from reserved) or mark confirmed (if booked)
-  const handleOverrideConfirm = () => {
+  const handleOverrideConfirm = async () => {
     if (!selectedAppointment) return;
-    const { index, type, ...updated } = selectedAppointment;
-    const apptUpdated: Appt = { ...(updated as Appt), status: "Confirmed" };
 
-    if (type === "reserved") {
-      // remove from reserved global index and add to booked
-      const reservedIdx = index;
-      const copy = [...reservedAppointments];
-      copy.splice(reservedIdx, 1);
-      setReservedAppointments(copy);
-      setBookedAppointments((prev) => [apptUpdated, ...prev]);
-    } else {
-      setBookedAppointments((prev) => replaceInArray(prev, index, apptUpdated));
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) return alert("Authentication error.");
+
+    try {
+        const response = await fetch(`http://localhost:4000/api/appointments/${selectedAppointment.id}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            // FIX: Send the correct 'confirmed' status to the backend
+            body: JSON.stringify({ status: 'confirmed' })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to confirm appointment');
+        }
+
+        const { appointment: updatedAppt } = await response.json();
+
+        // Update UI state after successful backend call
+        const { index, type } = selectedAppointment;
+        if (type === "reserved") {
+            // Remove from reserved list
+            const copy = [...reservedAppointments];
+            copy.splice(index, 1);
+            setReservedAppointments(copy);
+            // Add to booked list
+            setBookedAppointments((prev) => [{ ...updatedAppt, status: 'confirmed' }, ...prev]);
+        } else {
+            // Update in booked list
+            setBookedAppointments((prev) => replaceInArray(prev, index, { ...updatedAppt, status: 'confirmed' }));
+        }
+
+    } catch (error) {
+        console.error("Error confirming appointment:", error);
+        if (error instanceof Error) {
+            alert(`Error: ${error.message}`);
+        } else {
+            alert(`An unknown error occurred.`);
+        }
+    } finally {
+        setIsModalOpen(false);
+        setSelectedAppointment(null);
     }
-
-    // TODO: call backend to update status immediately if required
-    setIsModalOpen(false);
-    setSelectedAppointment(null);
   };
 
   // simulate patient acknowledgment: find the reserved appointment (global index in reservedAppointments), move to booked with Confirmed
@@ -264,7 +336,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
     const globalIdx = (reservedPage - 1) * rowsPerPage + visibleIndex;
     const appt = reservedAppointments[globalIdx];
     if (!appt) return;
-    const apptUpdated: Appt = { ...appt, status: "Confirmed" };
+    const apptUpdated: Appt = { ...appt, status: "confirmed" };
     moveReservedToBooked(globalIdx, apptUpdated);
     // TODO: notify backend that patient acknowledged
   };
@@ -344,7 +416,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
                 <td className="p-3 border border-blue-accent">{appt.patient}</td>
                 <td className="p-3 border border-blue-accent">{appt.service}</td>
                 <td className="p-3 border border-blue-accent">
-                  <span className={statusClass(appt.status)}>{appt.status}</span>
+                  <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
                 </td>
               </tr>
             ))}
@@ -384,6 +456,7 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
                 <tr
                   key={i}
                   className="text-center bg-white hover:bg-blue-100 cursor-pointer"
+                  // This onClick now handles everything for the row
                   onClick={() => handleRowClick(appt, i, "reserved")}
                 >
                   <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
@@ -391,19 +464,14 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
                   <td className="p-3 border border-blue-accent">{appt.patient}</td>
                   <td className="p-3 border border-blue-accent">{appt.service}</td>
                   <td className="p-3 border border-blue-accent">
-                    <span className={statusClass(appt.status)}>{appt.status}</span>
+                    <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
                   </td>
                   <td className="p-3 border border-blue-accent">
-                    {appt.status === "Pending Approval" ? (
-                      <Button onClick={() => handleSimulateAcknowledge(i)} className="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
-                        Acknowledge (simulate)
-                      </Button>
-                    ) : (
-                      <div className="flex gap-2 justify-center">
-                        <Button onClick={(e) => { e.stopPropagation(); setSelectedAppointment({ ...appt, index: globalIdx, type: "reserved" }); setIsModalOpen(true); }} className="bg-blue-primary text-white px-3 py-1 rounded-full text-sm">Edit</Button>
-
-                      </div>
-                    )}
+                    {/* FIX: Remove the specific onClick from the button. */}
+                    {/* The button now acts as a visual indicator, and the row's onClick will handle opening the modal. */}
+                    <div className="bg-green-600 text-white px-3 py-1 rounded-full text-sm inline-block">
+                      Acknowledge
+                    </div>
                   </td>
                 </tr>
               );
@@ -467,13 +535,19 @@ const handleRowClick = (appt: Appt, visibleIndex: number, type: "booked" | "rese
               <Input value={selectedAppointment.service} onChange={(e) => setSelectedAppointment({ ...selectedAppointment, service: e.target.value })} />
 
               <label className="block text-sm font-medium text-gray-700">Status</label>
-              <Select value={selectedAppointment.status} onValueChange={(v) => setSelectedAppointment({ ...selectedAppointment, status: v })}>
+              <Select 
+                value={selectedAppointment.status} 
+                onValueChange={(v: Appt['status']) => setSelectedAppointment({ ...selectedAppointment, status: v })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {["Reserved", "Pending Approval", "Confirmed", "Completed", "Cancelled"].map((status) => (
-                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  {/* FIX: Use the correct DB statuses for the dropdown */}
+                  {DB_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {formatStatusForDisplay(status)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
