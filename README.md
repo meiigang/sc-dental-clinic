@@ -29,4 +29,7 @@ You can start editing by modifying any `page.tsx` file. The page auto-updates as
 - Staff-side Services page is fully functioning.
 - Ongoing bug fixes for staff-side Patient Record data retrievals.
 ### Sprint 3: Appointment Management, Booking Management, Dental Chart Management
-- Sprint begins
+- Staff-side Availability feature is fully functioning.
+- Appointment tables have been implemented and are functioning.
+- Appointment reservation feature is fully functioning. Revisions on managing appointments (notifications, rescheduling, cancellation) are needed.
+- Dental chart management is unfinished. Frontend needs polishing and no backend has been implemented yet.
