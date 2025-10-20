@@ -5,12 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -26,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Filter, ArrowUpDown, Search, Trash2, Undo2 } from "lucide-react";
+import { Plus, Filter, ArrowUpDown, Search, Pencil, Archive, ArchiveX, Undo2 } from "lucide-react";
 
 type Service = {
   id: number;
@@ -81,10 +75,13 @@ export default function StaffServices() {
   // search, sort, filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("");
-  const [filterOption, setFilterOption] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterType, setFilterType] = useState("");
 
-  // trash modal state
-  const [isTrashOpen, setIsTrashOpen] = useState(false);
+  // archive states
+  const [showArchiveModal, setShowArchiveModal] = useState(false); // archive service button
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false); // archived services modal
+  const [serviceToArchive, setServiceToArchive] = useState<Service | null>(null); // service pending archive confirmation
 
   // error states for add form
   const [error, setError] = useState("");
@@ -239,13 +236,13 @@ export default function StaffServices() {
     }
   };
 
-  // archive service (move to trash)
+  // archive service (remove from view)
   const archiveService = (service: Service) => {
     setServices((prev) => prev.filter((s) => s.id !== service.id));
     setArchivedServices((prev) => [service, ...prev]);
   };
 
-  // restore service from trash
+  // restore service from archive
   const restoreService = (service: Service) => {
     setArchivedServices((prev) => prev.filter((s) => s.id !== service.id));
     setServices((prev) => [service, ...prev]);
@@ -263,14 +260,17 @@ export default function StaffServices() {
       );
     })
     .filter((s) => {
-      if (!filterOption) return true;
-      return s.status === filterOption;
+      if (filterType && filterType !== "All" && s.type !== filterType) return false;
+      if (filterStatus && filterStatus !== "All" && s.status !== filterStatus) return false;
+      return true;
     })
     .sort((a, b) => {
       const priceA = parseFloat(a.price) || 0;
       const priceB = parseFloat(b.price) || 0;
-      if (sortOption === "lowToHigh") return priceA - priceB;
-      if (sortOption === "highToLow") return priceB - priceA;
+      if (sortOption === "lowToHigh") return priceA - priceB; // ascending by price
+      if (sortOption === "highToLow") return priceB - priceA; // descending by price
+      if (sortOption === "lastAdded") return b.id - a.id; // descending by id
+      if (sortOption === "firstAdded") return a.id - b.id; // ascending by id
       return 0;
     });
 
@@ -279,62 +279,51 @@ export default function StaffServices() {
       {/* Top bar */}
       <section className="w-full max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Title */}
-        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-blue-dark leading-snug">
+        <h1 className="text-3xl font-bold text-blue-dark leading-snug">
           Services
         </h1>
 
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Sort */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="bg-blue-primary text-white flex items-center gap-2 w-[170px] justify-start"
-              >
-                <ArrowUpDown className="h-4 w-4" />
-                {sortOption === "lowToHigh"
-                  ? "Price: Low to High"
-                  : sortOption === "highToLow"
-                  ? "Price: High to Low"
-                  : "Sort"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setSortOption("lowToHigh")}>
-                Price: Low to High
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortOption("highToLow")}>
-                Price: High to Low
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Select value={sortOption} onValueChange={setSortOption}>
+            <SelectTrigger className="bg-white">
+              <ArrowUpDown />
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="lastAdded">Last Added Service</SelectItem>
+              <SelectItem value="firstAdded">First Added Service</SelectItem>
+              <SelectItem value="lowToHigh">Price: Lowest to Highest</SelectItem>
+              <SelectItem value="highToLow">Price: Highest to Lowest</SelectItem>
+            </SelectContent>
+          </Select>
 
-          {/* Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="bg-blue-primary text-white flex items-center gap-2 w-[150px] justify-start"
-              >
-                <Filter className="h-4 w-4" />
-                {filterOption === "Available"
-                  ? "Available"
-                  : filterOption === "Unavailable"
-                  ? "Unavailable"
-                  : "All"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setFilterOption("")}>All</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterOption("Available")}>
-                Available
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setFilterOption("Unavailable")}>
-                Unavailable
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Filter by Service Type */}
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="bg-white">
+              <Filter />
+              <SelectValue placeholder="Filter Type" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              {serviceTypes.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Filter by Status */}
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="bg-white">
+              <Filter />
+              <SelectValue placeholder="Filter Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="All">All</SelectItem>
+              <SelectItem value="Available">Available</SelectItem>
+              <SelectItem value="Unavailable">Unavailable</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Search */}
           <div className="relative">
@@ -342,21 +331,20 @@ export default function StaffServices() {
             <Input
               type="text"
               placeholder="Search..."
-              className="bg-white pl-8 w-40 md:w-56"
+              className="bg-white pl-8 w-40"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
-          {/* Trash Button */}
-          <Dialog open={isTrashOpen} onOpenChange={setIsTrashOpen}>
+          {/* Archive Button */}
+          <Dialog open={isArchiveOpen} onOpenChange={setIsArchiveOpen}>
             <DialogTrigger asChild>
               <Button
-                variant="outline"
-                className="bg-red-600 text-white flex items-center gap-2"
+                className="flex items-center gap-2"
               >
-                <Trash2 className="h-4 w-4" />
-                Trash ({archivedServices.length})
+                <Archive />
+                Archive ({archivedServices.length})
               </Button>
             </DialogTrigger>
             <DialogContent
@@ -372,12 +360,12 @@ export default function StaffServices() {
               {archivedServices.length === 0 ? (
                 <p className="text-gray-500">No archived services.</p>
               ) : (
-                <table className="w-full text-sm text-left mt-4">
-                  <thead className="bg-gray-200 text-gray-800">
+                <table className="bg-blue-light w-full text-sm text-left mt-4">
+                  <thead className="bg-blue-primary">
                     <tr>
-                      <th className="px-4 py-2">Service</th>
-                      <th className="px-4 py-2">Type</th>
-                      <th className="px-4 py-2">Action</th>
+                      <th className="text-blue-light px-4 py-2">Service</th>
+                      <th className="text-blue-light px-4 py-2">Type</th>
+                      <th className="text-blue-light px-4 py-2">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -407,7 +395,7 @@ export default function StaffServices() {
           {/* Add Service Modal */}
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="bg-blue-primary text-white hover:bg-white hover:text-black flex items-center gap-2">
+              <Button className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 Add Service
               </Button>
@@ -536,7 +524,7 @@ export default function StaffServices() {
               </div>
 
               <DialogFooter>
-                <Button onClick={addService} className="bg-blue-600">
+                <Button onClick={addService}>
                   Add Service
                 </Button>
               </DialogFooter>
@@ -549,7 +537,7 @@ export default function StaffServices() {
       <section className="w-full max-w-7xl px-6 pb-20">
         <div className="overflow-x-auto bg-white shadow-md rounded-xl">
           <table className="w-full text-sm text-left">
-            <thead className="bg-blue-700 text-white">
+            <thead className="bg-blue-primary text-white">
               <tr>
                 <th className="px-6 py-3">Service</th>
                 <th className="px-6 py-3">Description</th>
@@ -565,8 +553,7 @@ export default function StaffServices() {
               {displayedServices.map((service) => (
                 <tr
                   key={service.id}
-                  className="border-b last:border-none even:bg-blue-50 cursor-pointer hover:bg-blue-100"
-                  onClick={() => openEdit(service)}
+                  className="border-b last:border-none even:bg-blue-50 hover:bg-blue-100"
                 >
                   <td className="px-6 py-3">{service.name}</td>
                   <td className="px-6 py-3">{service.description}</td>
@@ -583,18 +570,21 @@ export default function StaffServices() {
                   >
                     {service.status}
                   </td>
-                  <td className="px-6 py-3">
+                  <td className="px-6 py-3 flex gap-2">
+                    <Button title="Edit Service" size="sm" className="cursor-pointer" onClick={() => openEdit(service)}>
+                      <Pencil />
+                    </Button>
                     <Button
-                      variant="outline"
+                      title="Archive Service"
+                      variant="destructive"
                       size="sm"
-                      className="text-red-600 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation(); // ✅ prevents opening edit modal
-                        archiveService(service);
+                      className="cursor-pointer hover:bg-red-700"
+                      onClick={() => {
+                        setServiceToArchive(service);
+                        setShowArchiveModal(true);
                       }}
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Archive
+                      <ArchiveX />
                     </Button>
                   </td>
                 </tr>
@@ -603,6 +593,34 @@ export default function StaffServices() {
           </table>
         </div>
       </section>
+
+      {/* Archive Service Confirmation Modal */}
+      <Dialog open={showArchiveModal} onOpenChange={setShowArchiveModal}>
+        <DialogContent className="w-2xl">
+          <DialogHeader>
+            <DialogTitle>Archive Service</DialogTitle>
+          </DialogHeader>
+          <div>Are you sure you want to archive this service? The selected service will be removed from view.</div>
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" className="hover:bg-blue-50" onClick={() => { setServiceToArchive(null); setShowArchiveModal(false); }}>
+              {"Cancel"}
+            </Button>
+            <Button
+              variant="destructive"
+              className="hover:bg-red-700"
+              onClick={() => {
+                if (serviceToArchive) {
+                  archiveService(serviceToArchive);
+                  setServiceToArchive(null);
+                }
+                setShowArchiveModal(false);
+              }}
+            >
+              {"Yes, archive service"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Service Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
