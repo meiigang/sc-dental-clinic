@@ -17,7 +17,7 @@ const router = Router();
 
 router.use(supabaseMiddleware);
 
-//Example: GET to check patient record in database
+//GET to check patient record in database
 router.get("/check-record/:userId", checkPatientRecordHandler);
 
 router.get("/all", getAllPatientsHandler);

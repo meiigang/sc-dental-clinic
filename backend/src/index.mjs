@@ -9,6 +9,7 @@ import servicesRouter from "./routes/services.mjs";
 import availabilityRouter from "./routes/availability.mjs"
 import reservationRouter from "./routes/reservation.mjs";
 import appointmentsRouter from "./routes/appointments.mjs";
+import editProfileRouter from "./routes/editProfile.mjs";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -31,6 +32,7 @@ app.use("/api/services", servicesRouter);
 app.use("/api/availability", availabilityRouter);
 app.use("/api/reservation", reservationRouter);
 app.use("/api/appointments", appointmentsRouter);
+app.use("/api/edit-profile", editProfileRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

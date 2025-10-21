@@ -45,7 +45,7 @@ export default async function patientDentalHistoryHandler(req, res) {
     return res.status(201).json({ message: "Dental history created successfully." });
 }
 
-//FETCH Method
+//GET Method
 export async function getPatientDentalHistory(req, res) {
     //Get user id from url params
     const patientId= req.params.patientId;

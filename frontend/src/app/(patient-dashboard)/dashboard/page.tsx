@@ -18,6 +18,7 @@ export default function PatientDashboard() {
   const [fullName, setFullName] = useState("User");
   const [userEmail, setUserEmail] = useState("");
   const [userContact, setUserContact] = useState("");
+  const [profilePicture, setProfilePicture] = useState("/images/img-profile-default.png");
   const [showPatientDialog, setShowPatientDialog] = useState(false);
   const [profile, setProfile] = useState({
     firstName: "",
@@ -39,6 +40,7 @@ export default function PatientDashboard() {
           setFullName(`${decoded.firstName || ""} ${decoded.lastName || ""}`.trim());
           setUserEmail(decoded.email || "");
           setUserContact(decoded.contactNumber || "");
+          setProfilePicture(decoded.profile_picture ||  "/images/img-profile-default.png" );
 
           // Check patient record
           fetch(`http://localhost:4000/api/patients/check-record/${decoded.id}`)
@@ -53,6 +55,7 @@ export default function PatientDashboard() {
             setFullName("User");
             setUserEmail("");
             setUserContact("");
+            setProfilePicture("/images/img-profile-default.png");
         }
     } else {
       router.push("/login");
@@ -93,7 +96,7 @@ export default function PatientDashboard() {
               {/* Profile Picture */}
               <div className="justify-center">
                 <Image
-                  src="/images/img-profile-default.png"
+                  src={profilePicture}
                   alt="Default Profile Picture"
                   className="rounded-3xl object-cover"
                   width={160}
