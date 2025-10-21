@@ -69,8 +69,8 @@ export default function AccountInfoForm({ initialValues, onSubmit, readOnly=fals
                                 <FormLabel>First Name *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    readOnly ={readOnly}
-                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                                    disabled={readOnly}
+                                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -85,8 +85,8 @@ export default function AccountInfoForm({ initialValues, onSubmit, readOnly=fals
                                 <FormLabel>Middle Name *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    readOnly={readOnly}
-                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                                    disabled={readOnly}
+                                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -101,8 +101,8 @@ export default function AccountInfoForm({ initialValues, onSubmit, readOnly=fals
                                 <FormLabel>Last Name *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    readOnly={readOnly}
-                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                                    disabled={readOnly}
+                                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -115,8 +115,8 @@ export default function AccountInfoForm({ initialValues, onSubmit, readOnly=fals
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Suffix</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing}>
-                                    <SelectTrigger className={`${isEditing ? "bg-background" : "bg-blue-light"}`}>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={readOnly}>
+                                    <SelectTrigger className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}>
                                         <SelectValue placeholder="Select..." />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -140,8 +140,8 @@ export default function AccountInfoForm({ initialValues, onSubmit, readOnly=fals
                                 <FormLabel>Email Address *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    readOnly={!isEditing}
-                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                                    disabled={readOnly}
+                                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -156,8 +156,8 @@ export default function AccountInfoForm({ initialValues, onSubmit, readOnly=fals
                                 <FormLabel>Contact Number *</FormLabel>
                                 <FormControl>
                                     <Input {...field}
-                                    readOnly={!isEditing}
-                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                                    disabled={readOnly}
+                                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -172,8 +172,8 @@ export default function AccountInfoForm({ initialValues, onSubmit, readOnly=fals
                                 <FormLabel>Password *</FormLabel>
                                 <FormControl>
                                     <Input {...field} type="password"
-                                    readOnly={!isEditing}
-                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                                    disabled={readOnly}
+                                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
@@ -188,15 +188,15 @@ export default function AccountInfoForm({ initialValues, onSubmit, readOnly=fals
                                 <FormLabel>Confirm Password *</FormLabel>
                                 <FormControl>
                                     <Input {...field} type="password"
-                                    readOnly={!isEditing}
-                                    className={`${isEditing ? "bg-background" : "bg-blue-light"}`}
+                                    disabled={readOnly}
+                                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}
                                     />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>
                         )}
                     />
-                    {isEditing && (
+                    {!readOnly && (
                     <div className="button-container md:col-span-4 flex justify-end">
                         <Button type="submit" className="bg-blue-dark hover:bg-blue-darker text-white mt-6">Next</Button>
                     </div>

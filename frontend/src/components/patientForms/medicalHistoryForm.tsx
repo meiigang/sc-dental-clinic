@@ -24,7 +24,7 @@ type MedicalHistoryFormProps = {
 export default function MedicalHistoryForm({ initialValues, readOnly = false, onSubmit, onPrev, mode }: MedicalHistoryFormProps) {
   // Instantiate medical form
   const medicalForm = useForm<z.infer<typeof medicalSchema>>({
-    defaultValues: {
+    defaultValues: initialValues || {
       physicianName: "",
       officeAddress: "",
       specialty: "",
@@ -58,7 +58,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
   const [patientId, setPatientId] = useState<number | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [medicalHistoryId, setMedicalHistoryId] = useState<number | null>(null);
-
+  
   //When submitting form
   async function onMedicalSubmit (values: z.infer<typeof medicalSchema>) {
     console.log("Medical History Info:", values)
@@ -70,6 +70,13 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
     medicalForm.reset(values); // Reset form to clear dirty state and hide Save/Discard buttons
   }
     
+  // Reset form when initialValues change
+  useEffect(() => {
+    if (initialValues) {
+      medicalForm.reset(initialValues);
+    }
+  }, [initialValues, medicalForm]);
+
   //Retrieve patient id from JWT
   useEffect(() => {
     // 1. Get user ID from JWT
@@ -306,7 +313,8 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                 <FormControl>
                   <Input {...field}
                     placeholder="Dr. Juan Dela Cruz"
-                    className= "bg-background" />
+                    disabled={readOnly}
+                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -321,7 +329,8 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                 <FormLabel className="text-blue-dark">Office Address</FormLabel>
                 <FormControl>
                   <Input {...field}
-                    className="bg-background" />
+                    disabled={readOnly}
+                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -336,7 +345,8 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                 <FormLabel className="text-blue-dark">Specialty</FormLabel>
                 <FormControl>
                   <Input {...field}
-                    className="bg-background" />
+                    disabled={readOnly}
+                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -351,7 +361,8 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                 <FormLabel className="text-blue-dark">Office Number</FormLabel>
                 <FormControl>
                   <Input {...field}
-                    className="bg-background" />
+                    disabled={readOnly}
+                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -387,6 +398,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                           value="yes"
                           checked={field.value === "yes"}
                           onChange={() => field.onChange("yes")}
+                          disabled={readOnly}
                           className="accent-blue-600"
                           />
                         </FormControl>
@@ -406,6 +418,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="no"
                             checked={field.value === "no"}
                             onChange={() => field.onChange("no")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -432,6 +445,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                           value="yes"
                           checked={field.value === "yes"}
                           onChange={() => field.onChange("yes")}
+                          disabled={readOnly}
                           className="accent-blue-600"
                           />
                         </FormControl>
@@ -451,6 +465,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="no"
                             checked={field.value === "no"}
                             onChange={() => field.onChange("no")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -470,7 +485,9 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                         <FormItem className="flex">
                           <FormLabel className="font-normal">What is the condition being treated?</FormLabel>
                           <FormControl>
-                          <input {...field}  className="bg-background w-40 rounded-sm px-3 ml-2" />
+                          <input {...field}  
+                            disabled={readOnly}
+                            className={`${!readOnly ? "bg-background" : "bg-blue-light"} w-40 rounded-sm px-3 ml-2`} />
                           </FormControl>
                         </FormItem>
                         )}
@@ -496,6 +513,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                           value="yes"
                           checked={field.value === "yes"}
                           onChange={() => field.onChange("yes")}
+                          disabled={readOnly}
                           className="accent-blue-600"
                           />
                         </FormControl>
@@ -515,6 +533,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="no"
                             checked={field.value === "no"}
                             onChange={() => field.onChange("no")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -534,7 +553,9 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                           <FormItem className="flex">
                             <FormLabel className="font-normal">What illness or operation?</FormLabel>
                             <FormControl>
-                            <input {...field} className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
+                            <input {...field} 
+                              disabled={readOnly}
+                              className={`${!readOnly ? "bg-background" : "bg-blue-light"} text-sm w-1/4 rounded-sm px-3 ml-2`} />
                             </FormControl>
                           </FormItem>
                         )}
@@ -560,6 +581,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="yes"
                             checked={field.value === "yes"}
                             onChange={() => field.onChange("yes")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -579,6 +601,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                           value="no"
                           checked={field.value === "no"}
                           onChange={() => field.onChange("no")}
+                          disabled={readOnly}
                           className="accent-blue-600"
                           />
                         </FormControl>
@@ -598,7 +621,9 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                       <FormItem className="flex">
                         <FormLabel className="font-normal">When, and why?</FormLabel>
                         <FormControl>
-                        <input {...field} className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
+                        <input {...field} 
+                          disabled={readOnly}
+                          className={`${!readOnly ? "bg-background" : "bg-blue-light"} text-sm w-1/4 rounded-sm px-3 ml-2`} />
                         </FormControl>
                       </FormItem>
                       )}
@@ -624,6 +649,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="yes"
                             checked={field.value === "yes"}
                             onChange={() => field.onChange("yes")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -643,6 +669,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                           value="no"
                           checked={field.value === "no"}
                           onChange={() => field.onChange("no")}
+                          disabled={readOnly}
                           className="accent-blue-600"
                           />
                         </FormControl>
@@ -662,7 +689,9 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                       <FormItem className="flex">
                         <FormLabel className="font-normal">Current medication:</FormLabel>
                         <FormControl>
-                        <input {...field} className="bg-background text-sm w-1/4 rounded-sm px-3 ml-2" />
+                        <input {...field} 
+                          disabled={readOnly}
+                          className={`${!readOnly ? "bg-background" : "bg-blue-light"} text-sm w-1/4 rounded-sm px-3 ml-2`} />
                         </FormControl>
                       </FormItem>
                       )}
@@ -688,6 +717,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="yes"
                             checked={field.value === "yes"}
                             onChange={() => field.onChange("yes")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -707,6 +737,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="no"
                             checked={field.value === "no"}
                             onChange={() => field.onChange("no")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                             />
                           </FormControl>
@@ -733,6 +764,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                           value="yes"
                           checked={field.value === "yes"}
                           onChange={() => field.onChange("yes")}
+                          disabled={readOnly}
                           className="accent-blue-600"
                           />
                         </FormControl>
@@ -752,6 +784,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="no"
                             checked={field.value === "no"}
                             onChange={() => field.onChange("no")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -789,6 +822,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             type="checkbox"
                             value={option}
                             checked={medicalForm.watch("allergies")?.includes(option)}
+                            disabled={readOnly}
                             onChange={e => {
                               const checked = e.target.checked;
                               const prev = medicalForm.getValues("allergies") || [];
@@ -822,7 +856,8 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                         <FormItem className="inline-block ml-2">
                           <FormControl>
                             <input type="text" {...field} 
-                            className={`bg-background text-sm w-32 rounded-sm px-3 border border-gray-300 focus:outline-none`}
+                            disabled={readOnly}
+                            className={`${!readOnly ? "bg-background" : "bg-blue-light"} text-sm w-32 rounded-sm px-3 border border-gray-300 focus:outline-none`}
                             />
                           </FormControl>
                         </FormItem>
@@ -854,6 +889,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="yes"
                             checked={field.value === "yes"}
                             onChange={() => field.onChange("yes")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -873,6 +909,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="no"
                             checked={field.value === "no"}
                             onChange={() => field.onChange("no")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -898,6 +935,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="yes"
                             checked={field.value === "yes"}
                             onChange={() => field.onChange("yes")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -917,6 +955,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="no"
                             checked={field.value === "no"}
                             onChange={() => field.onChange("no")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -942,6 +981,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="yes"
                             checked={field.value === "yes"}
                             onChange={() => field.onChange("yes")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -961,6 +1001,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                             value="no"
                             checked={field.value === "no"}
                             onChange={() => field.onChange("no")}
+                            disabled={readOnly}
                             className="accent-blue-600"
                           />
                         </FormControl>
@@ -980,8 +1021,8 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                       render={({field}) => (
                         <FormItem className="inline-block ml-2">
                           <FormControl>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <SelectTrigger className="bg-background">
+                            <Select onValueChange={field.onChange} value={field.value} disabled={readOnly}>
+                              <SelectTrigger className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}>
                                 <SelectValue placeholder="Select..."/>
                               </SelectTrigger>
                               <SelectContent>
@@ -1015,7 +1056,8 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                         <FormItem className="inline-block ml-2">
                           <FormControl>
                             <input type="text" {...field} 
-                            className="bg-background text-sm w-32 rounded-sm px-3 border border-gray-300 focus:outline-none" />
+                            disabled={readOnly}
+                            className={`${!readOnly ? "bg-background" : "bg-blue-light"} text-sm w-32 rounded-sm px-3 border border-gray-300 focus:outline-none`} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -1050,6 +1092,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
                               type="checkbox"
                               value={option}
                               checked={medicalForm.watch("diseases")?.includes(option)}
+                              disabled={readOnly}
                               onChange={e => {
                                 const checked = e.target.checked;
                                 const prev = medicalForm.getValues("diseases") || [];

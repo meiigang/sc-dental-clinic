@@ -8,6 +8,7 @@ import MedicalHistoryForm from "@/components/patientForms/medicalHistoryForm";
 import { accountInfoSchema, personalSchema, dentistSchema, medicalSchema } from "@/components/patientForms/formSchemas/schemas";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 // Define the shape of your form data here
 const registrationInitialState = {
@@ -50,6 +51,7 @@ export default function Register() {
 function RegisterSteps() {
   // Tell the hook what shape to expect!
   const { currentStep, setCurrentStep, formValues, updateFormValues } = useFormContext<RegistrationFormState>();
+  const router = useRouter();
 
   const steps = [
     {
@@ -115,6 +117,7 @@ function RegisterSteps() {
           {/* Account Info Review */}
           <AccountInfoForm
             initialValues={formValues.accountInfo}
+            onSubmit={() => {}}
             readOnly={true}
           />
 
@@ -146,10 +149,32 @@ function RegisterSteps() {
             </Button>
             <Button
               className="bg-blue-dark hover:bg-blue-darker text-white px-6 py-2 rounded"
-              onClick={() => {
-                // TODO: Submit all data to backend here
-                console.log("Final form data:", formValues);
-                alert("Submitted! (Implement backend submission)");
+              onClick={async () => {
+                try {
+                  const res = await fetch ("http://localhost:4000/api/users/register/full", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(formValues),
+                  });
+
+                  if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.message || "Registration failed.");
+                  }
+
+                  //Upon successful registration:
+                  alert("Registration successful!");
+                  router.push("/login");
+
+                } 
+                
+                catch (error: any) {
+                  console.error("Final submission error:", error);
+                  alert(`Error: ${error.message}`);
+                }
+
               }}
             >
               Submit

@@ -216,7 +216,8 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onS
                 <FormControl>
                   <Input
                     placeholder="Jane" {...field} 
-                    className="bg-background"
+                    disabled={readOnly}
+                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}
                   />
                 </FormControl>
                 <FormMessage />
@@ -233,6 +234,7 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onS
                   <Input
                     type="date"
                     placeholder="MM/DD/YYYY"
+                    disabled={readOnly}
                     value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                     onChange={e => {
                       const val = e.target.value;
@@ -241,7 +243,7 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onS
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
-                    className="bg-background"
+                    className={`${!readOnly ? "bg-background" : "bg-blue-light"}`}
                   />
                 </FormControl>
                 <FormMessage />

@@ -200,7 +200,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   <FormControl>
                     <Input
                       {...field}
-                      className={`${hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""} bg-background`}
+                      disabled={readOnly}
+                      className={`${hasSubmitted && personalForm.formState.errors.nickname ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
                     />
                   </FormControl>
                 </FormItem>
@@ -216,6 +217,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                     <Input
                       type="date"
                       placeholder="MM/DD/YYYY"
+                      disabled={readOnly}
                       value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                       onChange={e => {
                         const val = e.target.value;
@@ -224,7 +226,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                       onBlur={field.onBlur}
                       name={field.name}
                       ref={field.ref}
-                      className={`${hasSubmitted && personalForm.formState.errors.birthDate ? "border-red-500" : ""} bg-background`}
+                      className={`${hasSubmitted && personalForm.formState.errors.birthDate ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
                     />
                   </FormControl>
                 </FormItem>
@@ -254,8 +256,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                 <FormItem>
                   <FormLabel className="text-blue-dark">Sex *</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger className={`${hasSubmitted && personalForm.formState.errors.sex ? "border-red-500" : ""} bg-background`}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={readOnly}>
+                      <SelectTrigger className={`${hasSubmitted && personalForm.formState.errors.sex ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent>
@@ -277,7 +279,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   <FormControl>
                     <Input
                       {...field}
-                      className={`${hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""} bg-background`}
+                      disabled={readOnly}
+                      className={`${hasSubmitted && personalForm.formState.errors.religion ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
                     />
                   </FormControl>
                 </FormItem>
@@ -292,7 +295,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   <FormControl>
                     <Input
                       {...field}
-                      className={`${hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""} bg-background`}
+                      disabled={readOnly}
+                      className={`${hasSubmitted && personalForm.formState.errors.nationality ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
                     />
                   </FormControl>
                 </FormItem>
@@ -306,7 +310,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   <FormLabel className="text-blue-dark">Home Address *</FormLabel>
                   <Input
                     {...field}
-                    className={`${hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""} bg-background w-full`}
+                    disabled={readOnly}
+                    className={`${hasSubmitted && personalForm.formState.errors.homeAddress ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"} w-full`}
                   />
                 </FormItem>
               )}
@@ -319,7 +324,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   <FormLabel className="text-blue-dark">Occupation</FormLabel>
                   <Input 
                     {...field}
-                    className={`${hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""} bg-background`}
+                    disabled={readOnly}
+                    className={`${hasSubmitted && personalForm.formState.errors.occupation ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
                   />
                 </FormItem>
               )}
@@ -332,7 +338,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   <FormLabel className="text-blue-dark">Dental Insurance</FormLabel>
                   <Input
                     {...field}
-                    className={`${hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""} bg-background`}
+                    disabled={readOnly}
+                    className={`${hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
                   />
                 </FormItem>
               )}
@@ -347,6 +354,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                     <Input
                       type="date"
                       placeholder="MM/DD/YYYY"
+                      disabled={readOnly}
                       value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                       onChange={e => {
                         const val = e.target.value;
@@ -355,7 +363,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                       onBlur={field.onBlur}
                       name={field.name}
                       ref={field.ref}
-                      className={`${hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""} bg-background`}
+                      className={`${hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
                     />
                   </FormControl>
                 </FormItem>
@@ -371,6 +379,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                     <Input
                       type="date"
                       placeholder="MM/DD/YYYY"
+                      disabled={readOnly}
                       value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                       onChange={e => {
                         const val = e.target.value;
@@ -379,7 +388,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                       onBlur={field.onBlur}
                       name={field.name}
                       ref={field.ref}
-                      className={`${hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""} bg-background`}
+                      className={`${hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
                     />
                   </FormControl>
                 </FormItem>
@@ -397,7 +406,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   <FormLabel className="text-blue-dark">Full Name *</FormLabel>
                   <FormControl>
                     <Input placeholder="Juan Dela Cruz" {...field} 
-                      className={`${hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""} bg-background`} />
+                      disabled={readOnly}
+                      className={`${hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`} />
                   </FormControl>
                 </FormItem>
               )}
@@ -410,7 +420,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   <FormLabel className="text-blue-dark">Occupation *</FormLabel>
                   <Input 
                     {...field}
-                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""} bg-background`}
+                    disabled={readOnly}
+                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
                   />
                 </FormItem>
               )}
@@ -424,7 +435,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   <FormControl>
                     <Input
                     {...field} 
-                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""} bg-background`} />
+                    disabled={readOnly}
+                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`} />
                   </FormControl>
                 </FormItem>
               )}
