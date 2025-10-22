@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { AppointmentHistoryTable } from "@/components/AppointmentHistoryTable"
+import { AppointmentsTable } from "@/components/appointments-table"
 import PersonalInfoForm from "@/components/patientForms/personalInfoForm";
 import DentalHistoryForm from "@/components/patientForms/dentalHistoryForm";
 import MedicalHistoryForm from "@/components/patientForms/medicalHistoryForm";
@@ -142,7 +142,7 @@ export default function PatientRecord() {
         {/* Appointments Table */}
         <div className="py-20">
           <h1 className="text-3xl font-bold text-blue-dark">Appointment History</h1>
-          <AppointmentHistoryTable/>
+          <AppointmentsTable />
         </div>
 
         {/* Dental Chart */}
