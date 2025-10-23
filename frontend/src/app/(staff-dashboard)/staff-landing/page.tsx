@@ -2,13 +2,13 @@
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { RiPencilFill } from "react-icons/ri"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
 import AvailabilityInputs from "@/components/availability-inputs"
+import { AppointmentsTable } from "@/components/appointments-table"
 import UpcomingAppointments from "../appointments/UpcomingAppointments";
 
 export default function StaffDashboard() {
@@ -144,7 +144,6 @@ export default function StaffDashboard() {
         <div className="mt-50">
           <UpcomingAppointments />
         </div>
-
 
           { /* Recently Viewed Patient Records */ }
           <div className="mt-50">
