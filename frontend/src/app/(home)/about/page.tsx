@@ -14,13 +14,13 @@ export default function About() {
         </p>
 
         <div className="mt-8 flex justify-center gap-4 sm:gap-6 flex-wrap">
-          {[1, 2].map((_, index) => (
+          {[1].map((_, index) => (
             <div
               key={index}
-              className="bg-blue-100 rounded-xl w-60 h-40 flex items-center justify-center overflow-hidden shadow-lg"
+              className="bg-blue-100 rounded-xl w-160 h-auto flex items-center justify-center overflow-hidden shadow-lg"
             >
               <Image
-                src="/images/home-section1-portrait.jpg"
+                src="/images/about-section1.jpg"
                 alt="Clinic"
                 width={240}
                 height={160}

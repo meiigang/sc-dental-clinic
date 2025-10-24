@@ -31,11 +31,11 @@ export default function Home() {
         </div>
 
         {/* Image Side */}
-        <div className="md:w-1/2 mt-8 md:mt-0 flex justify-center">
+        <div className="md:w-1/2 mt-8 ml-8 md:mt-0 flex justify-center">
           <Image
-            src="/images/home-section1-portrait.jpg"
+            src="/images/home-section1.jpg"
             alt="Dentist Portrait"
-            className="w-40 sm:w-56 md:w-72 lg:w-80 h-auto rounded-lg shadow-lg"
+            className="w-40 sm:w-56 md:w-72 lg:w-150 h-auto rounded-lg shadow-lg"
             width={300}
             height={420}
           />
