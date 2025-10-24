@@ -20,22 +20,143 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { profileSchema, Profile } from "./schema";
+import { jwtDecode } from "jwt-decode"
+import { useEffect, useState, useRef } from "react"; 
 
-interface EditProfileFormProps {
-  initialValues: Partial<Profile>;
-  onSubmit: (data: Profile) => void;
-  loading?: boolean;
-}
 
-export function EditProfileForm({ initialValues, onSubmit, loading }: EditProfileFormProps) {
+
+export function EditProfileForm() {
+  
+  //Define use states
+  const [userId, setUserId] = useState<string>("");
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string>("/images/img-profile-default.png");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<Profile>({
     resolver: zodResolver(profileSchema),
-    defaultValues: initialValues,
+    defaultValues: {
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      suffix: "none",
+      email: "",
+      contactNumber: "",
+      password: ""
+    },
   });
+
+  //Get user id from JWT token and fetch data
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+    //If token found
+    if (token){
+      //Decode JWT
+      const decoded: any = jwtDecode(token);
+      const currentUserId = decoded.id;
+      setUserId(currentUserId);
+
+      //ASYNC: Retrieve user from backend
+      const fetchUserData = async () => {
+        try {
+          const response = await fetch(`http://localhost:4000/api/edit-profile/${currentUserId}`);
+          if (!response.ok){
+            throw new Error("Failed to fetch user data.");
+          }
+
+          const data = await response.json();
+
+          form.reset({
+            firstName: data.firstName,
+            middleName: data.middleName,
+            lastName: data.lastName, 
+            suffix: data.nameSuffix || "none",
+            email: data.email,
+            contactNumber: data.contactNumber
+          });
+
+          if (data.profile_picture) {
+            setProfilePictureUrl(data.profile_picture);
+          }
+
+        }  catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      };
+
+      fetchUserData()
+    }
+  }, [form]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setProfilePictureUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemovePicture = () => {
+    setSelectedFile(null);
+    setProfilePictureUrl("/images/img-profile-default.png");
+    // We will send a flag to the backend to nullify the URL
+  };
+
+  //Backend call to update user data
+  async function handleProfileUpdate(values: z.infer<typeof profileSchema>) {
+    const formData = new FormData();
+
+    // Append all form text fields
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === 'password' && !value) return; // Don't append empty password
+      if (value) {
+        formData.append(key, value as string);
+      }
+    });
+
+    // Append the file if a new one was selected
+    if (selectedFile) {
+      formData.append('profilePicture', selectedFile);
+    } else if (profilePictureUrl === "/images/img-profile-default.png") {
+      // If the image is the default one, it means user wants to remove it
+      formData.append('removeProfilePicture', 'true');
+    }
+
+    try {
+      const response = await fetch(`http://localhost:4000/api/edit-profile/${userId}`, {
+        method: 'PATCH',
+        body: formData,
+      });
+
+      const responseData = await response.json(); 
+
+      if (!response.ok){
+        throw new Error(responseData.message || "Failed to update profile.");
+      }
+
+      // Check if a new token was sent and update it
+      if (responseData.token) {
+        // Update whichever storage you use (localStorage or sessionStorage)
+        if (localStorage.getItem("token")) {
+            localStorage.setItem("token", responseData.token);
+        }
+        if (sessionStorage.getItem("token")) {
+            sessionStorage.setItem("token", responseData.token);
+        }
+      }
+
+      alert("Profile updated successfully!");
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Update failed:", error);
+      alert(`Error: ${error.message}`);
+    }
+  }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleProfileUpdate)} className="space-y-4">
         <div className="flex flex-row gap-20">
           <div className="space-y-4">
             <p className="text-blue-dark font-medium text-lg">Basic Information</p>
@@ -136,17 +257,24 @@ export function EditProfileForm({ initialValues, onSubmit, loading }: EditProfil
             <div className="flex flex-col gap-4 items-center">
               <div>
               <Image
-                src="/images/img-profile-default.png"
-                alt="Default Profile Picture"
+                src={profilePictureUrl}
+                alt="Profile Picture"
                 className="rounded-2xl object-cover mt-4"
                 width={208}
                 height={208}
               />
               </div>
-              <Button className="bg-blue-accent text-blue-dark hover:bg-blue-primary hover:text-white w-full">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/png, image/jpeg"
+                style={{ display: 'none' }}
+              />
+              <Button type="button" onClick={() => fileInputRef.current?.click()} className="bg-blue-accent text-blue-dark hover:bg-blue-primary hover:text-white w-full">
                 Upload New Picture
               </Button>
-              <Button className="bg-blue-accent text-blue-dark hover:bg-blue-primary hover:text-white w-full">
+              <Button type="button" onClick={handleRemovePicture} className="bg-blue-accent text-blue-dark hover:bg-blue-primary hover:text-white w-full">
                 Remove Picture
               </Button>
             </div>
@@ -155,9 +283,10 @@ export function EditProfileForm({ initialValues, onSubmit, loading }: EditProfil
 
         {/* Save Changes Button */}
         <div className="flex justify-end pt-2">
-          <Button type="submit" className="bg-blue-primary text-white hover:bg-blue-dark" disabled={loading}>Save Changes</Button>
+          <Button type="submit" className="bg-blue-primary text-white hover:bg-blue-dark">Save Changes</Button>
         </div>
       </form>
     </Form>
   );
 }
+

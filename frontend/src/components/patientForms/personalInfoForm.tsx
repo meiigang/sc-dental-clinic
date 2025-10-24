@@ -58,6 +58,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
   const formRef = useRef<HTMLFormElement>(null);
   const birthDate = personalForm.watch("birthDate");
 
+  const today = new Date().toISOString().split("T")[0];
+
   // Calculate age from birth date
   useEffect(() => {
     if (birthDate instanceof Date && !isNaN(birthDate.getTime())) {
@@ -218,6 +220,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                       type="date"
                       placeholder="MM/DD/YYYY"
                       disabled={readOnly}
+                      max={today}
                       value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                       onChange={e => {
                         const val = e.target.value;
@@ -355,6 +358,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                       type="date"
                       placeholder="MM/DD/YYYY"
                       disabled={readOnly}
+                      max={today}
                       value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                       onChange={e => {
                         const val = e.target.value;
@@ -380,6 +384,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                       type="date"
                       placeholder="MM/DD/YYYY"
                       disabled={readOnly}
+                      max={today}
                       value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
                       onChange={e => {
                         const val = e.target.value;

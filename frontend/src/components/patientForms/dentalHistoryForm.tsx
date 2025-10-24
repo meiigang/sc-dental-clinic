@@ -20,7 +20,7 @@ type dentalHistoryFormProps = {
   mode?: FormMode;
 };
 
-export default function DentalHistoryForm({ initialValues, readOnly = false, onSubmit, onPrev, mode }: dentalHistoryFormProps) {
+export default function DentalHistoryForm({ initialValues, readOnly = false, onSubmit, onPrev, mode }: dentalHistoryFormProps) { 
 
   // Instantiate dental form
   const dentalForm = useForm<z.infer<typeof dentistSchema>>({

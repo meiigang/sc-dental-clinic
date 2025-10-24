@@ -34,7 +34,8 @@ export default async function loginHandler(req, res) {
             middleName: user.middleName,
             lastName: user.lastName,
             contactNumber: user.contactNumber,
-            role: user.role
+            role: user.role,
+            profile_picture: user.profile_picture
         },
         process.env.JWT_SECRET,
         { expiresIn: "1h" }

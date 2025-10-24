@@ -16,6 +16,7 @@ export default function StaffDashboard() {
   const [firstName, setFirstName] = useState("User");
   const [fullName, setFullName] = useState("User");
   const [userEmail, setUserEmail] = useState("");
+  const [profilePicture, setProfilePicture] = useState("/images/img-profile-default.png");
   const [userContact, setUserContact] = useState("");
   const [profile, setProfile] = useState({
     firstName: "",
@@ -37,6 +38,7 @@ export default function StaffDashboard() {
         setFullName(`${decoded.firstName || ""} ${decoded.lastName || ""}`.trim());
         setUserEmail(decoded.email || "");
         setUserContact(decoded.contactNumber || "");
+        setProfilePicture(decoded.profile_picture ||  "/images/img-profile-default.png" );
         setProfile({
           firstName: decoded.firstName || "",
           middleName: decoded.middleName || "",
@@ -51,6 +53,7 @@ export default function StaffDashboard() {
         setFullName("User");
         setUserEmail("");
         setUserContact("");
+        setProfilePicture("/images/img-profile-default.png");
         setProfile({
           firstName: "",
           middleName: "",
@@ -100,7 +103,7 @@ export default function StaffDashboard() {
             {/* Profile Picture */}
               <div className="justify-center">
                 <Image
-                  src="/images/img-profile-default.png"
+                  src={profilePicture}
                   alt="Default Profile Picture"
                   className="rounded-3xl object-cover"
                   width={160}
