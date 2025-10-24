@@ -22,7 +22,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Filter, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Filter, ArrowUpDown, ChevronLeft, ChevronRight, CalendarArrowUp} from "lucide-react";
 import { LogAppointment } from "./log-appointment-modal"
 
 // Define  database statuses
@@ -122,7 +122,7 @@ export function AppointmentsTable() {
 
   // Filter function
   const filterData = (data: Appointment[]) => {
-    const today = new Date("2025-10-10");
+    const today = new Date();
     if (filterOption === "Today") return data.filter((d) => d.date === today.toISOString().split("T")[0]);
     if (filterOption === "This Week") {
       const weekLater = new Date(today);
@@ -146,11 +146,20 @@ export function AppointmentsTable() {
     });
   };
 
-  const sortedAppointments = useMemo(() => sortData(appointments), [appointments, sortOption]);
+  const filtered = useMemo(() => filterData(appointments), [appointments, filterOption]);
+  const sortedAppointments = useMemo(
+    () => sortData(filtered),
+    [filtered, sortOption]
+  );
+
 
   // pagination slices
   const totalPages = Math.max(1, Math.ceil(sortedAppointments.length / rowsPerPage));
-  const pagedData = sortedAppointments.slice((page - 1) * rowsPerPage, bookedPage * rowsPerPage);
+  const pagedData = sortedAppointments.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
+
   
   const handleRowClick = (appt: Appointment, visibleIndex: number, type: "booked" | "reserved") => {
     const globalIndex =
@@ -313,6 +322,8 @@ export function AppointmentsTable() {
     setIsLogDialogOpen(true);
   };
 
+  const [activeTab, setActiveTab] = useState<"reserved" | "booked" |  "completed">("reserved");
+
   return (
     <main className="min-h-screen px-4 sm:px-8 md:px-12 lg:px-20 py-8 space-y-16">
       {/* Filter + Sort */}
@@ -350,57 +361,228 @@ export function AppointmentsTable() {
 
       {/* --- Table --- */}
       <section className="max-w-6xl mx-auto bg-blue-light p-6 rounded-2xl shadow-md">
-        <h2 className="text-2xl font-bold text-blue-dark mb-4">Booked Appointments</h2>
-        <table className="w-full text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden">
-          <thead>
-            <tr className="bg-blue-accent text-blue-dark font-semibold">
-              <th className="p-3 border border-blue-accent">Date</th>
-              <th className="p-3 border border-blue-accent">Time</th>
-              <th className="p-3 border border-blue-accent">Patient</th>
-              <th className="p-3 border border-blue-accent">Service</th>
-              <th className="p-3 border border-blue-accent">Price</th>
-              <th className="p-3 border border-blue-accent">Status</th>
-              <th className="p-3 border border-blue-accent">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagedData.map((appt, i) => (
-              <tr
-                key={i}
-                className="text-center bg-white hover:bg-blue-100 cursor-pointer"
-                onClick={() => {
-                  setSelectedAppointment({ ...appt, index: (page - 1) * rowsPerPage + i, type: "booked" });
-                  setIsModalOpen(true);
-                }}
-              >
-                <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
-                <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
-                <td className="p-3 border border-blue-accent">{appt.patient}</td>
-                <td className="p-3 border border-blue-accent">{appt.service}</td>
-                <td className="p-3 border border-blue-accent">{appt.price}</td>
-                <td className="p-3 border border-blue-accent">
-                  <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
-                </td>
-                <td className="p-3 border border-blue-accent">
-                  {/* FIX: Remove the specific onClick from the button. */}
-                  {/* The button now acts as a visual indicator, and the row's onClick will handle opening the modal. */}
-                  <Button></Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Pagination */}
-        <div className="flex justify-end items-center mt-4 gap-3">
-          <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
-            <ChevronLeft className="h-5 w-5" />
+        {/* --- TAB BUTTONS --- */}
+        <div className="flex gap-3 mb-6">
+          <Button
+            variant={activeTab === "reserved" ? "default" : "outline"}
+            onClick={() => setActiveTab("reserved")}
+          >
+            Reserved Appointments
           </Button>
-          <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
-          <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
-            <ChevronRight className="h-5 w-5" />
+          <Button
+            variant={activeTab === "booked" ? "default" : "outline"}
+            onClick={() => setActiveTab("booked")}
+          >
+            Booked Appointments
+          </Button>
+          <Button
+            variant={activeTab === "completed" ? "default" : "outline"}
+            onClick={() => setActiveTab("completed")}
+          >
+            Completed Appointments
           </Button>
         </div>
+        
+        {/* --- RESERVED TAB --- */}
+        {activeTab === "reserved" && (
+          <>
+            <table className="w-full text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden">
+              <thead>
+                <tr className="bg-blue-accent text-blue-dark font-semibold">
+                  <th className="p-3 border border-blue-accent">Date</th>
+                  <th className="p-3 border border-blue-accent">Time</th>
+                  <th className="p-3 border border-blue-accent">Patient</th>
+                  <th className="p-3 border border-blue-accent">Service</th>
+                  <th className="p-3 border border-blue-accent">Price</th>
+                  <th className="p-3 border border-blue-accent">Status</th>
+                  <th className="p-3 border border-blue-accent">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagedData.map((appt, index) => (
+                  <tr
+                    key={appt.id}
+                    className="text-center bg-white hover:bg-blue-100 cursor-pointer"
+                  >
+                    <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
+                    <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
+                    <td className="p-3 border border-blue-accent">{appt.patient}</td>
+                    <td className="p-3 border border-blue-accent">{appt.service}</td>
+                    <td className="p-3 border border-blue-accent">{appt.price}</td>
+                    <td className="p-3 border border-blue-accent">
+                      <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
+                    </td>
+                    <td className="p-3 border border-blue-accent">
+                      <div className="flex items-center justify-center gap-2">
+                        {/* Reschedule */}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAppointment({
+                              ...appt,
+                              index,           // REQUIRED by your state type
+                              type: "reserved" // or "booked" depending on this table
+                            });
+                            setIsModalOpen(true); 
+                          }}
+                        >
+                          <CalendarArrowUp className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Pagination */}
+            <div className="flex justify-end items-center mt-4 gap-3">
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* --- BOOKED TAB --- */}
+        {activeTab === "booked" && (
+          <>
+            <table className="w-full text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden">
+              <thead>
+                <tr className="bg-blue-accent text-blue-dark font-semibold">
+                  <th className="p-3 border border-blue-accent">Date</th>
+                  <th className="p-3 border border-blue-accent">Time</th>
+                  <th className="p-3 border border-blue-accent">Patient</th>
+                  <th className="p-3 border border-blue-accent">Service</th>
+                  <th className="p-3 border border-blue-accent">Price</th>
+                  <th className="p-3 border border-blue-accent">Status</th>
+                  <th className="p-3 border border-blue-accent">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagedData.map((appt, index) => (
+                  <tr
+                    key={appt.id}
+                    className="text-center bg-white hover:bg-blue-100 cursor-pointer"
+                  >
+                    <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
+                    <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
+                    <td className="p-3 border border-blue-accent">{appt.patient}</td>
+                    <td className="p-3 border border-blue-accent">{appt.service}</td>
+                    <td className="p-3 border border-blue-accent">{appt.price}</td>
+                    <td className="p-3 border border-blue-accent">
+                      <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
+                    </td>
+                    <td className="p-3 border border-blue-accent">
+                      <div className="flex items-center justify-center gap-2">
+                        {/* Reschedule */}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAppointment({
+                              ...appt,
+                              index,           // REQUIRED by your state type
+                              type: "reserved" // or "booked" depending on this table
+                            });
+                            setIsModalOpen(true); 
+                          }}
+                        >
+                          <CalendarArrowUp className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Pagination */}
+            <div className="flex justify-end items-center mt-4 gap-3">
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* --- COMPLETED TAB (EMPTY FOR NOW) --- */}
+        {activeTab === "completed" && (
+          <>
+            <table className="w-full text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden">
+              <thead>
+                <tr className="bg-blue-accent text-blue-dark font-semibold">
+                  <th className="p-3 border border-blue-accent">Date</th>
+                  <th className="p-3 border border-blue-accent">Time</th>
+                  <th className="p-3 border border-blue-accent">Patient</th>
+                  <th className="p-3 border border-blue-accent">Service</th>
+                  <th className="p-3 border border-blue-accent">Price</th>
+                  <th className="p-3 border border-blue-accent">Status</th>
+                  <th className="p-3 border border-blue-accent">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagedData.map((appt, index) => (
+                  <tr
+                    key={appt.id}
+                    className="text-center bg-white hover:bg-blue-100 cursor-pointer"
+                  >
+                    <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
+                    <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
+                    <td className="p-3 border border-blue-accent">{appt.patient}</td>
+                    <td className="p-3 border border-blue-accent">{appt.service}</td>
+                    <td className="p-3 border border-blue-accent">{appt.price}</td>
+                    <td className="p-3 border border-blue-accent">
+                      <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
+                    </td>
+                    <td className="p-3 border border-blue-accent">
+                      <div className="flex items-center justify-center gap-2">
+                        {/* Reschedule */}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedAppointment({
+                              ...appt,
+                              index,           // REQUIRED by your state type
+                              type: "reserved" // or "booked" depending on this table
+                            });
+                            setIsModalOpen(true); 
+                          }}
+                        >
+                          <CalendarArrowUp className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Pagination */}
+            <div className="flex justify-end items-center mt-4 gap-3">
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
+              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+          </>
+        )} 
       </section>
 
       {/* --- Edit Modal (staff-only) --- */}
@@ -463,29 +645,24 @@ export function AppointmentsTable() {
                   ))}
                 </SelectContent>
               </Select>
-
-              <div className="text-sm text-gray-500">
-                Tip: To require patient acknowledgement before finalizing, choose <strong>Send Notification</strong>. Or choose <strong>Override & Confirm Now</strong> to finalize immediately.
-              </div>
               <Button onClick={handleLogAppointment}>Log Appointment</Button>
             </div>
           )}
 
           <DialogFooter>
             <div className="flex gap-2">
-              <Button onClick={handleSave} className="bg-blue-primary text-white">Save</Button>
+              <Button onClick={() => { /* Override confirm now */ handleOverrideConfirm(); }} className="bg-green-600 text-white">
+                Confirm Now
+              </Button>
 
               <Button onClick={() => { /* Send notification */ handleSendNotification(); }} className="bg-orange-500 text-white">
-                Send Notification
+                Reschedule
               </Button>
 
-              <Button onClick={() => { /* Override confirm now */ handleOverrideConfirm(); }} className="bg-green-600 text-white">
-                Override & Confirm Now
-              </Button>
-
-              <Button onClick={() => { setIsModalOpen(false); setSelectedAppointment(null); }} variant="outline">Cancel</Button>
+              <Button onClick={() => { setIsModalOpen(false); setSelectedAppointment(null); }} className="bg-red-500 text-white" variant="outline">Cancel</Button>
             </div>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
