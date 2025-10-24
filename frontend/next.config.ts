@@ -10,7 +10,10 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/storage/v1/object/public/profile-pictures/**',
       },
-    ]
+    ],
+    domains: [
+      'oxbkwpsoxbmypxiwsmul.supabase.co',
+    ],
   }
 };
 
