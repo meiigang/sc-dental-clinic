@@ -52,7 +52,7 @@ export default function NavbarStaff() {
             let href = "";
               if (item === "Dashboard") {
                 href = "/dashboard";
-              } else {
+              }else {
                 href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
               }
               const isActive =
