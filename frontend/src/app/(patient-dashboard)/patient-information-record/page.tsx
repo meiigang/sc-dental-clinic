@@ -7,9 +7,11 @@ export default function PatientRecords() {
     <main>
       <div className="record-container flex flex-col items-center py-20 min-h-screen">
         <h1 className="text-3xl font-bold text-blue-dark">Patient Information Record</h1>
-        <PersonalInfoForm/>
-        <DentalHistoryForm/>
-        <MedicalHistoryForm/>
+        <div className="w-full max-w-5xl">
+          <PersonalInfoForm/>
+          <DentalHistoryForm/>
+          <MedicalHistoryForm/>
+        </div>
         </div>
     </main>
   );

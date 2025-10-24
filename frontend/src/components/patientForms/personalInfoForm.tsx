@@ -77,6 +77,22 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
 
   console.log("Current userId state:", userId);
 
+  //Get user ID from JWT
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    
+    if(token){
+      try{
+        const decoded: any = jwtDecode(token);
+        setUserId(decoded.id);
+
+      }
+      catch (error){
+        console.error("Error decoding token:", error);
+      }
+    }
+  }, []);
+
   // When form is submitted
   function onPersonalSubmit(values: z.infer<typeof personalSchema>) {
     console.log("Personal Info:", values)
@@ -125,10 +141,9 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
         });
         if (!res.ok) return;
         const data = await res.json();
-        console.log("Fetched patient info from backend:", data);
+        console.log("Fetched patient info:", data);
         if (data.patient) {
-          personalForm.reset({
-            ...personalForm.getValues(),
+          const fetchedData = {
             nickname: data.patient.nickname || "",
             birthDate: data.patient.birth_date ? new Date(data.patient.birth_date) : undefined,
             age: data.patient.age || "",
@@ -143,7 +158,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
             emergencyContactName: data.emergencyContact?.name || "",
             emergencyContactOccupation: data.emergencyContact?.occupation || "",
             emergencyContactNumber: data.emergencyContact?.contact_number || "",
-          });
+          };
+          personalForm.reset(fetchedData);
         }
       } catch (err) {
         console.error("Error fetching patient info:", err);
