@@ -1,25 +1,16 @@
 "use client"
-
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { CheckIcon } from "lucide-react";
-import { RxCaretDown } from "react-icons/rx";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { useParams } from "next/navigation";
-
-const frameworks = [
-  { value: "ascending", label: "Ascending (A-Z)" },
-  { value: "descending", label: "Descending (Z-A)" }
-];
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { ArrowUpDown, Search, CheckIcon } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { set } from "zod"
 
 export default function PatientRecords() {
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
   const [patients, setPatients] = useState<any[]>([]);
-  const [filtered, setFiltered] = useState<any[]>([]);
+  const [sortOption, setSortOption] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch patients on mount
   useEffect(() => {
@@ -27,84 +18,79 @@ export default function PatientRecords() {
       const res = await fetch("http://localhost:4000/api/patients/all");
       const data = await res.json();
       setPatients(data.patients || []);
-      setFiltered(data.patients || []);
     }
     fetchPatients();
   }, []);
 
-  // Filter logic
-  useEffect(() => {
-    if (value === "ascending") {
-      setFiltered([...patients].sort((a, b) => a.last_name.localeCompare(b.last_name)));
-    } else if (value === "descending") {
-      setFiltered([...patients].sort((a, b) => b.last_name.localeCompare(a.last_name)));
-    } else {
-      setFiltered(patients);
+  const displayedPatients = [...patients]
+  // Filter and sort patients function
+  .filter((patient) => patient.role === "patient")
+  .filter((patient) => {
+    const fullName = `${patient.first_name} ${patient.middle_name} ${patient.last_name}`.toLowerCase();
+    return fullName.includes(searchQuery.toLowerCase());
+  })
+  .sort((a, b) => {
+    if (sortOption === "ascending") {
+      return a.last_name.localeCompare(b.last_name);
     }
-  }, [value, patients]);
-
+    if (sortOption === "descending") {
+      return b.last_name.localeCompare(a.last_name);
+    }
+    return 0;
+  });
+  
   return (
     <main>
       <div className="record-container flex flex-col items-center py-20 min-h-screen">
         <h1 className="text-3xl font-bold text-blue-dark">Patient Records</h1>
-        <div className="bg-blue-light mt-10 w-full max-w-4xl h-full rounded-3xl p-6">
-          {/* Filter Button */}
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-[200px] justify-between"
-              >
-                {value
-                  ? frameworks.find((framework) => framework.value === value)?.label
-                  : "Filter"}
-                <RxCaretDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
-              <Command>
-                <CommandList>
-                  <CommandEmpty>No filter found.</CommandEmpty>
-                  <CommandGroup>
-                    {frameworks.map((framework) => (
-                      <CommandItem
-                        key={framework.value}
-                        value={framework.value}
-                        onSelect={(currentValue) => {
-                          setValue(currentValue === value ? "" : currentValue)
-                          setOpen(false)
-                        }}
-                      >
-                        <CheckIcon
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value === framework.value ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {framework.label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+        <div className="bg-blue-light rounded-3xl mt-10 w-full max-w-4xl h-full p-10 space-y-8">
+          <div className="flex gap-8">
+            {/* Sort */}
+            <Select value={sortOption} onValueChange={setSortOption}>
+              <SelectTrigger className="bg-white">
+                <ArrowUpDown />
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="ascending">Ascending (A-Z)</SelectItem>
+                <SelectItem value="descending">Descending (Z-A)</SelectItem>
+              </SelectContent>
+            </Select>
 
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search..."
+                className="bg-white pl-8 w-40"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
           {/* Patient List */}
-          <div className="mt-6">
-            {filtered.length === 0 ? (
+          <div className="h-96 overflow-y-auto">
+            {displayedPatients.length === 0 ? (
               <div className="text-center text-gray-500">No patients found.</div>
             ) : (
-              <ul>
-                {filtered.map((patient) => (
-                  <li key={patient.id} className="py-2 border-b">
-                    <Link
-                      href={`/patient/${patient.id}`}
-                      className="text-blue-700 hover:underline"
-                    >
-                      {patient.last_name}, {patient.first_name} {patient.middle_name}
+              <ul className="space-y-4">
+                {displayedPatients.map((patient) => (
+                  <li
+                    key={patient.id}
+                    className="bg-background rounded-2xl p-4 flex items-center gap-4 hover:bg-blue-accent"
+                  >
+                    <Link href={`/patient/${patient.id}`} className="flex items-center gap-4 w-full">
+                      <Image
+                        src={patient.profile_picture || "/images/img-profile-default.png"}
+                        alt="User's Profile Picture"
+                        className="rounded-2xl object-cover"
+                        width={90}
+                        height={90}
+                      />
+                      <p>
+                        {patient.last_name}, {patient.first_name} {patient.middle_name}
+                      </p>
                     </Link>
                   </li>
                 ))}

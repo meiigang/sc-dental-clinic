@@ -22,8 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { profileSchema, Profile } from "./schema";
 import { jwtDecode } from "jwt-decode"
 import { useEffect, useState, useRef } from "react"; 
-
-
+import { z } from "zod";
 
 export function EditProfileForm() {
   
