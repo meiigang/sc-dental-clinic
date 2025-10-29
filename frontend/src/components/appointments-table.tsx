@@ -22,7 +22,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Filter, ArrowUpDown, ChevronLeft, ChevronRight, CalendarArrowUp} from "lucide-react";
+import { Filter, ArrowUpDown, ChevronLeft, ChevronRight, CalendarArrowUp, ChevronDown} from "lucide-react";
 import { LogAppointment } from "./log-appointment-modal"
 
 // Define  database statuses
@@ -55,17 +55,16 @@ export function AppointmentsTable() {
   const [page, setPage] = useState(1);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
-  const [bookedAppointments, setBookedAppointments] = useState<Appointment[]>([]);
-  const [reservedAppointments, setReservedAppointments] = useState<Appointment[]>([]);
   const [filterOption, setFilterOption] = useState("This Week");
   const [sortOption, setSortOption] = useState("Date");
   const [isLoading, setIsLoading] = useState(true);
   const [bookedPage, setBookedPage] = useState(1);
   const [reservedPage, setReservedPage] = useState(1);
   const [selectedAppointment, setSelectedAppointment] = useState<
-    (Appointment & { index: number; type: "booked" | "reserved" }) | null
+    (Appointment & { index: number; type: "booked" | "reserved" | "completed" | "cancelled" }) | null
   >(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"reserved" | "booked" | "completed" | "cancelled">("reserved");
   const rowsPerPage = 10;
   
   // Fetch data from the backend when the component mounts
@@ -90,6 +89,24 @@ export function AppointmentsTable() {
     };
     fetchAppointments();
   }, []);
+
+  // 1. Memoize appointments into their respective tab categories
+  const reservedAppointments = useMemo(
+    () => appointments.filter(appt => appt.status === 'pending_approval'),
+    [appointments]
+  );
+  const bookedAppointments = useMemo(
+    () => appointments.filter(appt => appt.status === 'confirmed'),
+    [appointments]
+  );
+  const completedAppointments = useMemo(
+    () => appointments.filter(appt => ['completed'].includes(appt.status)),
+    [appointments]
+  );
+    const cancelledAppointments = useMemo(
+    () => appointments.filter(appt => appt.status === 'cancelled','no_show'),
+    [appointments]
+  );
   
   // Helper function to display time into 12-hour format
   const formatDisplayTime = (appt: Appointment) => {
@@ -146,14 +163,23 @@ export function AppointmentsTable() {
     });
   };
 
-  const filtered = useMemo(() => filterData(appointments), [appointments, filterOption]);
+  // 2. Determine which dataset to use based on the active tab
+  const currentData = useMemo(() => {
+    if (activeTab === 'reserved') return reservedAppointments;
+    if (activeTab === 'booked') return bookedAppointments;
+    if (activeTab === 'completed') return completedAppointments;
+    if (activeTab === 'cancelled') return cancelledAppointments;
+    return [];
+  }, [activeTab, reservedAppointments, bookedAppointments, completedAppointments, cancelledAppointments]);
+
+  const filtered = useMemo(() => filterData(currentData), [currentData, filterOption]);
   const sortedAppointments = useMemo(
     () => sortData(filtered),
     [filtered, sortOption]
   );
 
 
-  // pagination slices
+  // 3. Update pagination to be based on the final sorted data
   const totalPages = Math.max(1, Math.ceil(sortedAppointments.length / rowsPerPage));
   const pagedData = sortedAppointments.slice(
     (page - 1) * rowsPerPage,
@@ -161,11 +187,8 @@ export function AppointmentsTable() {
   );
 
   
-  const handleRowClick = (appt: Appointment, visibleIndex: number, type: "booked" | "reserved") => {
-    const globalIndex =
-      type === "booked"
-        ? (bookedPage - 1) * rowsPerPage + visibleIndex
-        : (reservedPage - 1) * rowsPerPage + visibleIndex;
+  const handleRowClick = (appt: Appointment, visibleIndex: number, type: "booked" | "reserved" | "completed" | "cancelled") => {
+    const globalIndex = (page - 1) * rowsPerPage + visibleIndex;
     setSelectedAppointment({ ...appt, index: globalIndex, type });
     setIsModalOpen(true);
   };
@@ -174,16 +197,6 @@ export function AppointmentsTable() {
     const copy = [...arr];
     copy[idx] = updated;
     return copy;
-  };
-
-  // move from reserved -> booked (on confirm)
-  const moveReservedToBooked = (reservedIdx: number, updatedAppt: Appointment) => {
-    // remove from reserved list (global index)
-    const copyReserved = [...reservedAppointments];
-    copyReserved.splice(reservedIdx, 1);
-    setReservedAppointments(copyReserved);
-    // push to booked
-    setBookedAppointments((prev) => [updatedAppt, ...prev]);
   };
 
   // save changes (edit modal)
@@ -195,6 +208,15 @@ export function AppointmentsTable() {
 
     // We only need the appointment data itself, not the old index or type
     const { index, type, ...updatedAppt } = selectedAppointment;
+
+    
+    // --- CONFIRMATION FOR CANCELLATION ---
+    // If the status is being changed to 'cancelled', ask for confirmation.
+    if (updatedAppt.status === 'cancelled') {
+      if (!confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
+        return; // Stop the function if the user clicks 'Cancel'
+      }
+    }
 
     try {
       // 1. Call the backend to save the changes
@@ -214,20 +236,61 @@ export function AppointmentsTable() {
 
       const { appointment: savedAppt } = await response.json();
 
-      // 2. Remove the appointment from BOTH lists using its ID.
-      // This is safer and handles all cases.
-      setBookedAppointments(prev => prev.filter(appt => appt.id !== savedAppt.id));
-      setReservedAppointments(prev => prev.filter(appt => appt.id !== savedAppt.id));
+      // 2. Update the main appointments list. This will automatically refilter the tabs.
+      setAppointments(prev => {
+        const indexToUpdate = prev.findIndex(a => a.id === savedAppt.id);
+        if (indexToUpdate === -1) return [savedAppt, ...prev]; // Add if new
+        const newAppointments = [...prev];
+        newAppointments[indexToUpdate] = savedAppt;
+        return newAppointments;
+      });
 
-      // 3. Add the saved appointment (returned from the backend) to the correct new list.
-      if (savedAppt.status === 'pending_approval') {
-        setReservedAppointments(prev => [savedAppt, ...prev]);
-      } else {
-        setBookedAppointments(prev => [savedAppt, ...prev]);
-      }
     } catch (error) {
       console.error("Error saving appointment:", error);
       if (error instanceof Error) alert(`Error: ${error.message}`);
+    } finally {
+      setIsModalOpen(false);
+      setSelectedAppointment(null);
+    }
+};
+
+ const handleCompleteNow = async () => {
+    if (!selectedAppointment) return;
+
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) return alert("Authentication error.");
+
+    try {
+      const response = await fetch(`http://localhost:4000/api/appointments/${selectedAppointment.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'completed' })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to complete appointment');
+      }
+
+      const { appointment: updatedAppt } = await response.json();
+
+      // Update the main appointments list. This will automatically move the item to the 'Completed' tab.
+      setAppointments(prev => {
+        const indexToUpdate = prev.findIndex(a => a.id === updatedAppt.id);
+        if (indexToUpdate === -1) return prev;
+        const newAppointments = [...prev];
+        newAppointments[indexToUpdate] = updatedAppt;
+        return newAppointments;
+      });
+
+    } catch (error) {
+      console.error("Error completing appointment:", error);
+      if (error instanceof Error) {
+        alert(`Error: ${error.message}`);
+      }
     } finally {
       setIsModalOpen(false);
       setSelectedAppointment(null);
@@ -241,12 +304,8 @@ export function AppointmentsTable() {
     // mark PendingAcknowledgment
     const apptUpdated: Appointment = { ...(updated as Appointment), status: "pending_approval" };
 
-    if (type === "reserved") {
-      setReservedAppointments((prev) => replaceInArray(prev, index, apptUpdated));
-    } else {
-      // if staff tries sending on a booked appt, update in booked table
-      setBookedAppointments((prev) => replaceInArray(prev, index, apptUpdated));
-    }
+    // Update the main list, which will cause the appointment to move to the correct tab
+    setAppointments(prev => replaceInArray(prev, prev.findIndex(a => a.id === apptUpdated.id), apptUpdated));
 
     // TODO: call backend notify endpoint here
     // e.g. await api.post('/notify', { appt: apptUpdated })
@@ -281,19 +340,15 @@ export function AppointmentsTable() {
 
       const { appointment: updatedAppt } = await response.json();
 
-      // Update UI state after successful backend call
-      const { index, type } = selectedAppointment;
-      if (type === "reserved") {
-        // Remove from reserved list
-        const copy = [...reservedAppointments];
-        copy.splice(index, 1);
-        setReservedAppointments(copy);
-        // Add to booked list
-        setBookedAppointments((prev) => [{ ...updatedAppt, status: 'confirmed' }, ...prev]);
-      } else {
-        // Update in booked list
-        setBookedAppointments((prev) => replaceInArray(prev, index, { ...updatedAppt, status: 'confirmed' }));
-      }
+      // Update the main appointments list. This will automatically move the item to the 'Booked' tab.
+      setAppointments(prev => {
+        const indexToUpdate = prev.findIndex(a => a.id === updatedAppt.id);
+        if (indexToUpdate === -1) return prev; // Should not happen
+        const newAppointments = [...prev];
+        newAppointments[indexToUpdate] = updatedAppt;
+        return newAppointments;
+      });
+
     } catch (error) {
       console.error("Error confirming appointment:", error);
       if (error instanceof Error) {
@@ -309,11 +364,19 @@ export function AppointmentsTable() {
 
   // simulate patient acknowledgment: find the reserved appointment (global index in reservedAppointments), move to booked with Confirmed
   const handleSimulateAcknowledge = (visibleIndex: number) => {
-    const globalIdx = (reservedPage - 1) * rowsPerPage + visibleIndex;
-    const appt = reservedAppointments[globalIdx];
+    const globalIdx = (page - 1) * rowsPerPage + visibleIndex;
+    const appt = sortedAppointments[globalIdx]; // Get from the currently visible sorted list
     if (!appt) return;
     const apptUpdated: Appointment = { ...appt, status: "confirmed" };
-    moveReservedToBooked(globalIdx, apptUpdated);
+    
+    // Update the main list
+    setAppointments(prev => {
+      const indexToUpdate = prev.findIndex(a => a.id === apptUpdated.id);
+      if (indexToUpdate === -1) return prev;
+      const newAppointments = [...prev];
+      newAppointments[indexToUpdate] = apptUpdated;
+      return newAppointments;
+    });
     // TODO: notify backend that patient acknowledged
   };
 
@@ -322,7 +385,10 @@ export function AppointmentsTable() {
     setIsLogDialogOpen(true);
   };
 
-  const [activeTab, setActiveTab] = useState<"reserved" | "booked" |  "completed">("reserved");
+  const handleTabChange = (tab: "reserved" | "booked" | "completed" | "cancelled") => {
+    setActiveTab(tab);
+    setPage(1); // Reset to the first page whenever a tab is changed
+  };
 
   return (
     <main className="min-h-screen px-4 sm:px-8 md:px-12 lg:px-20 py-8 space-y-16">
@@ -365,224 +431,91 @@ export function AppointmentsTable() {
         <div className="flex gap-3 mb-6">
           <Button
             variant={activeTab === "reserved" ? "default" : "outline"}
-            onClick={() => setActiveTab("reserved")}
+            onClick={() => handleTabChange("reserved")}
           >
             Reserved Appointments
           </Button>
           <Button
             variant={activeTab === "booked" ? "default" : "outline"}
-            onClick={() => setActiveTab("booked")}
+            onClick={() => handleTabChange("booked")}
           >
             Booked Appointments
           </Button>
           <Button
             variant={activeTab === "completed" ? "default" : "outline"}
-            onClick={() => setActiveTab("completed")}
+            onClick={() => handleTabChange("completed")}
           >
             Completed Appointments
           </Button>
+          <Button
+            variant={activeTab === "cancelled" ? "default" : "outline"}
+            onClick={() => handleTabChange("cancelled")}
+          >
+            Cancelled Appointments
+          </Button>
         </div>
         
-        {/* --- RESERVED TAB --- */}
-        {activeTab === "reserved" && (
-          <>
-            <table className="w-full text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden">
-              <thead>
-                <tr className="bg-blue-accent text-blue-dark font-semibold">
-                  <th className="p-3 border border-blue-accent">Date</th>
-                  <th className="p-3 border border-blue-accent">Time</th>
-                  <th className="p-3 border border-blue-accent">Patient</th>
-                  <th className="p-3 border border-blue-accent">Service</th>
-                  <th className="p-3 border border-blue-accent">Price</th>
-                  <th className="p-3 border border-blue-accent">Status</th>
-                  <th className="p-3 border border-blue-accent">Actions</th>
+        {/* --- TABLE RENDER --- */}
+        {/* The table structure is the same for all tabs, so we can render it once */}
+        <>
+          <table className="w-full text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden">
+            <thead>
+              <tr className="bg-blue-accent text-blue-dark font-semibold">
+                <th className="p-3 border border-blue-accent">Date</th>
+                <th className="p-3 border border-blue-accent">Time</th>
+                <th className="p-3 border border-blue-accent">Patient</th>
+                <th className="p-3 border border-blue-accent">Service</th>
+                <th className="p-3 border border-blue-accent">Price</th>
+                <th className="p-3 border border-blue-accent">Status</th>
+                <th className="p-3 border border-blue-accent">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedData.map((appt, index) => (
+                <tr
+                  key={appt.id}
+                  className="text-center bg-white hover:bg-blue-100 cursor-pointer"
+                  onClick={() => handleRowClick(appt, index, activeTab)}
+                >
+                  <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
+                  <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
+                  <td className="p-3 border border-blue-accent">{appt.patient}</td>
+                  <td className="p-3 border border-blue-accent">{appt.service}</td>
+                  <td className="p-3 border border-blue-accent">{appt.price}</td>
+                  <td className="p-3 border border-blue-accent">
+                    <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
+                  </td>
+                  <td className="p-3 border border-blue-accent">
+                    <div className="flex items-center justify-center gap-2">
+                      {/* Reschedule */}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRowClick(appt, index, activeTab);
+                        }}
+                      >
+                        <CalendarArrowUp className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {pagedData.map((appt, index) => (
-                  <tr
-                    key={appt.id}
-                    className="text-center bg-white hover:bg-blue-100 cursor-pointer"
-                  >
-                    <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
-                    <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
-                    <td className="p-3 border border-blue-accent">{appt.patient}</td>
-                    <td className="p-3 border border-blue-accent">{appt.service}</td>
-                    <td className="p-3 border border-blue-accent">{appt.price}</td>
-                    <td className="p-3 border border-blue-accent">
-                      <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
-                    </td>
-                    <td className="p-3 border border-blue-accent">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* Reschedule */}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedAppointment({
-                              ...appt,
-                              index,           // REQUIRED by your state type
-                              type: "reserved" // or "booked" depending on this table
-                            });
-                            setIsModalOpen(true); 
-                          }}
-                        >
-                          <CalendarArrowUp className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
 
-            {/* Pagination */}
-            <div className="flex justify-end items-center mt-4 gap-3">
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-          </>
-        )}
-
-        {/* --- BOOKED TAB --- */}
-        {activeTab === "booked" && (
-          <>
-            <table className="w-full text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden">
-              <thead>
-                <tr className="bg-blue-accent text-blue-dark font-semibold">
-                  <th className="p-3 border border-blue-accent">Date</th>
-                  <th className="p-3 border border-blue-accent">Time</th>
-                  <th className="p-3 border border-blue-accent">Patient</th>
-                  <th className="p-3 border border-blue-accent">Service</th>
-                  <th className="p-3 border border-blue-accent">Price</th>
-                  <th className="p-3 border border-blue-accent">Status</th>
-                  <th className="p-3 border border-blue-accent">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pagedData.map((appt, index) => (
-                  <tr
-                    key={appt.id}
-                    className="text-center bg-white hover:bg-blue-100 cursor-pointer"
-                  >
-                    <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
-                    <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
-                    <td className="p-3 border border-blue-accent">{appt.patient}</td>
-                    <td className="p-3 border border-blue-accent">{appt.service}</td>
-                    <td className="p-3 border border-blue-accent">{appt.price}</td>
-                    <td className="p-3 border border-blue-accent">
-                      <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
-                    </td>
-                    <td className="p-3 border border-blue-accent">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* Reschedule */}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedAppointment({
-                              ...appt,
-                              index,           // REQUIRED by your state type
-                              type: "reserved" // or "booked" depending on this table
-                            });
-                            setIsModalOpen(true); 
-                          }}
-                        >
-                          <CalendarArrowUp className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Pagination */}
-            <div className="flex justify-end items-center mt-4 gap-3">
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-          </>
-        )}
-
-        {/* --- COMPLETED TAB (EMPTY FOR NOW) --- */}
-        {activeTab === "completed" && (
-          <>
-            <table className="w-full text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden">
-              <thead>
-                <tr className="bg-blue-accent text-blue-dark font-semibold">
-                  <th className="p-3 border border-blue-accent">Date</th>
-                  <th className="p-3 border border-blue-accent">Time</th>
-                  <th className="p-3 border border-blue-accent">Patient</th>
-                  <th className="p-3 border border-blue-accent">Service</th>
-                  <th className="p-3 border border-blue-accent">Price</th>
-                  <th className="p-3 border border-blue-accent">Status</th>
-                  <th className="p-3 border border-blue-accent">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pagedData.map((appt, index) => (
-                  <tr
-                    key={appt.id}
-                    className="text-center bg-white hover:bg-blue-100 cursor-pointer"
-                  >
-                    <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
-                    <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
-                    <td className="p-3 border border-blue-accent">{appt.patient}</td>
-                    <td className="p-3 border border-blue-accent">{appt.service}</td>
-                    <td className="p-3 border border-blue-accent">{appt.price}</td>
-                    <td className="p-3 border border-blue-accent">
-                      <span className={statusClass(appt.status)}>{formatStatusForDisplay(appt.status)}</span>
-                    </td>
-                    <td className="p-3 border border-blue-accent">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* Reschedule */}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedAppointment({
-                              ...appt,
-                              index,           // REQUIRED by your state type
-                              type: "reserved" // or "booked" depending on this table
-                            });
-                            setIsModalOpen(true); 
-                          }}
-                        >
-                          <CalendarArrowUp className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Pagination */}
-            <div className="flex justify-end items-center mt-4 gap-3">
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-          </>
-        )} 
+          {/* Pagination */}
+          <div className="flex justify-end items-center mt-4 gap-3">
+            <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
+            <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+        </>
       </section>
 
       {/* --- Edit Modal (staff-only) --- */}
@@ -626,40 +559,51 @@ export function AppointmentsTable() {
               <Input value={selectedAppointment.patient} onChange={(e) => setSelectedAppointment({ ...selectedAppointment, patient: e.target.value })} />
 
               <label className="block text-sm font-medium text-gray-700">Service</label>
-              <Input value={selectedAppointment.service} onChange={(e) => setSelectedAppointment({ ...selectedAppointment, service: e.target.value })} />
+<Input value={selectedAppointment.service} onChange={(e) => setSelectedAppointment({ ...selectedAppointment, service: e.target.value })} />
 
+              {/* New Status Dropdown inside the form */}
               <label className="block text-sm font-medium text-gray-700">Status</label>
-              <Select 
-                value={selectedAppointment.status} 
-                onValueChange={(v: Appointment['status']) => setSelectedAppointment({ ...selectedAppointment, status: v })}
+              <Select
+                value={selectedAppointment.status}
+                onValueChange={(newStatus) =>
+                  setSelectedAppointment({
+                    ...selectedAppointment,
+                    status: newStatus as Appointment['status'],
+                  })
+                }
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className={statusClass(selectedAppointment.status)}>
+                  <SelectValue placeholder="Select a status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* FIX: Use the correct DB statuses for the dropdown */}
                   {DB_STATUSES.map((status) => (
                     <SelectItem key={status} value={status}>
                       {formatStatusForDisplay(status)}
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
-              <Button onClick={handleLogAppointment}>Log Appointment</Button>
+              </Select>            
             </div>
           )}
 
           <DialogFooter>
-            <div className="flex gap-2">
-              <Button onClick={() => { /* Override confirm now */ handleOverrideConfirm(); }} className="bg-green-600 text-white">
-                Confirm Now
-              </Button>
+            <div className="flex justify-between w-full items-center">
+              {/* Left-aligned: Cancel */}
+              <div className="flex gap-2">
+                <Button onClick={() => { setIsModalOpen(false); setSelectedAppointment(null); }} variant="outline">
+                  Cancel
+                </Button>
+              </div>
 
-              <Button onClick={() => { /* Send notification */ handleSendNotification(); }} className="bg-orange-500 text-white">
-                Reschedule
-              </Button>
-
-              <Button onClick={() => { setIsModalOpen(false); setSelectedAppointment(null); }} className="bg-red-500 text-white" variant="outline">Cancel</Button>
+              {/* Right-aligned: Primary actions */}
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={handleLogAppointment}>
+                  Log Appointment
+                </Button>
+                <Button onClick={handleSave} className="bg-blue-primary hover:bg-blue-600 text-white">
+                  Save Changes
+                </Button>
+              </div>
             </div>
           </DialogFooter>
 
