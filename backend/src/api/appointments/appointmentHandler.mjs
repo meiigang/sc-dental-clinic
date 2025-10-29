@@ -1,86 +1,3 @@
-// Handler for a staff member to update the status of an appointment
-export async function updateAppointmentStatusHandler(req, res) {
-    // 1. Check for staff authentication
-    const user = req.user;
-    if (!user || (user.role !== 'staff' && user.role !== 'dentist')) {
-        return res.status(403).json({ message: "Forbidden: You do not have permission to perform this action." });
-    }
-
-    // 2. Get appointment ID from URL and new status from body
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!id || !status) {
-        return res.status(400).json({ message: "Appointment ID and new status are required." });
-    }
-
-    // Optional: Validate the status to ensure it's one of the allowed enum values
-    const allowedStatuses = ['pending_approval', 'confirmed', 'cancelled', 'no_show', 'completed'];
-    if (!allowedStatuses.includes(status)) {
-        return res.status(400).json({ message: `Invalid status. Must be one of: ${allowedStatuses.join(', ')}` });
-    }
-
-    try {
-        // 1. Update the appointment in the database
-        const { error: updateError } = await req.supabase
-            .from('appointments')
-            .update({ status: status })
-            .eq('id', id);
-
-        if (updateError) throw updateError;
-
-        // 2. Re-fetch the appointment with the correct column names
-        const { data: updatedAppointment, error: fetchError } = await req.supabase
-            .from('appointments')
-            .select(`
-                id,
-                start_time,
-                end_time,
-                status,
-                patient:patients (
-                    user:users ( firstName, middleName, lastName )
-                ),
-                service:services ( service_name )
-            `)
-            .eq('id', id)
-            .single();
-
-        if (fetchError) {
-            if (fetchError.code === 'PGRST116') {
-                return res.status(404).json({ message: `Appointment with ID ${id} not found after update.` });
-            }
-            throw fetchError;
-        }
-
-        // 3. Format the single updated appointment with the correct data
-        const startTimeUTC = new Date(updatedAppointment.start_time);
-        const endTimeUTC = new Date(updatedAppointment.end_time);
-        
-        const user = updatedAppointment.patient?.user;
-        const patientName = user
-            ? `${user.lastName}, ${user.firstName} ${user.middleName ? user.middleName.charAt(0) + '.' : ''}`.trim()
-            : 'Unknown Patient';
-
-        const formattedData = {
-            id: updatedAppointment.id,
-            date: startTimeUTC.toISOString().split('T')[0],
-            startTime: startTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-            endTime: endTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-            patient: patientName,
-            service: updatedAppointment.service?.service_name || 'Unknown Service',
-            status: updatedAppointment.status
-        };
-
-        // 4. Return success response
-        console.log(`Appointment ${id} status updated to ${status} by user ${req.user.id}`);
-        res.status(200).json({ message: "Appointment status updated successfully.", appointment: formattedData });
-
-    } catch (error) {
-        console.error("Error updating appointment status:", error);
-        res.status(500).json({ message: "An internal server error occurred.", error: error.message });
-    }
-}
-
 // Handler for staff to get all appointments
 export async function getAllAppointmentsHandler(req, res) {
     // 1. Check for staff authentication
@@ -90,7 +7,7 @@ export async function getAllAppointmentsHandler(req, res) {
     }
 
     try {
-        // Fetch appointments with the correct column names
+        // Fetch appointments with explicit joins and include price
         const { data, error } = await req.supabase
             .from('appointments')
             .select(`
@@ -98,10 +15,10 @@ export async function getAllAppointmentsHandler(req, res) {
                 start_time,
                 end_time,
                 status,
-                patient:patients (
-                    user:users ( firstName, middleName, lastName )
+                patient:patient_id (
+                    user:user_id ( firstName, middleName, lastName )
                 ),
-                service:services ( service_name )
+                service:service_id ( service_name, price )
             `);
 
         if (error) throw error;
@@ -122,6 +39,7 @@ export async function getAllAppointmentsHandler(req, res) {
                 endTime: endTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
                 patient: patientName,
                 service: appt.service?.service_name || 'Unknown Service',
+                price: appt.service?.price || 0,
                 status: appt.status
             };
         });
@@ -136,72 +54,137 @@ export async function getAllAppointmentsHandler(req, res) {
 
 // Handler for a staff member to update any detail of an appointment
 export async function updateAppointmentDetailsHandler(req, res) {
+    // 1. Check for staff authentication
     const user = req.user;
     if (!user || (user.role !== 'staff' && user.role !== 'dentist')) {
-        return res.status(403).json({ message: "Forbidden: You do not have permission to perform this action." });
+        return res.status(403).json({ message: 'Forbidden: Only staff can perform this action.' });
     }
 
+    // 2. Get appointment ID from URL and updated data from body
     const { id } = req.params;
-    const { date, startTime, endTime, patient, service, status } = req.body;
+    // Only destructure fields that can actually be updated in this modal
+    const { date, startTime, endTime, status } = req.body;
 
-    // Note: This is a simplified update. A real-world app would need to
-    // convert patient/service names back to IDs before updating.
-    // For now, we'll focus on updating time and status.
+    if (!id) {
+        return res.status(400).json({ message: 'Appointment ID is required.' });
+    }
 
-    const updatePayload = {
-        status: status,
-        // You would add more fields here as needed
-    };
+    // 3. Construct the update object, combining date and time into timestamps
+    const updateData = {};
 
-    // If startTime and endTime are provided, update them
     if (date && startTime) {
-        updatePayload.start_time = `${date}T${startTime}:00Z`;
+        updateData.start_time = new Date(`${date}T${startTime}`).toISOString();
     }
     if (date && endTime) {
-        updatePayload.end_time = `${date}T${endTime}:00Z`;
+        updateData.end_time = new Date(`${date}T${endTime}`).toISOString();
+    }
+    if (status) updateData.status = status;
+
+    // Check if there's anything to update
+    if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: 'No update data provided.' });
     }
 
     try {
-        const { data, error } = await req.supabase
+        // 4. Update the appointment in Supabase
+        const { error: updateError } = await req.supabase
             .from('appointments')
-            .update(updatePayload)
-            .eq('id', id)
-            .select()
-            .single();
+            .update(updateData)
+            .eq('id', id);
 
-        if (error) throw error;
+        if (updateError) {
+            console.error('Error updating appointment details:', updateError);
+            return res.status(500).json({ message: 'Failed to update appointment.' });
+        }
 
-        // Re-fetch and format for consistency (same as the other handlers)
-        // This part is crucial to prevent state corruption.
-        // (You can refactor this into a shared function later)
+        // 5. Re-fetch the updated record with explicit joins to format it for the frontend
         const { data: updatedAppointment, error: fetchError } = await req.supabase
             .from('appointments')
-            .select(`id, start_time, end_time, status, patient:patients(user:users(firstName, middleName, lastName)), service:services(service_name)`)
+            .select(`
+                id,
+                start_time,
+                end_time,
+                status,
+                patient:patient_id (
+                    user:user_id ( firstName, middleName, lastName )
+                ),
+                service:service_id ( service_name, price )
+            `)
             .eq('id', id)
             .single();
 
         if (fetchError) throw fetchError;
 
-        const patientUser = updatedAppointment.patient?.user;
-        const patientName = patientUser ? `${patientUser.lastName}, ${patientUser.firstName} ${patientUser.middleName ? patientUser.middleName.charAt(0) + '.' : ''}`.trim() : 'Unknown Patient';
-        
-        const formattedData = {
+        // 6. Format the response to match the frontend's data structure
+        const startTimeUTC = new Date(updatedAppointment.start_time);
+        const endTimeUTC = new Date(updatedAppointment.end_time);
+        const user = updatedAppointment.patient?.user;
+        const patientName = user
+            ? `${user.lastName}, ${user.firstName} ${user.middleName ? user.middleName.charAt(0) + '.' : ''}`.trim()
+            : 'Unknown Patient';
+
+        const formattedAppointment = {
             id: updatedAppointment.id,
-            date: new Date(updatedAppointment.start_time).toISOString().split('T')[0],
-            startTime: new Date(updatedAppointment.start_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-            endTime: new Date(updatedAppointment.end_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+            date: startTimeUTC.toISOString().split('T')[0],
+            startTime: startTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+            endTime: endTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
             patient: patientName,
             service: updatedAppointment.service?.service_name || 'Unknown Service',
+            price: updatedAppointment.service?.price || 0,
             status: updatedAppointment.status
         };
 
-        res.status(200).json({ message: "Appointment updated successfully.", appointment: formattedData });
+        res.status(200).json({ message: 'Appointment updated successfully.', appointment: formattedAppointment });
 
     } catch (error) {
-        console.error("Error updating appointment details:", error);
-        res.status(500).json({ message: "An internal server error occurred." });
+        console.error('Server error:', error);
+        res.status(500).json({ message: 'Internal server error.' });
     }
 }
+
+
+//Handler to cancel appointments
+export async function cancelAppointmentHandler(req, res) {
+    // 1. Check for staff authentication
+    const user = req.user;
+    if (!user || (user.role !== 'staff' && user.role !== 'dentist')) {
+        return res.status(403).json({ message: 'Forbidden: Only staff can perform this action.' });
+    }
+
+    // 2. Get appointment ID from URL
+    const { id } = req.params;
+    if (!id) {
+        return res.status(400).json({ message: 'Appointment ID is required.' });
+    }
+
+    try {
+        // 3. Update the appointment status to 'cancelled' in Supabase
+        const { data: updatedAppointment, error } = await req.supabase
+            .from('appointments')
+            .update({ status: 'cancelled' })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error cancelling appointment:', error);
+            return res.status(500).json({ message: 'Failed to cancel appointment.' });
+        }
+
+        if (!updatedAppointment) {
+            return res.status(404).json({ message: 'Appointment not found.' });
+        }
+
+        // Optional: Add notification logic here to inform the patient
+
+        res.status(200).json({ message: 'Appointment successfully cancelled.', appointment: updatedAppointment });
+
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+}
+
 
 // --- NEW HANDLER (for Patients) ---
 // Handler for a patient to get their own appointments
@@ -233,8 +216,8 @@ export async function getMyAppointmentsHandler(req, res) {
                 start_time,
                 end_time,
                 status,
-                service:services ( service_name ),
-                dentist:staff ( user:users ( firstName, lastName ) )
+                service:service_id ( service_name, price ),
+                dentist:staff_id ( user:user_id ( firstName, lastName ) )
             `)
             .eq('patient_id', patientId);
 
@@ -251,6 +234,7 @@ export async function getMyAppointmentsHandler(req, res) {
                 startTime: new Date(appt.start_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
                 endTime: new Date(appt.end_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
                 service: appt.service?.service_name || 'Unknown Service',
+                price: appt.service?.price || 0,
                 dentist: dentistName,
                 status: appt.status
             };
