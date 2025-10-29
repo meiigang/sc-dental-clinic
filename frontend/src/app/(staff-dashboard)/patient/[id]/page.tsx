@@ -3,6 +3,8 @@ import Image from "next/image"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { AppointmentsTable } from "@/components/appointments-table"
 import PersonalInfoForm from "@/components/patientForms/personalInfoForm";
@@ -17,6 +19,8 @@ export default function PatientRecord() {
   const [fullName, setFullName] = useState("User");
   const [userContact, setUserContact] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [editingPatient, setEditingPatient] = useState<any>({status: "Active"});
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const router = useRouter();
   const params = useParams();
   const patientId = params?.id;
@@ -29,6 +33,7 @@ export default function PatientRecord() {
         const profileRes = await fetch(`http://localhost:4000/api/patients/${patientId}`);
         const profileData = profileRes.ok ? await profileRes.json() : null;
         if (profileData) {
+          setEditingPatient(profileData); // Initialize the patient state for editing
           setFullName(
             `${profileData.last_name || ''} ${profileData.first_name || ''} ${profileData.middle_name || ''}`.trim()
           );
@@ -91,19 +96,70 @@ export default function PatientRecord() {
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userEmail}</span>
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userContact}</span>
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">year</span>
-                <span className="px-4 py-2 rounded-2xl font-medium text-green-600">Active</span>
+                <div className="flex items-center gap-2">
+                  <span className={`px-4 py-2 rounded-2xl font-medium ${
+                    editingPatient.status === "Active"
+                    ? "text-green-600"
+                    : "text-red-600"
+                  }`}>
+                    {editingPatient.status}
+                  </span>
+                  <Switch
+                    checked={editingPatient.status === "Active"}
+                    onClick={() => setShowConfirmationModal(true)}
+                  />
+                </div>
               </div>
             </div>
 
+            {/* Update Patient Status Confirmation Modal */}
+            <Dialog open={showConfirmationModal} onOpenChange={setShowConfirmationModal}>
+              <DialogContent className="w-lg">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl font-bold text-blue-dark">Update Patient Status</DialogTitle>
+                  {editingPatient.status === "Active" ? (
+                    <div>
+                      <p>You are about to set this patient's status to <span className="font-bold text-red-600">inactive</span>.</p>
+                      <p className="text-sm text-blue-accent mt-2">They may lose access to certain features. Are you sure?</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p>You are about to set this patient's status to <span className="font-bold text-green-600">active</span>.</p>
+                      <p className="text-sm text-gray-500 mt-2">This will restore their access. Are you sure?</p>
+                    </div>
+                  )}
+                  <DialogFooter className="flex justify-end gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      className="text-blue-dark hover:bg-blue-50 hover:text-blue-dark"
+                      onClick={() => setShowConfirmationModal(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setEditingPatient({
+                          ...editingPatient,
+                          status: editingPatient.status === "Active" ? "Inactive" : "Active",
+                        });
+                        setShowConfirmationModal(false);
+                      }}
+                    >
+                      Confirm
+                    </Button>
+                  </DialogFooter>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+
             {/* Profile Picture */}
             <div className="justify-end">
-                <Image
-                  src="/images/img-profile-default.png"
-                  alt="Default Profile Picture"
-                  className="rounded-3xl object-cover"
-                  width={210}
-                  height={210}
-                />
+              <Image
+                src="/images/img-profile-default.png"
+                alt="Default Profile Picture"
+                className="rounded-3xl object-cover"
+                width={210}
+                height={210}
+              />
             </div>  
           </div> 
         </div>

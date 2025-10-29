@@ -10,7 +10,7 @@ export default function NavbarStaff() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const pathname = usePathname();
 
-  const links: string[] = ["Appointments", "Patient Records", "Services", "Notifications", "Dashboard", "Log Out"];
+  const links: string[] = ["Appointments", "Patient Records", "Services", "Notifications", "Sales", "Dashboard", "Log Out"];
 
   const router = useRouter();
 
@@ -32,9 +32,6 @@ export default function NavbarStaff() {
             width={40}
             height={40}
           />
-          <span className="text-lg sm:text-xl font-bold text-blue-light">
-            Sabado - Cuaton Dental Clinic
-          </span>
         </div>
 
         {/* Desktop Menu */}
