@@ -10,9 +10,6 @@ import { NotificationBell } from "./ui/notification-bell"; // <-- Import Notific
 export default function NavbarStaff() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const pathname = usePathname();
-
-  const links: string[] = ["Appointments", "Patient Records", "Services", "Sales", "Dashboard", "Log Out"];
-
   const router = useRouter();
 
   // MODIFICATION: Removed 'Notifications' from this array
@@ -78,8 +75,8 @@ export default function NavbarStaff() {
               </Link>
             );
           })}
-          {/* NEW: Added the NotificationBell component here */}
-          <NotificationBell />
+          {/* MODIFIED: Pass the correct href for staff */}
+          <NotificationBell href="/staff-notifications" />
         </div>
 
         {/* Mobile Hamburger Button */}
