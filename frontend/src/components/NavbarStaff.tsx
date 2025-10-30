@@ -4,15 +4,16 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
+import { NotificationBell } from "./ui/notification-bell"; // <-- Import NotificationBell
 
 export default function NavbarStaff() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const pathname = usePathname();
-
-  const links: string[] = ["Appointments", "Patient Records", "Services", "Notifications", "Dashboard", "Log Out"];
-
   const router = useRouter();
+
+  // MODIFICATION: Removed 'Notifications' from this array
+  const links: string[] = ["Appointments", "Patient Records", "Services", "Dashboard", "Log Out"];
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -38,7 +39,7 @@ export default function NavbarStaff() {
         </div>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex space-x-4 lg:space-x-6 font-medium">
+        <div className="hidden md:flex items-center space-x-4 lg:space-x-6 font-medium">
           {links.map((item) => {
             if (item === "Log Out"){
               return(
@@ -56,16 +57,12 @@ export default function NavbarStaff() {
             let href = "";
             if (item === "Dashboard") {
               href = "/staff-landing";
-            } else if (item === "Notifications") {
-              href = "/staff-notifications";
             } else if (item === "Services") {
-              href = "/staff-services"; // ✅ fixed
+              href = "/staff-services";
             } else {
               href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
             }
-              const isActive =
-                pathname === href ||
-                (pathname === "/" && item === "Dashboard");
+              const isActive = pathname === href;
 
             return (
               <Link
@@ -81,6 +78,8 @@ export default function NavbarStaff() {
               </Link>
             );
           })}
+          {/* NEW: Added the NotificationBell component here */}
+          <NotificationBell />
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -118,33 +117,13 @@ export default function NavbarStaff() {
       {/* Mobile Dropdown Menu */}
       {isOpen && (
         <div className="md:hidden px-4 pb-4 space-y-2 font-medium bg-blue-primary">
-          {links.map((item) => {
-            let href = "";
-              if (item === "Dashboard") {
-                href = "/staff-landing";
-              } else if (item === "Notifications") {
-                href = "/staff-notifications"
-              } else {
-                href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
-              }
-              const isActive =
-                pathname === href ||
-                (pathname === "/" && item === "Dashboard");
-
-            return (
-              <Link
-                key={item}
-                href={href}
-                className={`block px-3 py-2 rounded-md text-sm transition ${
-                  isActive
-                    ? "bg-blue-light text-blue-dark"
-                    : "text-blue-light hover:bg-blue-light hover:text-blue-dark"
-                }`}
-              >
-                {item}
-              </Link>
-            );
-          })}
+          {/* MODIFICATION: Manually add all links for mobile view for clarity */}
+          <Link href="/staff-landing" className={`block px-3 py-2 rounded-md text-sm transition ${pathname === '/staff-landing' ? "bg-blue-light text-blue-dark" : "text-blue-light hover:bg-blue-light hover:text-blue-dark"}`}>Dashboard</Link>
+          <Link href="/appointments" className={`block px-3 py-2 rounded-md text-sm transition ${pathname === '/appointments' ? "bg-blue-light text-blue-dark" : "text-blue-light hover:bg-blue-light hover:text-blue-dark"}`}>Appointments</Link>
+          <Link href="/patient-records" className={`block px-3 py-2 rounded-md text-sm transition ${pathname === '/patient-records' ? "bg-blue-light text-blue-dark" : "text-blue-light hover:bg-blue-light hover:text-blue-dark"}`}>Patient Records</Link>
+          <Link href="/staff-services" className={`block px-3 py-2 rounded-md text-sm transition ${pathname === '/staff-services' ? "bg-blue-light text-blue-dark" : "text-blue-light hover:bg-blue-light hover:text-blue-dark"}`}>Services</Link>
+          <Link href="/staff-notifications" className={`block px-3 py-2 rounded-md text-sm transition ${pathname === '/staff-notifications' ? "bg-blue-light text-blue-dark" : "text-blue-light hover:bg-blue-light hover:text-blue-dark"}`}>Notifications</Link>
+          <a href="#" onClick={handleLogout} className="block px-3 py-2 rounded-md text-sm transition text-blue-light hover:bg-blue-light hover:text-blue-dark">Log Out</a>
         </div>
       )}
     </nav>
