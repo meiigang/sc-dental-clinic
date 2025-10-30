@@ -19,7 +19,7 @@ export default function PatientRecord() {
   const [fullName, setFullName] = useState("User");
   const [userContact, setUserContact] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [editingPatient, setEditingPatient] = useState<any>({status: "Active"});
+  const [editingPatient, setEditingPatient] = useState<any>({});
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const router = useRouter();
   const params = useParams();
@@ -33,7 +33,6 @@ export default function PatientRecord() {
         const profileRes = await fetch(`http://localhost:4000/api/patients/${patientId}`);
         const profileData = profileRes.ok ? await profileRes.json() : null;
         if (profileData) {
-          setEditingPatient(profileData); // Initialize the patient state for editing
           setFullName(
             `${profileData.last_name || ''} ${profileData.first_name || ''} ${profileData.middle_name || ''}`.trim()
           );
@@ -102,7 +101,9 @@ export default function PatientRecord() {
                     ? "text-green-600"
                     : "text-red-600"
                   }`}>
-                    {editingPatient.status}
+                    {editingPatient.status === "Inactive"
+                      ? "Inactive"
+                      : "Active"}
                   </span>
                   <Switch
                     checked={editingPatient.status === "Active"}
@@ -117,17 +118,7 @@ export default function PatientRecord() {
               <DialogContent className="w-lg">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold text-blue-dark">Update Patient Status</DialogTitle>
-                  {editingPatient.status === "Active" ? (
-                    <div>
-                      <p>You are about to set this patient's status to <span className="font-bold text-red-600">inactive</span>.</p>
-                      <p className="text-sm text-blue-accent mt-2">They may lose access to certain features. Are you sure?</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p>You are about to set this patient's status to <span className="font-bold text-green-600">active</span>.</p>
-                      <p className="text-sm text-gray-500 mt-2">This will restore their access. Are you sure?</p>
-                    </div>
-                  )}
+                  <div>Are you sure you want to update the patient's status to {editingPatient.status}?</div>
                   <DialogFooter className="flex justify-end gap-2 mt-4">
                     <Button
                       variant="outline"
