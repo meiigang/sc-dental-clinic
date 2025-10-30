@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "@/styles/globals.css";
 import NavbarStaff from "@/components/NavbarStaff";
+import { NotificationProvider } from '@/context/useNotificationContext';
 
 const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"], // Choose weights you need
@@ -22,8 +23,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} antialiased bg-background`}>
-        <NavbarStaff />
-        {children}
+        <NotificationProvider>
+          <NavbarStaff />
+          {children}
+        </NotificationProvider>    
       </body>
     </html>
   );
