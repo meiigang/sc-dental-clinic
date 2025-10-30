@@ -76,8 +76,8 @@ export default function NavbarPatient() {
               </Link>
             );
           })}
-          {/* NEW: Added the NotificationBell component here */}
-          <NotificationBell />
+          {/* MODIFIED: Pass the correct href for patients */}
+          <NotificationBell href="/notifications" />
         </div>
 
         {/* Mobile Hamburger Button */}
