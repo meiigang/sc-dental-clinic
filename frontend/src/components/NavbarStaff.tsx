@@ -10,6 +10,9 @@ import { NotificationBell } from "./ui/notification-bell"; // <-- Import Notific
 export default function NavbarStaff() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const pathname = usePathname();
+
+  const links: string[] = ["Appointments", "Patient Records", "Services", "Sales", "Dashboard", "Log Out"];
+
   const router = useRouter();
 
   // MODIFICATION: Removed 'Notifications' from this array
@@ -33,9 +36,6 @@ export default function NavbarStaff() {
             width={40}
             height={40}
           />
-          <span className="text-lg sm:text-xl font-bold text-blue-light">
-            Sabado - Cuaton Dental Clinic
-          </span>
         </div>
 
         {/* Desktop Menu */}
