@@ -8,6 +8,7 @@ type ToothProps = {
   onChange: (number: number, state: ToothState) => void;
   onClick: () => void;
   selected: boolean;
+  showNumber?: boolean;
 };
 
 type Cavities = {
@@ -84,7 +85,7 @@ const initialState: ToothState = {
   Fracture: 0
 };
 
-const Tooth: React.FC<ToothProps> = ({ number, positionX, positionY, onChange, onClick, selected }) => {
+const Tooth: React.FC<ToothProps> = ({ number, positionX, positionY, onChange, onClick, selected, showNumber = true }) => {
   const [toothState, dispatch] = useReducer(reducer, initialState);
 
   const firstUpdate = useRef(true);
@@ -95,11 +96,6 @@ const Tooth: React.FC<ToothProps> = ({ number, positionX, positionY, onChange, o
     }
     onChange(number, toothState);
   }, [toothState, onChange, number]);
-
-  // You can keep these for future use, but they're not used without context menu:
-  // const doneSubMenu = ...
-  // const todoSubMenu = ...
-  // const menuConfig = ...
 
   const getClassNamesByZone = (zone: keyof Cavities) => {
     if (toothState.Cavities) {
@@ -155,49 +151,35 @@ const Tooth: React.FC<ToothProps> = ({ number, positionX, positionY, onChange, o
   }
 
   return (
-    <svg
+    <g
       className={`tooth${selected ? " selected" : ""}`}
       onClick={onClick}
-      tabIndex={0}
-      role="button"
-      aria-pressed={selected}
-      aria-label={`Tooth ${number}`}
       style={{ cursor: "pointer" }}
+      transform={translate}
     >
-      <g transform={translate}>
-        <polygon
-          points="0,0 20,0 15,5 5,5"
-          className={getClassNamesByZone('top')}
-        />
-        <polygon
-          points="5,15 15,15 20,20 0,20"
-          className={getClassNamesByZone('bottom')}
-        />
-        <polygon
-          points="15,5 20,0 20,20 15,15"
-          className={getClassNamesByZone('left')}
-        />
-        <polygon
-          points="0,0 5,5 5,15 0,20"
-          className={getClassNamesByZone('right')}
-        />
-        <polygon
-          points="5,5 15,5 15,15 5,15"
-          className={getClassNamesByZone('center')}
-        />
-        {drawToothActions()}
+      <image
+        href={`/images/teeth/tooth${number}.png`}
+        x="0"
+        y="0"
+        width="32"
+        height="40"
+        style={{ pointerEvents: "all" }}
+      />
+      {drawToothActions()}
+      {/* Conditionally render the number on the tooth if showNumber is true */}
+      {showNumber && (
         <text
-          x="6"
-          y="30"
-          stroke="navy"
-          fill="navy"
-          strokeWidth="0.1"
-          className="tooth"
+          x="16"
+          y="20"
+          textAnchor="middle"
+          fontSize="10"
+          fill="blue"
+          style={{ pointerEvents: "none" }}
         >
           {number}
         </text>
-      </g>
-    </svg>
+      )}
+    </g>
   );
 };
 
