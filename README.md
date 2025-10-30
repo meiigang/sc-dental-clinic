@@ -30,5 +30,8 @@ You can start editing by modifying any `page.tsx` file. The page auto-updates as
 ### Sprint 3: Appointment Management, Booking Management, Dental Chart Management
 - Staff-side Availability feature is fully functioning.
 - Appointment tables have been implemented and are functioning.
-- Appointment reservation feature is fully functioning. Revisions on managing appointments (notifications, rescheduling, cancellation) are ongoing.
+- Appointment reservation and cancellation feature is fully functioning.
+- Backend on rescheduling of appointments is to be implemented.
 - Dental chart management is unfinished. Frontend needs polishing and no backend has been implemented yet.
+### Sprint 4: Sales Management
+- UI for Sales page is to be created.
