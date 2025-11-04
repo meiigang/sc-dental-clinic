@@ -1,3 +1,5 @@
+import { createNotification } from '../notifications/notificationsHandler.mjs';
+
 // Handler for staff to get all appointments
 export async function getAllAppointmentsHandler(req, res) {
     // 1. Check for staff authentication
@@ -86,7 +88,21 @@ export async function updateAppointmentDetailsHandler(req, res) {
     }
 
     try {
-        // 4. Update the appointment in Supabase
+        // --- MODIFICATION START ---
+        // 4a. Before updating, fetch the original appointment to get patient details for notification
+        const { data: originalAppointment, error: fetchOriginalError } = await req.supabase
+            .from('appointments')
+            .select('start_time, patient:patient_id(user_id)')
+            .eq('id', id)
+            .single();
+
+        if (fetchOriginalError || !originalAppointment) {
+            return res.status(404).json({ message: 'Appointment not found.' });
+        }
+        const patientUserId = originalAppointment.patient.user_id;
+        // --- MODIFICATION END ---
+
+        // 4b. Update the appointment in Supabase
         const { error: updateError } = await req.supabase
             .from('appointments')
             .update(updateData)
@@ -96,6 +112,30 @@ export async function updateAppointmentDetailsHandler(req, res) {
             console.error('Error updating appointment details:', updateError);
             return res.status(500).json({ message: 'Failed to update appointment.' });
         }
+
+        // --- NEW: NOTIFICATION LOGIC ---
+        let notificationType = '';
+        const isRescheduled = updateData.start_time || updateData.end_time;
+
+        if (status === 'confirmed' && !isRescheduled) {
+            notificationType = 'APPOINTMENT_CONFIRMED';
+        } else if (isRescheduled) {
+            notificationType = 'APPOINTMENT_RESCHEDULED';
+        }
+
+        if (patientUserId && notificationType) {
+            await createNotification(
+                patientUserId,
+                notificationType,
+                { 
+                    // For rescheduled, you might want oldDate and newDate
+                    // For now, we'll just send the new date
+                    date: updateData.start_time || originalAppointment.start_time,
+                    appointmentId: id 
+                }
+            );
+        }
+        // --- END NOTIFICATION LOGIC ---
 
         // 5. Re-fetch the updated record with explicit joins to format it for the frontend
         const { data: updatedAppointment, error: fetchError } = await req.supabase
@@ -163,7 +203,7 @@ export async function cancelAppointmentHandler(req, res) {
             .from('appointments')
             .update({ status: 'cancelled' })
             .eq('id', id)
-            .select()
+            .select('id, start_time, patient:patient_id(user_id)') // Also select patient's user_id
             .single();
 
         if (error) {
@@ -175,7 +215,19 @@ export async function cancelAppointmentHandler(req, res) {
             return res.status(404).json({ message: 'Appointment not found.' });
         }
 
-        // Optional: Add notification logic here to inform the patient
+        // --- NEW: NOTIFICATION LOGIC ---
+        const patientUserId = updatedAppointment.patient?.user_id;
+        if (patientUserId) {
+            await createNotification(
+                patientUserId,
+                'APPOINTMENT_CANCELED',
+                {
+                    date: updatedAppointment.start_time,
+                    appointmentId: updatedAppointment.id
+                }
+            );
+        }
+        // --- END NOTIFICATION LOGIC ---
 
         res.status(200).json({ message: 'Appointment successfully cancelled.', appointment: updatedAppointment });
 

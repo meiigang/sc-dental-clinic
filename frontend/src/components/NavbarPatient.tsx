@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { NotificationBell } from "./ui/notification-bell";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function NavbarStaff() {
+// FIX: Corrected component name
+export default function NavbarPatient() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -15,7 +17,8 @@ export default function NavbarStaff() {
     router.push("/");
   };
 
-  const links: string[] = ["Patient Information Record", "Notifications", "Dashboard", "Log Out"];
+  // MODIFICATION: Removed 'Notifications' from this array as it will be handled by the bell icon.
+  const links: string[] = ["Patient Information Record", "Dashboard", "Log Out"];
 
   return (
     <nav className="bg-blue-primary shadow-md sticky top-0 z-50">
@@ -35,7 +38,7 @@ export default function NavbarStaff() {
         </div>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex space-x-4 lg:space-x-6 font-medium">
+        <div className="hidden md:flex items-center space-x-4 lg:space-x-6 font-medium">
           {links.map((item) => {
             if (item === "Log Out") {
               return (
@@ -73,6 +76,8 @@ export default function NavbarStaff() {
               </Link>
             );
           })}
+          {/* MODIFIED: Pass the correct href for patients */}
+          <NotificationBell href="/notifications" />
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -110,31 +115,11 @@ export default function NavbarStaff() {
       {/* Mobile Dropdown Menu */}
       {isOpen && (
         <div className="md:hidden px-4 pb-4 space-y-2 font-medium bg-blue-primary">
-          {links.map((item) => {
-            let href = "";
-              if (item === "Dashboard") {
-                href = "/dashboard";
-              } else {
-                href = `/${item.toLowerCase().replace(/\s+/g, "-")}`;
-              }
-              const isActive =
-                pathname === href ||
-                (pathname === "/" && item === "Dashboard");
-
-            return (
-              <Link
-                key={item}
-                href={href}
-                className={`block px-3 py-2 rounded-md text-sm transition ${
-                  isActive
-                    ? "bg-blue-light text-blue-dark"
-                    : "text-blue-light hover:bg-blue-light hover:text-blue-dark"
-                }`}
-              >
-                {item}
-              </Link>
-            );
-          })}
+          {/* MODIFICATION: Manually add all links for mobile view for clarity */}
+          <Link href="/dashboard" className={`block px-3 py-2 rounded-md text-sm transition ${pathname === '/dashboard' ? "bg-blue-light text-blue-dark" : "text-blue-light hover:bg-blue-light hover:text-blue-dark"}`}>Dashboard</Link>
+          <Link href="/patient-information-record" className={`block px-3 py-2 rounded-md text-sm transition ${pathname === '/patient-information-record' ? "bg-blue-light text-blue-dark" : "text-blue-light hover:bg-blue-light hover:text-blue-dark"}`}>Patient Information Record</Link>
+          <Link href="/notifications" className={`block px-3 py-2 rounded-md text-sm transition ${pathname === '/notifications' ? "bg-blue-light text-blue-dark" : "text-blue-light hover:bg-blue-light hover:text-blue-dark"}`}>Notifications</Link>
+          <Link href="/" onClick={handleLogout} className="block px-3 py-2 rounded-md text-sm transition text-blue-light hover:bg-blue-light hover:text-blue-dark">Log Out</Link>
         </div>
       )}
     </nav>

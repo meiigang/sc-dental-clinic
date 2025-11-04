@@ -14,7 +14,7 @@ export function LogAppointment({open, onOpenChange, onCancelLog} : LogAppointmen
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-full max-h-full overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-2xl font-bold text-blue-dark">Log Appointment</DialogTitle>
           </DialogHeader>

@@ -1,4 +1,5 @@
 import { format, parse, addMinutes } from 'date-fns';
+import { createNotification} from '../notifications/notificationsHandler.mjs';
 
 export default async function reserveAppointmentHandler(req, res){
     console.log("--- Reservation request received ---");
@@ -39,9 +40,11 @@ export default async function reserveAppointmentHandler(req, res){
         
         const { data: staffRecords, error: staffRecordsError } = await req.supabase
             .from("staff")
-            .select("id")
+            .select("id, user_id")
             .in("user_id", dentistUserIds);
         if (staffRecordsError) throw staffRecordsError;
+
+        const dentistStaffRecords = staffRecords;
         const dentistStaffIds = staffRecords.map(s => s.id);
         
         // --- CONFLICT DETECTION LOGIC ---
@@ -56,24 +59,58 @@ export default async function reserveAppointmentHandler(req, res){
         console.log("Conflicting appointments:", conflictingAppointments);
 
         const bookedStaffIds = conflictingAppointments.map(a => a.staff_id);
-        const availableStaffId = dentistStaffIds.find(id => !bookedStaffIds.includes(id));
-        console.log("Available Staff ID:", availableStaffId);
 
-        if (!availableStaffId) {
+        // FIX: Correctly find the full staff record for an available dentist
+        const availableStaffRecord = dentistStaffRecords.find(record => !bookedStaffIds.includes(record.id));
+
+        console.log("Available Staff Record:", availableStaffRecord);
+
+        // FIX: Check against the record, not just the ID
+        if (!availableStaffRecord) {
             return res.status(409).json({ message: "Sorry, no dentists are available at this time slot." });
         }
-        
+
+        const availableStaffId = availableStaffRecord.id;
+        const assignedDentistUserId = availableStaffRecord.user_id; // Get the user_id for notifications
+
         // --- Log 5: Check before final insert ---
         console.log("Attempting to insert appointment...");
-        const { error: insertError } = await req.supabase.from("appointments").insert({
+        const { data: newAppointment, error: insertError } = await req.supabase.from("appointments").insert({
             patient_id: patientIdToInsert, 
             staff_id: availableStaffId, 
             service_id: service_id,
-            start_time: startTime.toISOString(), // This will now be the correct UTC time
+            start_time: startTime.toISOString(),
             end_time: endTime.toISOString(),
             status: 'pending_approval'
-        });
+        }).select().single(); // Use .select().single() to get the inserted row back
+
         if (insertError) throw insertError;
+        
+        // --- FIX: CREATE NOTIFICATIONS ---
+        console.log("Creating notifications...")
+
+        // 1. Notify the patient that their request is pending
+        await createNotification (
+            req.supabase, // Pass the request-scoped supabase client
+            userUuid, // The patient's user ID
+            'APPOINTMENT_PENDING',
+            { 
+                date: startTime.toISOString(),
+                appointmentId: newAppointment.id 
+            }
+        );
+
+        // 2. Notify the assigned dentist of the new booking request
+        await createNotification(
+            req.supabase, // Pass the request-scoped supabase client
+            assignedDentistUserId, // The dentist's user ID
+            'NEW_BOOKING_REQUEST',
+            {
+                date: startTime.toISOString(),
+                appointmentId: newAppointment.id
+            }
+        );
+        // --- END OF NOTIFICATION ---
 
         console.log("--- Reservation successful ---");
         res.status(201).json({ message: "Your appointment request has been submitted and is pending approval." });
@@ -82,4 +119,6 @@ export default async function reserveAppointmentHandler(req, res){
         console.error("!!! RESERVATION CRASH !!!:", error);
         res.status(500).json({message: "An unexpected error occurred on the server.", error: error.message})
     }
+
+
 }
