@@ -19,6 +19,9 @@ export default function SalesBilling() {
     // Mode of Payment states
     const [modeOfPayment, setModeOfPayment] = useState<"cash" | "debitcard" | "creditcard" | "other">("cash");
     const [paymentDetails, setPaymentDetails] = useState<string>("");
+    const [bankName, setBankName] = useState("");
+    const [accountName, setAccountName] = useState("");
+    const [accountNumber, setAccountNumber] = useState("");
     const receiptRef = useRef<HTMLDivElement>(null);
 
     function cryptoRandomId() {
@@ -52,7 +55,7 @@ export default function SalesBilling() {
     const total = useMemo(() => Math.max(0, subtotal + taxAmount - discountAmount), [subtotal, taxAmount, discountAmount]);
 
     function downloadJSON() {
-        const payload = { customer, date, items, subtotal, taxPercent, taxAmount, discountType, discountValue, discountAmount, total, modeOfPayment, paymentDetails };
+        const payload = { customer, date, items, subtotal, taxPercent, taxAmount, discountType, discountValue, discountAmount, total, modeOfPayment, bankName, accountName, accountNumber};
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -67,7 +70,9 @@ export default function SalesBilling() {
             ["customer", customer],
             ["date", date],
             ["modeOfPayment", modeOfPayment],
-            ["paymentDetails", paymentDetails],
+            ["bankName", bankName],
+            ["accountName", accountName],
+            ["accountNumber", accountNumber],
             [],
             ["description", "qty", "price", "lineTotal"],
             ...items.map((it) => [it.description, String(it.qty), String(it.price), String((it.qty * it.price).toFixed(2))]),
@@ -231,28 +236,36 @@ export default function SalesBilling() {
                         </label>
                     </div>
 
-                    {(modeOfPayment !== "cash") && (
+                    {modeOfPayment !== "cash" && (
                         <div style={{ marginTop: 8 }}>
-                            <h1>Bank</h1>
+                            <h1 style={{ fontSize: 14, marginBottom: 4 }}>Bank</h1>
                             <input
-                                placeholder={modeOfPayment === "debitcard" ? "Bank name (e.g., BPI)" : modeOfPayment === "creditcard" ? "Card type (e.g., Visa)" : "Payment details"}
-                                value={paymentDetails}
-                                onChange={(e) => setPaymentDetails(e.target.value)}
-                                style={{ width: "100%", padding: 8 }}
+                            placeholder={
+                                modeOfPayment === "debitcard"
+                                ? "Bank name (e.g., BPI)"
+                                : modeOfPayment === "creditcard"
+                                ? "Card type (e.g., Visa)"
+                                : "Payment details"
+                            }
+                            value={bankName}
+                            onChange={(e) => setBankName(e.target.value)}
+                            style={{ width: "100%", padding: 8, marginBottom: 8 }}
                             />
-                            <h1>Account Name</h1>
+
+                            <h1 style={{ fontSize: 14, marginBottom: 4 }}>Account Name</h1>
                             <input
-                                placeholder={modeOfPayment === "debitcard" ? "(Firstname, Lastname)" : modeOfPayment === "creditcard" ? "(Firstname, Lastname)" : "Payment details"}
-                                value={paymentDetails}
-                                onChange={(e) => setPaymentDetails(e.target.value)}
-                                style={{ width: "100%", padding: 8 }}
+                            placeholder="(Firstname, Lastname)"
+                            value={accountName}
+                            onChange={(e) => setAccountName(e.target.value)}
+                            style={{ width: "100%", padding: 8, marginBottom: 8 }}
                             />
-                            <h1>Account Number</h1>
+
+                            <h1 style={{ fontSize: 14, marginBottom: 4 }}>Account Number</h1>
                             <input
-                                placeholder={modeOfPayment === "debitcard" ? "(123456789XXX)" : modeOfPayment === "creditcard" ? "(123456789XXX)" : "Payment details"}
-                                value={paymentDetails}
-                                onChange={(e) => setPaymentDetails(e.target.value)}
-                                style={{ width: "100%", padding: 8 }}
+                            placeholder="(123456789XXX)"
+                            value={accountNumber}
+                            onChange={(e) => setAccountNumber(e.target.value)}
+                            style={{ width: "100%", padding: 8 }}
                             />
                         </div>
                     )}
