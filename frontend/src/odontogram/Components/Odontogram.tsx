@@ -14,47 +14,39 @@ const Odontogram: React.FC<OdontogramProps> = ({panelType = "default"}) => {
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
 
   return (
-    <div>
-      <div className={panelType === "log" ? "flex flex-row gap-8 items-start" : ""}>
+    <div className="bg-white rounded-2xl border-2 border-blue-primary p-8 h-128 space-y-8">
+      <div className={panelType === "log" ? "flex flex-row gap-4 justify-between h-full" : ""}>
         <Teeth selectedTooth={selectedTooth} setSelectedTooth={setSelectedTooth} />
         {selectedTooth !== null && (
-          panelType === "log"
-          ? (
+          panelType === "log" ? (
             // Log Appointment Panel
-            <div>
+            <div className="bg-blue-light rounded-xl p-8">
               <div>
                 <p className="text-blue-dark text-lg font-bold">Tooth {selectedTooth}</p>
-                <Accordion type="single" collapsible className="mb-4 w-60">
+                <Accordion type="single" collapsible className="bg-background rounded-xl px-4 mt-2 mb-4 w-full">
                   <AccordionItem value="item-1">
                     <AccordionTrigger className="text-blue-dark font-medium">Conditions</AccordionTrigger>
                     <AccordionContent className="p-4 max-h-20 overflow-y-auto">
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Decayed</p>
+                        <Checkbox /><p>Decayed</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Missing due to Caries</p>
+                        <Checkbox /><p>Missing due to Caries</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Filled</p>
+                        <Checkbox /><p>Filled</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Caries indicated for Extension</p>
+                        <Checkbox /><p>Caries indicated for Extension</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Root Fragment</p>
+                        <Checkbox /><p>Root Fragment</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Missing (other causes)</p>
+                        <Checkbox /><p>Missing (other causes)</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Impacted Tooth</p>
+                        <Checkbox /><p>Impacted Tooth</p>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -62,36 +54,28 @@ const Odontogram: React.FC<OdontogramProps> = ({panelType = "default"}) => {
                     <AccordionTrigger className="text-blue-dark font-medium">Restorations</AccordionTrigger>
                     <AccordionContent className="flex flex-col gap-2 p-4 max-h-20 overflow-y-auto">
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Jacket Crown</p>
+                        <Checkbox /><p>Jacket Crown</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Amalgam Filling</p>
+                        <Checkbox /><p>Amalgam Filling</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Abutment</p>
+                        <Checkbox /><p>Abutment</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Pontic</p>
+                        <Checkbox /><p>Pontic</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Inlay</p>
+                        <Checkbox /><p>Inlay</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Fixed Cure Composite</p>
+                        <Checkbox /><p>Fixed Cure Composite</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Sealant</p>
+                        <Checkbox /><p>Sealant</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Removable Denture</p>
+                        <Checkbox /><p>Removable Denture</p>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -99,20 +83,16 @@ const Odontogram: React.FC<OdontogramProps> = ({panelType = "default"}) => {
                     <AccordionTrigger className="text-blue-dark font-medium">Treatments</AccordionTrigger>
                     <AccordionContent className="flex flex-col gap-2 p-4 max-h-20 overflow-y-auto">
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Extraction (Caries)</p>
+                        <Checkbox /><p>Extraction (Caries)</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Extraction (other causes)</p>
+                        <Checkbox /><p>Extraction (other causes)</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Congenitally Missing</p>
+                        <Checkbox /><p>Congenitally Missing</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Checkbox />
-                        <p>Supernumerary</p>
+                        <Checkbox /><p>Supernumerary</p>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -126,13 +106,18 @@ const Odontogram: React.FC<OdontogramProps> = ({panelType = "default"}) => {
                   placeholder="Add your notes here..."
                 />
               </div>
-              <div className="flex gap-2 py-6">
-                <Button onClick={() => setSelectedTooth(null)}>Cancel</Button>
+              <div className="flex justify-end gap-2 py-6">
+                <Button
+                  onClick={() => setSelectedTooth(null)}
+                  variant="outline"
+                  className="bg-blue-light text-blue-dark border-blue-primary hover:text-blue-dark hover:bg-background"
+                >
+                  Cancel
+                </Button>
                 <Button onClick={() => setSelectedTooth(null)}>Save</Button> {/* TO DO: implement backend for Save */}
               </div>
             </div>
-          )
-          : (
+          ) : (
           // Tooth Details Panel
           <div className="border-2 border-blue-primary rounded-xl p-8 space-y-8">
             <p className="text-blue-dark text-lg font-bold mb-4">Tooth {selectedTooth}</p>

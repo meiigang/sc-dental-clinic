@@ -26,49 +26,40 @@ export function LogAppointment({ open, onOpenChange, onCancelLog }: LogAppointme
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[80vw] max-h-[90vh] overflow-y-auto p-8 rounded-xl">
         {/* Centered Header */}
-        <DialogHeader className="w-full mb-6">
+        <DialogHeader className="w-full mb-2">
           <div className="w-full flex justify-center">
-            <DialogTitle className="text-2xl font-bold text-blue-dark">
+            <DialogTitle className="text-3xl font-bold text-blue-dark">
               Log Appointment
             </DialogTitle>
           </div>
         </DialogHeader>
-
         {/* Page Content */}
-<div className="">
-{page === "odontogram" ? (
-  <>
-    {/* Just render Odontogram directly */}
-    <Odontogram panelType="log" />
-
-    {/* Navigation Button to Billing */}
-    <div className="flex justify-center mt-4">
-      <Button onClick={() => setPage("billing")}>
-        Billing →
-      </Button>
-    </div>
-  </>
-) : (
-  <>
-    <div className="w-full border border-gray-200 rounded-xl p-6 shadow-sm bg-white">
-      <SalesBilling/>
-    </div>
-
-    {/* Navigation Button back to Odontogram */}
-    <div className="flex justify-center mt-4">
-      <Button onClick={() => setPage("odontogram")}>
-        ← Odontogram
-      </Button>
-    </div>
-  </>
-)}
-
-</div>
-
-
-
+        {/* Appointment Details */}
+        {/* (TO DO: data fetching for patient, date, service) */}
+        <div className="bg-blue-light rounded-2xl flex flex-row items-center gap-8 py-2 px-4 h-12">
+          <div>
+            <span className="text-small font-bold text-blue-dark">Patient:</span> name
+          </div>
+          <div>
+            <span className="text-small font-bold text-blue-dark">Date:</span> date
+          </div>
+          <div>
+            <span className="text-small font-bold text-blue-dark">Service:</span> service
+          </div>
+        </div>
+        <div className="">
+          {page === "odontogram" ? (
+            <><Odontogram panelType="log" /></>
+          ) : (
+            <>
+              <div className="bg-white border-2 border-blue-primary rounded-xl p-6 shadow-sm w-full">
+                <SalesBilling/>
+              </div>
+            </>
+          )}
+        </div>
         {/* Footer Buttons */}
-        <DialogFooter className="flex justify-end gap-2 mt-8">
+        <DialogFooter className="flex justify-end gap-2">
           <Button
             variant="outline"
             className="text-blue-dark border-blue-primary hover:text-blue-dark hover:bg-blue-light w-fit"
@@ -76,9 +67,24 @@ export function LogAppointment({ open, onOpenChange, onCancelLog }: LogAppointme
           >
             Cancel Log Appointment
           </Button>
-          <Button className="w-fit" onClick={onCancelLog}>
-            Finish Log Appointment
-          </Button>
+          {page === "odontogram" ? (
+            <>
+              {/* Navigation Button to Billing */}
+              <Button onClick={() => setPage("billing")}>
+                Proceed to Billing
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* Navigation Button back to Dental Chart */}
+              <Button onClick={() => setPage("odontogram")}>
+                Go Back to Dental Chart
+              </Button>
+              <Button className="w-fit" onClick={onCancelLog}>
+                Finish Log Appointment
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
