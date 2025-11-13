@@ -3,7 +3,8 @@ import updateAvailabilityHandler from "../api/availability/availabilityHandler.m
 import { 
     getAvailabilityHandler,
     getBookedDatesHandler,
-    getUnavailableSlotsHandler 
+    getUnavailableSlotsHandler,
+    getAvailableWorkdaysHandler
 } from "../api/availability/availabilityHandler.mjs";
 import { authenticateToken } from "../utils/middleware/middleware.mjs";
 
@@ -17,5 +18,6 @@ router.put("/", authenticateToken, updateAvailabilityHandler);
 // These are public because any visitor needs to see what's available.
 router.get("/booked-dates", getBookedDatesHandler);
 router.get("/unavailable-slots", getUnavailableSlotsHandler); // 2. Add the new route
+router.get('/available-workdays', getAvailableWorkdaysHandler);
 
 export default router;

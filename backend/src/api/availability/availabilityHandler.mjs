@@ -124,3 +124,23 @@ export async function getBookedDatesHandler(req, res) {
         res.status(500).json({ message: "Failed to fetch booked dates.", error: error.message });
     }
 }
+
+// For a patient to get the general days of the week the clinic is open.
+export async function getAvailableWorkdaysHandler(req, res) {
+    try {
+        // --- FIX: Removed the incorrect .eq('is_available', true) filter ---
+        const { data, error } = await req.supabase
+            .from('staff_weekly_availability')
+            .select('day_of_the_week');
+
+        if (error) throw error;
+
+        // Create a Set to get unique day numbers, then convert back to an array
+        const availableDays = [...new Set(data.map(item => item.day_of_the_week))];
+
+        res.status(200).json({ availableDays });
+    } catch (error) {
+        console.error("Error fetching available workdays:", error);
+        res.status(500).json({ message: "Failed to fetch available workdays." });
+    }
+}

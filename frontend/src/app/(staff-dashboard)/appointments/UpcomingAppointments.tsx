@@ -34,6 +34,8 @@ type Appt = {
 };
 
 export default function UpcomingAppointments() {
+  const [filterOption, setFilterOption] = useState("All");
+  const [sortOption, setSortOption] = useState("Date");
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -53,16 +55,16 @@ export default function UpcomingAppointments() {
         return;
       }
       try {
-        const response = await fetch("http://localhost:4000/api/appointments", {
+        // --- FIX: Use the correct relative path for the API call ---
+        const response = await fetch("/api/appointments", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error("Failed to fetch appointments");
 
-        const allAppointments: Appt[] = await response.json();
+        const upcomingAppointments: Appt[] = await response.json();
 
-        // Show confirmed bookings only
-        const upcoming = allAppointments.filter((a) => a.status === "confirmed");
-        setAppointments(upcoming);
+        // The backend now sends only upcoming appointments, so no client-side filtering is needed here.
+        setAppointments(upcomingAppointments);
       } catch (error) {
         console.error("Error fetching upcoming appointments:", error);
       } finally {

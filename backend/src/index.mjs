@@ -10,7 +10,7 @@ import availabilityRouter from "./routes/availability.mjs"
 import reservationRouter from "./routes/reservation.mjs";
 import appointmentsRouter from "./routes/appointments.mjs";
 import editProfileRouter from "./routes/editProfile.mjs";
-import notificationRouter from "./routes/notifications.mjs"
+import notificationRouter from "./routes/notifications.mjs";
 
 const app = express();
 const PORT = process.env.PORT || 4000;

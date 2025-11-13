@@ -22,11 +22,11 @@ const NOTIFICATION_CONFIG = {
         containerClasses: 'bg-green-100 border-green-200',
         text: (data: any) => `Your appointment on ${formatDate(data.date)} has been confirmed.`
     },
-    APPOINTMENT_CANCELED: {
+    APPOINTMENT_CANCELLED: {
         icon: <XCircle className="h-6 w-6 text-white" />,
         bgColor: 'bg-red-500',
         containerClasses: 'bg-red-100 border-red-200',
-        text: (data: any) => `Your appointment on ${formatDate(data.date)} has been canceled.`
+        text: (data: any) => `Your appointment on ${formatDate(data.date)} has been cancelled.`
     },
     APPOINTMENT_RESCHEDULED: {
         icon: <Clock className="h-6 w-6 text-white" />,

@@ -76,7 +76,8 @@ export function AppointmentsTable() {
         return;
       }
       try {
-        const response = await fetch("http://localhost:4000/api/appointments", {
+        // --- FIX: Use relative path for API calls ---
+        const response = await fetch("/api/appointments", {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch appointments');
@@ -206,27 +207,51 @@ export function AppointmentsTable() {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return alert("Authentication error.");
 
-    // We only need the appointment data itself, not the old index or type
-    const { index, type, ...updatedAppt } = selectedAppointment;
-
+    // --- FIX: Determine which endpoint to call ---
+    const { id, date, startTime, endTime, status } = selectedAppointment;
     
-    // --- CONFIRMATION FOR CANCELLATION ---
-    // If the status is being changed to 'cancelled', ask for confirmation.
-    if (updatedAppt.status === 'cancelled') {
+    // Find the original appointment to compare against
+    const originalAppointment = appointments.find(a => a.id === id);
+    
+    // Check if date or time has been changed
+    const isRescheduled = originalAppointment && (
+        originalAppointment.date !== date ||
+        originalAppointment.startTime !== startTime ||
+        originalAppointment.endTime !== endTime
+    );
+
+    let endpoint = `/api/appointments/${id}`;
+    let payload: any = {};
+
+    if (isRescheduled) {
+        // If date/time changed, use the full update handler
+        endpoint = `/api/appointments/${id}`;
+        payload = {
+            start_time: `${date}T${startTime}:00`,
+            end_time: `${date}T${endTime}:00`,
+            status: status,
+        };
+    } else {
+        // If ONLY the status (or other minor details) changed, use the new status handler
+        endpoint = `/api/appointments/${id}/status`;
+        payload = { status: status };
+    }
+    // --- END OF FIX ---
+
+    if (status === 'cancelled') {
       if (!confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
-        return; // Stop the function if the user clicks 'Cancel'
+        return;
       }
     }
 
     try {
-      // 1. Call the backend to save the changes
-      const response = await fetch(`http://localhost:4000/api/appointments/${updatedAppt.id}`, {
+      const response = await fetch(endpoint, { // Use the determined endpoint
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(updatedAppt)
+        body: JSON.stringify(payload) // Send the correct payload for the endpoint
       });
 
       if (!response.ok) {
@@ -239,7 +264,7 @@ export function AppointmentsTable() {
       // 2. Update the main appointments list. This will automatically refilter the tabs.
       setAppointments(prev => {
         const indexToUpdate = prev.findIndex(a => a.id === savedAppt.id);
-        if (indexToUpdate === -1) return [savedAppt, ...prev]; // Add if new
+        if (indexToUpdate === -1) return [savedAppt, ...prev];
         const newAppointments = [...prev];
         newAppointments[indexToUpdate] = savedAppt;
         return newAppointments;
@@ -252,7 +277,7 @@ export function AppointmentsTable() {
       setIsModalOpen(false);
       setSelectedAppointment(null);
     }
-};
+  };
 
  const handleCompleteNow = async () => {
     if (!selectedAppointment) return;
@@ -261,7 +286,8 @@ export function AppointmentsTable() {
     if (!token) return alert("Authentication error.");
 
     try {
-      const response = await fetch(`http://localhost:4000/api/appointments/${selectedAppointment.id}/status`, {
+      // --- FIX: Use relative path for API calls ---
+      const response = await fetch(`/api/appointments/${selectedAppointment.id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -323,7 +349,8 @@ export function AppointmentsTable() {
     if (!token) return alert("Authentication error.");
 
     try {
-      const response = await fetch(`http://localhost:4000/api/appointments/${selectedAppointment.id}/status`, {
+      // --- FIX: Use relative path for API calls ---
+      const response = await fetch(`/api/appointments/${selectedAppointment.id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
