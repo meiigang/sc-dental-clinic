@@ -13,6 +13,7 @@ export default function PatientRecords() {
   const [sortOption, setSortOption] = useState("ascending");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterLetter, setFilterLetter] = useState(""); // New state for letter filter
   const PATIENTS_PER_PAGE = 5;
 
   // Fetch patients on mount
@@ -26,14 +27,20 @@ export default function PatientRecords() {
   }, []);
 
   const filteredAndSortedPatients = [...patients]
-  // Filter and sort patients function
+  // Filter patients function
   .filter((patient) => patient.role === "patient")
   .filter((patient) => {
     const fullName = `${patient.first_name} ${patient.middle_name} ${patient.last_name}`.toLowerCase();
     return fullName.includes(searchQuery.toLowerCase());
   })
+  .filter((patient) => {
+    if (!filterLetter || filterLetter === "All") return true; // If no letter is selected or "All", include all
+    return patient.last_name.startsWith(filterLetter); // Filter by last name starting with the selected letter
+  })
   .sort((a, b) => {
-    return a.last_name.localeCompare(b.last_name);
+    const nameA = `${a.last_name}, ${a.first_name} ${a.middle_name}`.toLowerCase();
+    const nameB = `${b.last_name}, ${b.first_name} ${b.middle_name}`.toLowerCase();
+    return sortOption === "ascending" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
   });
 
   // Calculate pagination
@@ -41,10 +48,10 @@ export default function PatientRecords() {
   const startIndex = (currentPage - 1) * PATIENTS_PER_PAGE;
   const displayedPatients = filteredAndSortedPatients.slice(startIndex, startIndex + PATIENTS_PER_PAGE);
 
-  // Reset to page 1 when search or sort changes
+  // Reset to page 1 when search, sort, or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, sortOption]);
+  }, [searchQuery, sortOption, filterLetter]);
 
   // Highlight matching text
   const highlightMatch = (text: string, query: string) => {
@@ -92,6 +99,25 @@ export default function PatientRecords() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+
+          {/* Filter by Letter */}
+          <Select value={filterLetter} onValueChange={setFilterLetter}>
+            <SelectTrigger className="bg-white w-full md:w-auto">
+              <ArrowUpDown className="h-4 w-4" />
+              <SelectValue placeholder="Filter by Letter" />
+            </SelectTrigger>
+            <SelectContent className="bg-white max-h-70 overflow-y-auto"> {/* Added max height and overflow */}
+              <SelectItem value="All">All</SelectItem> {/* Added "All" option */}
+              {Array.from(Array(26)).map((_, index) => {
+                const letter = String.fromCharCode(65 + index); // Generate letters A-Z
+                return (
+                  <SelectItem key={letter} value={letter}>
+                    {letter}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Patient List */}

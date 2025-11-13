@@ -35,6 +35,7 @@ type Appt = {
 
 export default function UpcomingAppointments() {
   const [sortOption, setSortOption] = useState("Date");
+  const [filterOption, setFilterOption] = useState("All");
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortAsc, setSortAsc] = useState<boolean>(true);
