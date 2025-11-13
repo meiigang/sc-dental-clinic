@@ -28,11 +28,15 @@ export default async function reserveAppointmentHandler(req, res){
         const { data: service, error: serviceError} = await req.supabase.from("services").select("estimated_duration").eq("id", service_id).single();
         if (serviceError) throw serviceError;
 
-        // FIX: Treat the incoming date and time as UTC to avoid timezone shifts.
+        // --- FIX: Interpret the incoming time as Philippine Time (UTC+8) ---
         const appointmentDateStr = format(new Date(appointment_date), 'yyyy-MM-dd');
-        const dateTimeStringUTC = `${appointmentDateStr}T${appointment_time}:00.000Z`;
-        const startTime = new Date(dateTimeStringUTC);
+        // Create a string that explicitly includes the +08:00 offset
+        const dateTimeStringPHT = `${appointmentDateStr}T${appointment_time}:00+08:00`;
+        
+        // new Date() will now correctly parse this as 9 AM PHT and know its UTC equivalent is 1 AM.
+        const startTime = new Date(dateTimeStringPHT);
         const endTime = addMinutes(startTime, service.estimated_duration);
+        // --- END OF FIX ---
 
         const { data: dentists, error: dentistsError} = await req.supabase.from("users").select("id").eq("role", "dentist");
         if (dentistsError) throw dentistsError;
