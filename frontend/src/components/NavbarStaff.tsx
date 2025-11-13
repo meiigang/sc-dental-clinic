@@ -33,6 +33,9 @@ export default function NavbarStaff() {
             width={40}
             height={40}
           />
+          <span className="text-lg sm:text-xl font-bold text-blue-light">
+            Sabado-Cuaton Dental Clinic
+          </span>
         </div>
 
         {/* Desktop Menu */}

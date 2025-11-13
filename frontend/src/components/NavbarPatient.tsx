@@ -33,7 +33,7 @@ export default function NavbarPatient() {
             height={40}
           />
           <span className="text-lg sm:text-xl font-bold text-blue-light">
-            Sabado - Cuaton Dental Clinic
+            Sabado-Cuaton Dental Clinic
           </span>
         </div>
 
