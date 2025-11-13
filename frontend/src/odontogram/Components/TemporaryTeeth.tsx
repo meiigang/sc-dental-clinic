@@ -1,39 +1,39 @@
 import React from "react";
 import Tooth from "./Tooth";
-import TemporaryTeeth from "./TemporaryTeeth";
 
-const UPPER_TEETH = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
-const LOWER_TEETH = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+const UPPER_TEMPORARY_TEETH = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
+const LOWER_TEMPORARY_TEETH = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
 
-const TOOTH_IMG_WIDTH = 32;
-const TOOTH_IMG_HEIGHT = 40;
+const TOOTH_IMG_WIDTH = 20; // Smaller than permanent teeth
+const TOOTH_IMG_HEIGHT = 25; // Smaller than permanent teeth
+
 const CENTER_X = 180;
-const CENTER_Y_UPPER = 10; // Y position for upper arch
-const CENTER_Y_LOWER = 380; // Y position for lower arch
+const CENTER_Y_UPPER = 110; // Position inside the permanent upper arch
+const CENTER_Y_LOWER = 290; // Position inside the permanent lower arch
 const SVG_WIDTH = CENTER_X * 2;
-const SVG_HEIGHT = 450;
+const SVG_HEIGHT = 390;
 
 // parabola coefficient for arches (smaller value = wider arch)
-const aUpper = 0.007;
-const aLower = 0.007;
+const aUpper = 0.018;
+const aLower = 0.018;
 
 // parabola coefficient for numbers (smaller value = wider arch)
-const aUpperNumbers = 0.005;
-const aLowerNumbers = 0.005;
+const aUpperNumbers = 0.012;
+const aLowerNumbers = 0.012;
 
 // Spacing for teeth positioning (smaller = tighter)
-const FRONT_TEETH_SPACING = 27;
+const FRONT_TEETH_SPACING = 15;
 const BACK_TEETH_SPACING = 8;
 
 // Spacing for number positioning (separate from teeth)
-const FRONT_NUMBERS_SPACING = 32; // Spacing for center numbers
-const BACK_NUMBERS_SPACING = 15; // Spacing for end numbers
+const FRONT_NUMBERS_SPACING = 28;
+const BACK_NUMBERS_SPACING = 4; // edge
 
 // Distance of numbers from teeth
-const NUMBER_OFFSET_UPPER = 2;
-const NUMBER_OFFSET_LOWER = 55;
+const NUMBER_OFFSET_UPPER = 10;
+const NUMBER_OFFSET_LOWER = 42;
 
-export default function Teeth({
+export default function TemporaryTeeth({
   selectedTooth,
   setSelectedTooth,
 }: {
@@ -84,7 +84,7 @@ export default function Teeth({
 
     // Calculate x positions for numbers (separate calculation)
     const numberXPositions: number[] = [];
-    let numberLeftX = centerX - TOOTH_IMG_WIDTH / 2; // Center the number on tooth
+    let numberLeftX = centerX - TOOTH_IMG_WIDTH / 2;
     for (let i = numTeeth / 2 - 1; i >= 0; i--) {
       numberXPositions[i] = numberLeftX;
       if (i > 0) {
@@ -124,77 +124,65 @@ export default function Teeth({
     return positions;
   }
 
-  const upperPositions = getArchPositions(UPPER_TEETH, CENTER_X, aUpper, CENTER_Y_UPPER, true);
-  const lowerPositions = getArchPositions(LOWER_TEETH, CENTER_X, -aLower, CENTER_Y_LOWER, false);
+  const upperPositions = getArchPositions(UPPER_TEMPORARY_TEETH, CENTER_X, aUpper, CENTER_Y_UPPER, true);
+  const lowerPositions = getArchPositions(LOWER_TEMPORARY_TEETH, CENTER_X, -aLower, CENTER_Y_LOWER, false);
 
   return (
-    <div style={{background: "bg-blue-light", width: "40%"}}>
-      <svg
-        width={SVG_WIDTH}
-        height={SVG_HEIGHT}
-        style={{ display: "block", overflow: "visible", margin :"0 auto", alignItems: "center" }}
-      >
-        {/* Upper arch (permanent teeth) */}
-        {upperPositions.map(({ x, y, num, numberX, numberY }) => (
-          <g key={num}>
-            <Tooth
-              number={num}
-              positionX={x}
-              positionY={y}
-              onChange={() => {}}
-              onClick={() => setSelectedTooth(num)}
-              selected={selectedTooth === num}
-              showNumber={false}
-              width={TOOTH_IMG_WIDTH}
-              height={TOOTH_IMG_HEIGHT}
-            />
-            <text
-              x={numberX}
-              y={numberY}
-              textAnchor="middle"
-              fontSize="12"
-              fill="#333"
-              style={{ cursor: "pointer" }}
-              onClick={() => setSelectedTooth(num)}
-            >
-              {num}
-            </text>
-          </g>
-        ))}
-        {/* Lower arch (permanent) */}
-        {lowerPositions.map(({ x, y, num, numberX, numberY }) => (
-          <g key={num}>
-            <Tooth
-              number={num}
-              positionX={x}
-              positionY={y}
-              onChange={() => {}}
-              onClick={() => setSelectedTooth(num)}
-              selected={selectedTooth === num}
-              showNumber={false}
-              width={TOOTH_IMG_WIDTH}
-              height={TOOTH_IMG_HEIGHT}
-            />
-            <text
-              x={numberX}
-              y={numberY}
-              textAnchor="middle"
-              fontSize="12"
-              fill="#333"
-              style={{ cursor: "pointer" }}
-              onClick={() => setSelectedTooth(num)}
-            >
-              {num}
-            </text>
-          </g>
-        ))}
-
-        {/* Temporary teeth positioned inside permanent teeth */}
-        <TemporaryTeeth
-          selectedTooth={selectedTooth}
-          setSelectedTooth={setSelectedTooth}
-        />
-      </svg>
-    </div>
+    <g> {/* Use <g> since this will be inside the main SVG */}
+      {/* Upper temporary arch */}
+      {upperPositions.map(({ x, y, num, numberX, numberY }) => (
+        <g key={num}>
+          <Tooth
+            number={num}
+            positionX={x}
+            positionY={y}
+            onChange={() => {}}
+            onClick={() => setSelectedTooth(num)}
+            selected={selectedTooth === num}
+            showNumber={false}
+            width={TOOTH_IMG_WIDTH}
+            height={TOOTH_IMG_HEIGHT}
+          />
+          <text
+            x={numberX}
+            y={numberY}
+            textAnchor="middle"
+            fontSize="10" // Smaller font for temporary teeth
+            fill="#666" // Different color to distinguish from permanent teeth
+            style={{ cursor: "pointer" }}
+            onClick={() => setSelectedTooth(num)}
+          >
+            {num}
+          </text>
+        </g>
+      ))}
+      {/* Lower temporary arch */}
+      {lowerPositions.map(({ x, y, num, numberX, numberY }) => (
+        <g key={num}>
+          <Tooth
+            number={num}
+            positionX={x}
+            positionY={y}
+            onChange={() => {}}
+            onClick={() => setSelectedTooth(num)}
+            selected={selectedTooth === num}
+            showNumber={false}
+            width={TOOTH_IMG_WIDTH}
+            height={TOOTH_IMG_HEIGHT}
+          />
+          <text
+            x={numberX}
+            y={numberY}
+            textAnchor="middle"
+            fontSize="10" // Smaller font for temporary teeth
+            fill="#666" // Different color to distinguish from permanent teeth
+            style={{ cursor: "pointer" }}
+            onClick={() => setSelectedTooth(num)}
+          >
+            {num}
+          </text>
+        </g>
+      ))}
+    </g>
   );
 }

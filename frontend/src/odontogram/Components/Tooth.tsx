@@ -9,6 +9,8 @@ type ToothProps = {
   onClick: () => void;
   selected: boolean;
   showNumber?: boolean;
+  width?: number;
+  height?: number;
 };
 
 type Cavities = {
@@ -85,7 +87,7 @@ const initialState: ToothState = {
   Fracture: 0
 };
 
-const Tooth: React.FC<ToothProps> = ({ number, positionX, positionY, onChange, onClick, selected, showNumber = true }) => {
+const Tooth: React.FC<ToothProps> = ({ number, positionX, positionY, onChange, onClick, selected, showNumber = true, width = 32, height = 40 }) => {
   const [toothState, dispatch] = useReducer(reducer, initialState);
 
   const firstUpdate = useRef(true);
@@ -161,16 +163,16 @@ const Tooth: React.FC<ToothProps> = ({ number, positionX, positionY, onChange, o
         href={`/images/teeth/tooth${number}.png`}
         x="0"
         y="0"
-        width="32"
-        height="40"
+        width={width}
+        height={height}
         style={{ pointerEvents: "all" }}
       />
       {drawToothActions()}
       {/* Conditionally render the number on the tooth if showNumber is true */}
       {showNumber && (
         <text
-          x="16"
-          y="20"
+          x={width / 2}
+          y={height / 2}
           textAnchor="middle"
           fontSize="10"
           fill="blue"
