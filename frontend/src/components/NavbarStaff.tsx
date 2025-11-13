@@ -13,7 +13,7 @@ export default function NavbarStaff() {
   const router = useRouter();
 
   // MODIFICATION: Removed 'Notifications' from this array
-  const links: string[] = ["Appointments", "Patient Records", "Services", "Dashboard", "Log Out"];
+  const links: string[] = ["Appointments", "Patient Records", "Sales", "Services", "Dashboard", "Log Out"];
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();

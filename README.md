@@ -34,4 +34,4 @@ You can start editing by modifying any `page.tsx` file. The page auto-updates as
 - Backend on rescheduling of appointments is to be implemented.
 - Dental chart management is unfinished. Frontend needs polishing and no backend has been implemented yet.
 ### Sprint 4: Sales Management
-- UI for Sales page is to be created.
+- Sales page has been created. Backend has yet to be implemented.
