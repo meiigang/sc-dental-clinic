@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Define the shape of a notification
 interface Notification {
@@ -16,61 +15,59 @@ interface Notification {
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
-  markAllAsReadInUI: () => void; // <-- Add this function type
+  markAllAsReadInUI: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const supabase = createClientComponentClient();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      // Ensure user is logged in before fetching
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      // --- FIX: Use your custom JWT for authentication ---
+      // 1. Check for the token in both localStorage and sessionStorage
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+      // 2. If no token is found, the user is not logged in. Stop.
+      if (!token) {
+        console.warn("[NotificationContext] No auth token found. User is not logged in.");
         setNotifications([]);
         setUnreadCount(0);
-        return; // Stop if no user
+        return;
       }
 
+      // 3. If a token is found, proceed with the API call.
       try {
-        // Fetch from your backend API endpoint.
-        // This assumes your Next.js app can proxy requests to your Express backend.
-        // You may need to configure rewrites in next.config.js or use the full backend URL.
-        const response = await fetch('/api/notifications'); 
+        const response = await fetch('/api/notifications', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          }
+        }); 
         
         if (!response.ok) {
-          // Don't throw an error, just log it, so the app doesn't crash on a failed poll
-          console.error('Failed to fetch notifications:', response.statusText);
+          console.error('[NotificationContext] Failed to fetch notifications:', response.status, response.statusText);
           return;
         }
 
         const data: Notification[] = await response.json();
-        
+        console.log("[NotificationContext] SUCCESS: Data received from backend:", data);
         setNotifications(data);
         setUnreadCount(data.filter(n => !n.is_read).length);
 
       } catch (error) {
-        console.error("Polling for notifications failed:", error);
+        console.error("[NotificationContext] CRITICAL: The fetch call itself failed.", error);
       }
     };
 
-    // 1. Fetch notifications immediately on component mount
     fetchNotifications();
+    const intervalId = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
+    return () => clearInterval(intervalId);
+  }, []); // The dependency array is now empty as we no longer depend on the supabase client instance here.
 
-    // 2. Set up an interval to poll for new notifications every 30 seconds
-    const intervalId = setInterval(fetchNotifications, 30000); // 30000 ms = 30 seconds
-
-    // 3. Cleanup function to clear the interval when the component unmounts
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [supabase]); // Re-run if the supabase client instance changes
-
-  // NEW: Function to update the UI state directly
   const markAllAsReadInUI = () => {
     setNotifications(currentNotifications => 
       currentNotifications.map(n => ({ ...n, is_read: true }))
@@ -78,7 +75,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setUnreadCount(0);
   };
 
-  const value = { notifications, unreadCount, markAllAsReadInUI }; // <-- Add the new function to the context value
+  const value = { notifications, unreadCount, markAllAsReadInUI };
 
   return (
     <NotificationContext.Provider value={value}>

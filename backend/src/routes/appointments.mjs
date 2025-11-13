@@ -4,7 +4,10 @@ import {
     getAllAppointmentsHandler, 
     updateAppointmentDetailsHandler,
     cancelAppointmentHandler,
-    getMyAppointmentsHandler } from "../api/appointments/appointmentHandler.mjs";
+    getMyAppointmentsHandler,
+    updateAppointmentStatusHandler
+
+} from "../api/appointments/appointmentHandler.mjs";
 
 const router = Router();
 
@@ -21,6 +24,12 @@ router.patch("/:id", authenticateToken, updateAppointmentDetailsHandler);
 
 //CANCEL APPOINTMENT
 router.patch("/:id/cancel", authenticateToken, cancelAppointmentHandler)
+
+//APPOINTMENT RESCHEDULING
+router.patch('/:id', authenticateToken, updateAppointmentDetailsHandler); // This is for rescheduling
+
+//APPOINTMENT STATUS UPDATING
+router.patch('/:id/status', authenticateToken, updateAppointmentStatusHandler); // <-- Add this new route
 
 
 //Patient-side: GET APPOINTMENTS

@@ -9,7 +9,10 @@ export async function getAllAppointmentsHandler(req, res) {
     }
 
     try {
-        // Fetch appointments with explicit joins and include price
+        // --- FIX: Add filters to fetch only upcoming and pending appointments ---
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to the beginning of the current day
+
         const { data, error } = await req.supabase
             .from('appointments')
             .select(`
@@ -21,11 +24,20 @@ export async function getAllAppointmentsHandler(req, res) {
                     user:user_id ( firstName, middleName, lastName )
                 ),
                 service:service_id ( service_name, price )
-            `);
+            `)
+            // Only get appointments with these statuses
+            .in('status', ['pending_approval', 'confirmed'])
+            // And only get appointments from today onwards
+            .gte('start_time', today.toISOString())
+            // Order by the appointment time
+            .order('start_time', { ascending: true });
+        // --- END OF FIX ---
 
         if (error) throw error;
 
         const formattedData = data.map(appt => {
+            // --- FIX: Use the correct time zone for formatting ---
+            const clinicTimeZone = 'Asia/Manila';
             const startTimeUTC = new Date(appt.start_time);
             const endTimeUTC = new Date(appt.end_time);
 
@@ -36,9 +48,9 @@ export async function getAllAppointmentsHandler(req, res) {
 
             return {
                 id: appt.id,
-                date: startTimeUTC.toISOString().split('T')[0],
-                startTime: startTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-                endTime: endTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+                date: startTimeUTC.toLocaleDateString('en-CA', { timeZone: clinicTimeZone }),
+                startTime: startTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone }),
+                endTime: endTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone }),
                 patient: patientName,
                 service: appt.service?.service_name || 'Unknown Service',
                 price: appt.service?.price || 0,
@@ -56,40 +68,24 @@ export async function getAllAppointmentsHandler(req, res) {
 
 // Handler for a staff member to update any detail of an appointment
 export async function updateAppointmentDetailsHandler(req, res) {
+    // This handler is now ONLY for rescheduling (changing date/time)
     // 1. Check for staff authentication
     const user = req.user;
     if (!user || (user.role !== 'staff' && user.role !== 'dentist')) {
-        return res.status(403).json({ message: 'Forbidden: Only staff can perform this action.' });
+        return res.status(403).json({ message: "Forbidden: You do not have permission to perform this action." });
     }
 
-    // 2. Get appointment ID from URL and updated data from body
+    // 2. Get ID and update data
     const { id } = req.params;
-    // Only destructure fields that can actually be updated in this modal
-    const { date, startTime, endTime, status } = req.body;
+    const updateData = req.body;
+    const { status, start_time } = updateData;
 
     if (!id) {
         return res.status(400).json({ message: 'Appointment ID is required.' });
     }
 
-    // 3. Construct the update object, combining date and time into timestamps
-    const updateData = {};
-
-    if (date && startTime) {
-        updateData.start_time = new Date(`${date}T${startTime}`).toISOString();
-    }
-    if (date && endTime) {
-        updateData.end_time = new Date(`${date}T${endTime}`).toISOString();
-    }
-    if (status) updateData.status = status;
-
-    // Check if there's anything to update
-    if (Object.keys(updateData).length === 0) {
-        return res.status(400).json({ message: 'No update data provided.' });
-    }
-
     try {
-        // --- MODIFICATION START ---
-        // 4a. Before updating, fetch the original appointment to get patient details for notification
+        // 3. Fetch the original appointment to get patient ID and original start time
         const { data: originalAppointment, error: fetchOriginalError } = await req.supabase
             .from('appointments')
             .select('start_time, patient:patient_id(user_id)')
@@ -100,62 +96,51 @@ export async function updateAppointmentDetailsHandler(req, res) {
             return res.status(404).json({ message: 'Appointment not found.' });
         }
         const patientUserId = originalAppointment.patient.user_id;
-        // --- MODIFICATION END ---
 
-        // 4b. Update the appointment in Supabase
-        const { error: updateError } = await req.supabase
+        // 4. Update the appointment in Supabase
+        const { data: updatedAppointment, error: updateError } = await req.supabase
             .from('appointments')
             .update(updateData)
-            .eq('id', id);
+            .eq('id', id)
+            .select(`
+                *,
+                patient:patient_id(user:user_id(*)),
+                service:service_id(*)
+            `)
+            .single();
 
-        if (updateError) {
-            console.error('Error updating appointment details:', updateError);
-            return res.status(500).json({ message: 'Failed to update appointment.' });
-        }
+        if (updateError) throw updateError;
 
-        // --- NEW: NOTIFICATION LOGIC ---
+        // --- FIX: Expanded Notification Logic ---
         let notificationType = '';
-        const isRescheduled = updateData.start_time || updateData.end_time;
+        const isRescheduled = start_time && new Date(start_time).getTime() !== new Date(originalAppointment.start_time).getTime();
 
-        if (status === 'confirmed' && !isRescheduled) {
-            notificationType = 'APPOINTMENT_CONFIRMED';
-        } else if (isRescheduled) {
+        if (isRescheduled) {
             notificationType = 'APPOINTMENT_RESCHEDULED';
+        } else if (status === 'confirmed') {
+            notificationType = 'APPOINTMENT_CONFIRMED';
+        } else if (status === 'cancelled') {
+            notificationType = 'APPOINTMENT_CANCELLED'; // Use the correct type from notification-item.tsx
+        } else if (status === 'completed') {
+            notificationType = 'APPOINTMENT_COMPLETED'; // Assuming you have or will add this type
+        } else if (status === 'no_show') {
+            notificationType = 'APPOINTMENT_NO_SHOW'; // Assuming you have or will add this type
         }
 
+        // Only create a notification if a relevant status change occurred
         if (patientUserId && notificationType) {
             await createNotification(
+                req.supabase,
                 patientUserId,
                 notificationType,
                 { 
-                    // For rescheduled, you might want oldDate and newDate
-                    // For now, we'll just send the new date
-                    date: updateData.start_time || originalAppointment.start_time,
+                    date: updatedAppointment.start_time,
                     appointmentId: id 
                 }
             );
         }
-        // --- END NOTIFICATION LOGIC ---
 
-        // 5. Re-fetch the updated record with explicit joins to format it for the frontend
-        const { data: updatedAppointment, error: fetchError } = await req.supabase
-            .from('appointments')
-            .select(`
-                id,
-                start_time,
-                end_time,
-                status,
-                patient:patient_id (
-                    user:user_id ( firstName, middleName, lastName )
-                ),
-                service:service_id ( service_name, price )
-            `)
-            .eq('id', id)
-            .single();
-
-        if (fetchError) throw fetchError;
-
-        // 6. Format the response to match the frontend's data structure
+        const clinicTimeZone = 'Asia/Manila';
         const startTimeUTC = new Date(updatedAppointment.start_time);
         const endTimeUTC = new Date(updatedAppointment.end_time);
         const user = updatedAppointment.patient?.user;
@@ -165,9 +150,9 @@ export async function updateAppointmentDetailsHandler(req, res) {
 
         const formattedAppointment = {
             id: updatedAppointment.id,
-            date: startTimeUTC.toISOString().split('T')[0],
-            startTime: startTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-            endTime: endTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+            date: startTimeUTC.toLocaleDateString('en-CA', { timeZone: clinicTimeZone }),
+            startTime: startTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone }),
+            endTime: endTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone }),
             patient: patientName,
             service: updatedAppointment.service?.service_name || 'Unknown Service',
             price: updatedAppointment.service?.price || 0,
@@ -176,14 +161,85 @@ export async function updateAppointmentDetailsHandler(req, res) {
 
         res.status(200).json({ message: 'Appointment updated successfully.', appointment: formattedAppointment });
 
+
     } catch (error) {
         console.error('Server error:', error);
         res.status(500).json({ message: 'Internal server error.' });
     }
 }
 
+// --- NEW, SIMPLER HANDLER FOR STATUS-ONLY CHANGES ---
+export async function updateAppointmentStatusHandler(req, res) {
+    // 1. Auth Check
+    const user = req.user;
+    if (!user || (user.role !== 'staff' && user.role !== 'dentist')) {
+        return res.status(403).json({ message: "Forbidden" });
+    }
 
-//Handler to cancel appointments
+    // 2. Get ID and new status
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+        return res.status(400).json({ message: 'Status is required.' });
+    }
+
+    try {
+        // 3. Update the appointment and get the patient's user ID for notification
+        const { data: updatedAppointment, error: updateError } = await req.supabase
+            .from('appointments')
+            .update({ status: status })
+            .eq('id', id)
+            .select(`*, patient:patient_id(user_id), service:service_id(*)`)
+            .single();
+
+        if (updateError) throw updateError;
+        if (!updatedAppointment) return res.status(404).json({ message: 'Appointment not found.' });
+
+        // 4. Determine Notification Type based on status
+        const patientUserId = updatedAppointment.patient.user_id;
+        let notificationType = '';
+
+        if (status === 'confirmed') notificationType = 'APPOINTMENT_CONFIRMED';
+        else if (status === 'cancelled') notificationType = 'APPOINTMENT_CANCELLED';
+        else if (status === 'completed') notificationType = 'APPOINTMENT_COMPLETED';
+        else if (status === 'no_show') notificationType = 'APPOINTMENT_NO_SHOW';
+
+        // 5. Send Notification
+        if (patientUserId && notificationType) {
+            await createNotification(
+                req.supabase,
+                patientUserId,
+                notificationType,
+                { appointmentId: id, date: updatedAppointment.start_time }
+            );
+        }
+
+        // 6. Format and send response (same as the other handler)
+        const clinicTimeZone = 'Asia/Manila';
+        const startTimeUTC = new Date(updatedAppointment.start_time);
+        const endTimeUTC = new Date(updatedAppointment.end_time);
+
+        const formattedAppointment = {
+            id: updatedAppointment.id,
+            date: startTimeUTC.toLocaleDateString('en-CA', { timeZone: clinicTimeZone }),
+            startTime: startTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone }),
+            endTime: endTimeUTC.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone }),
+            patient: updatedAppointment.patient?.user?.lastName ? `${updatedAppointment.patient.user.lastName}, ${updatedAppointment.patient.user.firstName}` : 'Unknown',
+            service: updatedAppointment.service?.service_name || 'Unknown',
+            price: updatedAppointment.service?.price || 0,
+            status: updatedAppointment.status
+        };
+        
+        res.status(200).json({ message: 'Appointment status updated.', appointment: formattedAppointment });
+
+    } catch (error) {
+        console.error('Error updating appointment status:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+}
+
+// Handler to cancel appointments
 export async function cancelAppointmentHandler(req, res) {
     // 1. Check for staff authentication
     const user = req.user;
@@ -219,8 +275,9 @@ export async function cancelAppointmentHandler(req, res) {
         const patientUserId = updatedAppointment.patient?.user_id;
         if (patientUserId) {
             await createNotification(
+                req.supabase, // <-- THIS WAS LIKELY MISSING HERE TOO
                 patientUserId,
-                'APPOINTMENT_CANCELED',
+                'APPOINTMENT_CANCELLED',
                 {
                     date: updatedAppointment.start_time,
                     appointmentId: updatedAppointment.id
@@ -255,8 +312,7 @@ export async function getMyAppointmentsHandler(req, res) {
             .single();
 
         if (patientError || !patientRecord) {
-            // This can happen if the user exists but has no patient record yet
-            return res.status(200).json([]); // Return empty array, not an error
+            return res.status(200).json([]);
         }
         const patientId = patientRecord.id;
 
@@ -277,25 +333,27 @@ export async function getMyAppointmentsHandler(req, res) {
 
         // 3. Format the data for the frontend
         const formattedData = data.map(appt => {
-            const dentistUser = appt.dentist?.user;
-            const dentistName = dentistUser ? `Dr. ${dentistUser.firstName} ${dentistUser.lastName}` : 'TBA';
-            
+            const clinicTimeZone = 'Asia/Manila';
+            const startTime = new Date(appt.start_time);
+            const endTime = new Date(appt.end_time);
+
             return {
                 id: appt.id,
-                date: new Date(appt.start_time).toISOString().split('T')[0],
-                startTime: new Date(appt.start_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-                endTime: new Date(appt.end_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+                date: startTime.toLocaleDateString('en-CA', { timeZone: clinicTimeZone }),
+                startTime: startTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone }),
+                endTime: endTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone }),
                 service: appt.service?.service_name || 'Unknown Service',
                 price: appt.service?.price || 0,
-                dentist: dentistName,
+                dentist: appt.dentist?.user?.firstName ? `Dr. ${appt.dentist.user.firstName} ${appt.dentist.user.lastName}` : 'TBA',
                 status: appt.status
             };
+            // --- END OF FIX ---
         });
 
         res.status(200).json(formattedData);
 
     } catch (error) {
-        console.error("Error fetching patient's appointments:", error);
-        res.status(500).json({ message: "An internal server error occurred.", error: error.message });
+        console.error("Error fetching patient appointments:", error);
+        res.status(500).json({ message: "Failed to fetch appointments." });
     }
 }

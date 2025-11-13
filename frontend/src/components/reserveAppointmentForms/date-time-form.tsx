@@ -2,8 +2,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useFormContext } from "@/context/useFormContext";
-import { useState, useEffect } from "react"; // Import hooks
-import { format } from "date-fns"; // Import format
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
 
 // FIX: Generate time slots as UTC strings
 const timeSlots = Array.from({ length: 37 }, (_, i) => {
@@ -18,30 +18,52 @@ export default function DateTimeForm() {
   const date = formValues.date ?? new Date();
   const selectedTime = formValues.selectedTime;
 
-  // --- STATE FOR BACKEND DATA ---
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
   const [unavailableSlots, setUnavailableSlots] = useState<string[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  // --- FIX: Add state for available workdays ---
+  const [availableWorkdays, setAvailableWorkdays] = useState<number[]>([]);
 
-  // --- FETCH BOOKED DATES FOR THE CALENDAR ---
+  // --- FIX: Add useEffect to fetch available workdays ---
+  useEffect(() => {
+    const fetchAvailableWorkdays = async () => {
+      try {
+        const res = await fetch('/api/availability/available-workdays');
+        if (!res.ok) throw new Error("Failed to fetch workdays");
+        const data = await res.json();
+        // Supabase DOW: 0=Sunday, 1=Monday...
+        // JavaScript getDay(): 0=Sunday, 1=Monday...
+        // The numbers match, so no conversion is needed.
+        setAvailableWorkdays(data.availableDays);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchAvailableWorkdays();
+  }, []); // Runs only once on component mount
+
   useEffect(() => {
     const fetchBookedDates = async () => {
       try {
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
-        const res = await fetch(`http://localhost:4000/api/availability/booked-dates?year=${year}&month=${month}`);
+        const res = await fetch(`/api/availability/booked-dates?year=${year}&month=${month}`);
         if (!res.ok) throw new Error("Failed to fetch booked dates");
         const data = await res.json();
-        const dates = data.bookedDates.map((d: string) => new Date(d + 'T00:00:00')); // Ensure correct date parsing
+        // Ensure time part is stripped for accurate date comparison
+        const dates = data.bookedDates.map((d: string) => {
+            const dt = new Date(d);
+            dt.setUTCHours(0, 0, 0, 0);
+            return dt;
+        });
         setBookedDates(dates);
       } catch (error) {
         console.error(error);
       }
     };
     fetchBookedDates();
-  }, [date]); // Re-fetch if the user changes the month in the calendar
+  }, [date]);
 
-  // --- FETCH UNAVAILABLE SLOTS WHEN A DATE IS SELECTED ---
   useEffect(() => {
     if (!date) return;
 
@@ -49,7 +71,8 @@ export default function DateTimeForm() {
       setIsLoadingSlots(true);
       try {
         const dateString = format(date, "yyyy-MM-dd");
-        const res = await fetch(`http://localhost:4000/api/availability/unavailable-slots?date=${dateString}`);
+        // NOTE: Using relative paths is better for production builds
+        const res = await fetch(`/api/availability/unavailable-slots?date=${dateString}`);
         if (!res.ok) throw new Error("Failed to fetch slots");
         const data = await res.json();
         setUnavailableSlots(data.unavailableSlots || []);
@@ -62,7 +85,30 @@ export default function DateTimeForm() {
     };
 
     fetchUnavailableSlots();
-  }, [date]); // Re-runs every time the 'date' changes
+  }, [date]);
+
+  //disable past dates ---
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to the beginning of today to make the whole day selectable
+
+  // --- FIX: Define custom modifiers for styling ---
+  const isBooked = (day: Date) => bookedDates.some(bookedDate => bookedDate.getTime() === day.getTime());
+
+  const modifiers = {
+    fullyBooked: (day: Date) => isBooked(day),
+    //Update 'available' logic to check against workdays ---
+    available: (day: Date) => {
+      const dayOfWeek = day.getDay(); // 0 for Sunday, 1 for Monday, etc.
+      return day >= today && !isBooked(day) && availableWorkdays.includes(dayOfWeek);
+    },
+  };
+
+  const modifierClassNames = {
+    // Style for fully booked dates (red background)
+    fullyBooked: "bg-red-200 text-red-800 hover:bg-red-300 focus:bg-red-300 aria-selected:bg-red-400 aria-selected:text-white",
+    // Style for available dates (green background)
+    available: "bg-green-200 text-green-800 hover:bg-green-300 focus:bg-green-300 aria-selected:bg-green-400 aria-selected:text-white",
+  };
 
   return (
     <div className="bg-blue-light rounded-xl p-12">
@@ -72,12 +118,14 @@ export default function DateTimeForm() {
           <Calendar
             mode="single"
             selected={date}
-            onSelect={d => updateFormValues({ date: d, selectedTime: undefined })} // Reset time on new date
+            onSelect={d => updateFormValues({ date: d, selectedTime: undefined })}
             defaultMonth={date}
-            disabled={bookedDates} // Use state for disabled dates
+            // Disable past dates and fully booked dates from being selected
+            disabled={[{ before: today }, ...bookedDates]}
             showOutsideDays={false}
-            modifiers={{ booked: bookedDates }}
-            modifiersClassNames={{ booked: "[&>button]:line-through opacity-100" }}
+            // Apply the new modifiers and styles
+            modifiers={modifiers}
+            modifiersClassNames={modifierClassNames}
             className="p-0 [--cell-size:--spacing(10)]"
             formatters={{
               formatWeekdayName: date => date.toLocaleString('en-US', { weekday: 'short' })
