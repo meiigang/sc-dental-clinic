@@ -10,6 +10,7 @@ import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
 import AvailabilityInputs from "@/components/availability-inputs"
 import { AppointmentsTable } from "@/components/appointments-table"
 import UpcomingAppointments from "../appointments/UpcomingAppointments";
+import StaffTable from "@/components/StaffTable"
 
 export default function StaffDashboard() {
   // Extract token variables
@@ -133,6 +134,109 @@ export default function StaffDashboard() {
                   />
                 </DialogContent>
               </Dialog>
+
+              {/* Add New Staff Modal */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-green-600 text-white hover:bg-green-700 w-full">
+                    <RiPencilFill /> Register New Staff
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold text-blue-dark">
+                      Register New Staff
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  <form
+                    className="flex flex-col gap-4 mt-4"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      const newUser = {
+                        firstName: formData.get("firstName"),
+                        lastName: formData.get("lastName"),
+                        email: formData.get("email"),
+                        contactNumber: formData.get("contactNumber"),
+                        password: formData.get("password"),
+                        role: "staff",
+                      };
+
+                      try {
+                        const res = await fetch("/api/users", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(newUser),
+                        });
+
+                        if (!res.ok) {
+                          throw new Error("Failed to register new staff");
+                        }
+
+                        const result = await res.json();
+                        alert(`✅ Staff ${result.firstName} registered successfully!`);
+                        e.currentTarget.reset();
+                      } catch (err: any) {
+                        console.error("Registration error:", err);
+                        alert("❌ Error creating staff account. Please try again.");
+                      }
+                    }}
+                  >
+                    <div className="grid gap-3">
+                      <label className="font-semibold text-blue-dark">First Name</label>
+                      <input
+                        type="text"
+                        name="firstName"
+                        className="border border-gray-300 rounded-md px-3 py-2"
+                        required
+                      />
+
+                      <label className="font-semibold text-blue-dark">Last Name</label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        className="border border-gray-300 rounded-md px-3 py-2"
+                        required
+                      />
+
+                      <label className="font-semibold text-blue-dark">Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        className="border border-gray-300 rounded-md px-3 py-2"
+                        required
+                      />
+
+                      <label className="font-semibold text-blue-dark">Contact Number</label>
+                      <input
+                        type="tel"
+                        name="contactNumber"
+                        className="border border-gray-300 rounded-md px-3 py-2"
+                      />
+
+                      <label className="font-semibold text-blue-dark">Password</label>
+                      <input
+                        type="password"
+                        name="password"
+                        className="border border-gray-300 rounded-md px-3 py-2"
+                        required
+                      />
+
+                      <input type="hidden" name="role" value="staff" />
+
+                      <Button
+                        type="submit"
+                        className="bg-green-600 text-white hover:bg-green-700 mt-3"
+                      >
+                        Create Staff Account
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
             </div>
           </div>
         </div>
@@ -144,18 +248,22 @@ export default function StaffDashboard() {
         </div>
 
         {/* Upcoming Appointments */}
-        <div className="mt-50">
+        <div className="py-20">
           <UpcomingAppointments />
         </div>
+        
+        {/* Staff Accounts Table */}
+        <div className="py-20">
+          <StaffTable />
+        </div>
 
-          { /* Recently Viewed Patient Records */ }
-          <div className="mt-50">
-            <h1 className="text-3xl font-bold text-blue-dark">Recently Viewed Patient Records</h1>
-          </div>
-
-          {/* Recently Viewed Patient Records */ }
+        { /* Recently Viewed Patient Records */ }
+        <div className="py-20">
+          <h1 className="text-3xl font-bold text-blue-dark">Recently Viewed Patient Records</h1>
           <div className="bg-blue-light p-5 rounded-2xl mt-4 w-full h-128 flex items-center justify-center overflow-y-auto">
           </div>
+        </div>
+
       </div>
     </main>
   );
