@@ -37,10 +37,6 @@ export default function UpcomingAppointments() {
   const [sortOption, setSortOption] = useState("Date");
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // filter: Today is the default (fixed shown). Additional filter options: This Week, This Month, All
-  const [filterOption, setFilterOption] = useState<"Today" | "This Week" | "This Month" | "All">("Today");
-  // sort: by date, asc/desc toggle
   const [sortAsc, setSortAsc] = useState<boolean>(true);
 
   useEffect(() => {

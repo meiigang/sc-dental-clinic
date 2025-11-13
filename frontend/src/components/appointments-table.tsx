@@ -51,7 +51,8 @@ const formatStatusForDisplay = (status: Appointment['status']) => {
   }
 };
 
-export function AppointmentsTable() {
+// --- FIX: Add patientId to the component's props ---
+export function AppointmentsTable({ patientId }: { patientId?: string | number }) {
   const [page, setPage] = useState(1);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
@@ -67,7 +68,7 @@ export function AppointmentsTable() {
   const [activeTab, setActiveTab] = useState<"reserved" | "booked" | "completed" | "cancelled">("reserved");
   const rowsPerPage = 10;
   
-  // Fetch data from the backend when the component mounts
+  // Fetch data from the backend when the component mounts or patientId changes
   useEffect(() => {
     const fetchAppointments = async () => {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -76,10 +77,17 @@ export function AppointmentsTable() {
         return;
       }
       try {
-        // --- FIX: Use relative path for API calls ---
-        const response = await fetch("/api/appointments", {
+        // --- FIX: Build the URL dynamically based on whether patientId is present ---
+        let url = "/api/appointments";
+        if (patientId) {
+          url += `?patientId=${patientId}`;
+        }
+
+        const response = await fetch(url, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        // --- END OF FIX ---
+
         if (!response.ok) throw new Error('Failed to fetch appointments');
         const allAppointments: Appointment[] = await response.json();
         setAppointments(allAppointments);
@@ -89,7 +97,7 @@ export function AppointmentsTable() {
       }
     };
     fetchAppointments();
-  }, []);
+  }, [patientId]); // --- FIX: Add patientId to the dependency array ---
 
   // 1. Memoize appointments into their respective tab categories
   const reservedAppointments = useMemo(

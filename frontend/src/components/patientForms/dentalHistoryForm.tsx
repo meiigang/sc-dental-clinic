@@ -30,12 +30,17 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onS
     }
   });
 
-  // Reset form when initialValues change (for read-only display)
+  // Reset form when initialValues change
   useEffect(() => {
     if (initialValues) {
-      dentalForm.reset(initialValues);
+      // --- FIX: Map snake_case from props to camelCase for the form ---
+      const mappedValues = {
+        previousDentist: initialValues.previous_dentist || "",
+        lastDentalVisit: initialValues.last_dental_visit ? new Date(initialValues.last_dental_visit) : undefined,
+      };
+      dentalForm.reset(mappedValues);
     }
-  }, [initialValues]);
+  }, [initialValues, dentalForm]);
 
   // Use states for buttons and fields
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -71,7 +76,8 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onS
   }, []);
 
   useEffect(() => {
-    if (!patientId) return;
+    // --- FIX: Only fetch data if initialValues are NOT provided ---
+    if (initialValues || !patientId) return;
 
     async function fetchDentalHistory() {
       try {
@@ -101,7 +107,7 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onS
     }
 
     fetchDentalHistory();
-  }, [patientId, dentalForm]);
+  }, [patientId, dentalForm, initialValues]); // Add initialValues to dependency array
 
   const lastDentalVisit = dentalForm.watch("lastDentalVisit");
 

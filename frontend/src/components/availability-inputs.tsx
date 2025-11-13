@@ -73,9 +73,8 @@ export default function AvailabilityInputs() {
     const [dateDialogOpen, setDateDialogOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [dateSlots, setDateSlots] = useState<TimeSlot[]>([{ from: "09:00", to: "17:00" }]);
-    const [isLoading, setIsLoading] = useState(true); // Changed initial state to true
+    const [isLoading, setIsLoading] = useState(true);
 
-    // FIX: This useEffect is now the single source of truth for fetching data.
     useEffect(() => {
       const fetchAvailability = async () => {
         setIsLoading(true);
@@ -86,7 +85,7 @@ export default function AvailabilityInputs() {
         }
 
        try {
-          const response = await fetch("http://localhost:4000/api/availability", {
+          const response = await fetch("/api/availability", {
             headers: { "Authorization": `Bearer ${token}` }
           });
 
@@ -94,19 +93,23 @@ export default function AvailabilityInputs() {
           
           const data = await response.json();
 
-          // 1. Transform Weekly Data from backend format to UI format
-          const weeklyDataFromAPI = { ...defaultTimes };
+          // --- FIX: Create a deep copy to prevent mutation across renders ---
+          // This creates a new object with new, empty arrays for each day.
+          const newWeeklyData: WeeklyAvailability = Object.fromEntries(
+            Object.keys(defaultTimes).map(day => [day, []])
+          );
+          // --- END OF FIX ---
+
           if (data.weekly) {
             data.weekly.forEach((item: WeeklySlot) => {
               const dayKey = numberToDayKey[item.day_of_the_week];
               if (dayKey) {
-                weeklyDataFromAPI[dayKey].push({ from: item.start_time, to: item.end_time });
+                newWeeklyData[dayKey].push({ from: item.start_time, to: item.end_time });
               }
             });
           }
 
-          // 2. Transform Overrides Data from backend format to UI format
-          const overridesDataFromAPI = data.overrides ? data.overrides.map((item: any) => {
+          const newOverridesData = data.overrides ? data.overrides.map((item: any) => {
             const [year, month, day] = item.override_date.split('-').map(Number);
             return {
               date: new Date(year, month - 1, day),
@@ -114,11 +117,10 @@ export default function AvailabilityInputs() {
             };
           }) : [];
 
-          // 3. Set both the UI state and the initial state for dirty checking
-          setAvailability(weeklyDataFromAPI);
-          setDateSpecific(overridesDataFromAPI);
-          setInitialAvailability(weeklyDataFromAPI);
-          setInitialDateSpecific(overridesDataFromAPI);
+          setAvailability(newWeeklyData);
+          setDateSpecific(newOverridesData);
+          setInitialAvailability(newWeeklyData);
+          setInitialDateSpecific(newOverridesData);
 
         } catch (error) {
           console.error("Error fetching availability:", error);

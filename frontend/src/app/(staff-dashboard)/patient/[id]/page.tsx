@@ -72,6 +72,11 @@ export default function PatientRecord() {
     window.location.replace("/login");
   }
 
+  // --- FIX: Dynamically get the year from the fetched data ---
+  const patientSinceYear = personalInfo?.patient?.patient_since 
+    ? new Date(personalInfo.patient.patient_since).getFullYear() 
+    : 'N/A';
+
   return (
     <main>
       <div className="page-container px-50 py-20 space-y-6 min-h-screen">
@@ -94,7 +99,8 @@ export default function PatientRecord() {
               <div className="flex flex-col gap-4">
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userEmail}</span>
                 <span className="px-4 py-2 rounded-2xl font-medium text-dark">{userContact}</span>
-                <span className="px-4 py-2 rounded-2xl font-medium text-dark">year</span>
+                {/* --- FIX: Replace hardcoded "year" with the dynamic variable --- */}
+                <span className="px-4 py-2 rounded-2xl font-medium text-dark">{patientSinceYear}</span>
                 <div className="flex items-center gap-2">
                   <span className={`px-4 py-2 rounded-2xl font-medium ${
                     editingPatient.status === "Active"
@@ -162,8 +168,12 @@ export default function PatientRecord() {
             <AccordionItem value="item-1">
               <AccordionTrigger className="text-blue-dark text-xl font-semibold">Personal Information</AccordionTrigger>
               <AccordionContent className="flex flex-col gap-4 text-balance">
+                {/* --- FIX: Pass the single patient object directly --- */}
                 {personalInfo && personalInfo.patient && (
-                  <PersonalInfoForm initialValues={personalInfo.patient[0]} readOnly={true} />
+                  <PersonalInfoForm 
+                    initialValues={personalInfo.patient} 
+                    readOnly={true} 
+                  />
                 )}
               </AccordionContent>
             </AccordionItem>
@@ -179,7 +189,7 @@ export default function PatientRecord() {
               <AccordionTrigger className="text-blue-dark text-xl font-semibold">Medical History</AccordionTrigger>
               <AccordionContent className="flex flex-col gap-4 text-balance">
                 {medicalHistory && medicalHistory.medicalHistory && (
-                  <MedicalHistoryForm initialValues={medicalHistory.medicalHistory[0]} readOnly={true} />
+                  <MedicalHistoryForm initialValues={medicalHistory.medicalHistory} readOnly={true} />
                 )}
               </AccordionContent>
             </AccordionItem>
@@ -189,7 +199,8 @@ export default function PatientRecord() {
         {/* Appointments Table */}
         <div className="py-20">
           <h1 className="text-3xl font-bold text-blue-dark">Appointment History</h1>
-          <AppointmentsTable />
+          {/* --- FIX: Pass the patientId to the AppointmentsTable component --- */}
+          <AppointmentsTable patientId={patientId} />
         </div>
 
         {/* Dental Chart */}
