@@ -88,18 +88,6 @@ export default function PatientRecords() {
             </SelectContent>
           </Select>
 
-          {/* Search */}
-          <div className="relative w-full md:w-auto">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search..."
-              className="bg-white pl-8 w-full md:w-40"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
           {/* Filter by Letter */}
           <Select value={filterLetter} onValueChange={setFilterLetter}>
             <SelectTrigger className="bg-white w-full md:w-auto">
@@ -118,6 +106,18 @@ export default function PatientRecords() {
               })}
             </SelectContent>
           </Select>
+
+          {/* Search */}
+          <div className="relative w-full md:w-auto">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search..."
+              className="bg-white pl-8 w-full md:w-40"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* Patient List */}
