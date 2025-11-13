@@ -46,9 +46,30 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
   // Reset form when initialValues change (for read-only display)
   useEffect(() => {
     if (initialValues) {
-      personalForm.reset(initialValues);
+      // --- FIX: Map from the new nested structure ---
+      const mappedValues = {
+        // Patient fields
+        nickname: initialValues.nickname || "",
+        birthDate: initialValues.birth_date ? new Date(initialValues.birth_date) : undefined,
+        occupation: initialValues.occupation || "", // This is now unambiguously the patient's occupation
+        age: initialValues.age || "",
+        sex: initialValues.sex || "",
+        religion: initialValues.religion || "",
+        nationality: initialValues.nationality || "",
+        homeAddress: initialValues.home_address || "",
+        dentalInsurance: initialValues.dental_insurance || "",
+        effectiveDate: initialValues.effective_date ? new Date(initialValues.effective_date) : undefined,
+        patientSince: initialValues.patient_since ? new Date(initialValues.patient_since) : undefined,
+        // ... other patient fields ...
+        
+        // Emergency Contact fields from the nested object
+        emergencyContactName: initialValues.emergency_contact?.name || "",
+        emergencyContactOccupation: initialValues.emergency_contact?.occupation || "",
+        emergencyContactNumber: initialValues.emergency_contact?.contact_number || "",
+      };
+      personalForm.reset(mappedValues);
     }
-  }, [initialValues]);
+  }, [initialValues, personalForm]);
 
   // Use states for buttons and fields
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -127,12 +148,13 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
 
   // Fetch existing personal info from backend
   useEffect(() => {
-    if (!userId) return;
+    // This condition correctly separates the two use cases (staff-side vs patient-side)
+    if (initialValues || !userId) return;
 
     async function fetchPatientInfo() {
       try {
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-        const res = await fetch(`http://localhost:4000/api/patients/patientPersonalInfo/${userId}`, {
+        const res = await fetch(`/api/patients/patientPersonalInfo/${userId}`, { // Use relative path
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -140,10 +162,12 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
           }
         });
         if (!res.ok) return;
-        const data = await res.json();
-        console.log("Fetched patient info:", data);
+        const data = await res.json(); // data is { patient: { ..., emergency_contact: { ... } } }
+        
         if (data.patient) {
+          // --- FIX: Map from the new nested data structure ---
           const fetchedData = {
+            // Patient fields
             nickname: data.patient.nickname || "",
             birthDate: data.patient.birth_date ? new Date(data.patient.birth_date) : undefined,
             age: data.patient.age || "",
@@ -155,9 +179,11 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
             dentalInsurance: data.patient.dental_insurance || "",
             effectiveDate: data.patient.effective_date ? new Date(data.patient.effective_date) : undefined,
             patientSince: data.patient.patient_since ? new Date(data.patient.patient_since) : undefined,
-            emergencyContactName: data.emergencyContact?.name || "",
-            emergencyContactOccupation: data.emergencyContact?.occupation || "",
-            emergencyContactNumber: data.emergencyContact?.contact_number || "",
+            
+            // Emergency Contact fields from the nested object
+            emergencyContactName: data.patient.emergency_contact?.name || "",
+            emergencyContactOccupation: data.patient.emergency_contact?.occupation || "",
+            emergencyContactNumber: data.patient.emergency_contact?.contact_number || "",
           };
           personalForm.reset(fetchedData);
         }
@@ -167,7 +193,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
     }
 
     fetchPatientInfo();
-  }, [userId, personalForm]);
+  }, [userId, personalForm, initialValues]);
 
   // PATCH or update personal info
   async function updatePersonalInfo(data: z.infer<typeof personalSchema>, userId: string) {

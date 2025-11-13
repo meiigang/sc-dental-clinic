@@ -73,46 +73,40 @@ return res.status(201).json({ message: "Patient and emergency contact created su
 
 //GET Method
 export async function getPatientPersonalInfoHandler(req, res) {
-     const userId = req.params.userId;
+    const idFromParam = req.params.userId;
 
-    if (!userId) {
-        return res.status(400).json({ message: "User ID is required."});
+    if (!idFromParam) {
+        return res.status(400).json({ message: "An ID is required."});
     }
 
-    //Fetch patient info
+    const isNumericId = /^\d+$/.test(idFromParam);
+    const queryColumn = isNumericId ? 'id' : 'user_id';
+
+    //Fetch patient info using the determined column
     const { data: patient, error: patientError } =  await req.supabase
         .from("patients")
-        .select("*")
-        .eq("user_id", userId)
+        .select(`
+            *,
+            emergency_contact:emergency_contacts_id (*)
+        `) // --- FIX: Use Supabase to join and nest the emergency contact data ---
+        .eq(queryColumn, idFromParam)
         .single();
 
-    // Log what was retrieved from the patients table
-    console.log("Fetched patient:", patient);
+    console.log(`Fetched patient by ${queryColumn}:`, patient);
 
     if (patientError || !patient) {
+        if (patientError) console.error("Error fetching patient:", patientError.message);
         return res.status(404).json({ message: "Patient not found." });
     }
 
-    // Optionally, fetch emergency contact if you want to populate those fields too
-    let emergencyContact = null;
-    if (patient.emergency_contacts_id) {
-        const { data: contact, error: contactError } = await req.supabase
-            .from("emergency_contacts")
-            .select("*")
-            .eq("id", patient.emergency_contacts_id)
-            .single();
-        if (!contactError && contact) {
-            emergencyContact = contact;
-        }
-    }
-
-    return res.status(200).json({ patient, emergencyContact });
+    // The 'patient' object now contains an 'emergency_contact' object within it.
+    return res.status(200).json({ patient }); // --- FIX: Return a single, nested object ---
 }
 
 //PATCH Method
 export async function updatePatientPersonalInfoHandler(req, res) {
-    const userId = req.params.userId;
-    if (!userId) {
+    const idFromParam = req.params.userId;
+    if (!idFromParam) {
         return res.status(400).json({ message: "User ID is required." });
     }
 
@@ -131,18 +125,23 @@ export async function updatePatientPersonalInfoHandler(req, res) {
         emergencyContactNumber
     } = req.body;
 
-    // Update emergency contact
-    // Get the patient's emergency_contacts_id
+    // --- FIX: Apply the same robust check to the PATCH handler ---
+    const isNumericId = /^\d+$/.test(idFromParam);
+    const queryColumn = isNumericId ? 'id' : 'user_id';
+    // --- END OF FIX ---
+
+    // Get the patient's emergency_contacts_id using the correct column
     const { data: patient, error: patientError } = await req.supabase
         .from("patients")
         .select("emergency_contacts_id")
-        .eq("user_id", userId)
+        .eq(queryColumn, idFromParam) // Use the dynamic queryColumn
         .single();
 
     if (patientError || !patient) {
         return res.status(404).json({ message: "Patient not found." });
     }
 
+    // Update emergency contact
     if (patient.emergency_contacts_id) {
         await req.supabase
             .from("emergency_contacts")
@@ -154,7 +153,7 @@ export async function updatePatientPersonalInfoHandler(req, res) {
             .eq("id", patient.emergency_contacts_id);
     }
 
-    //Update patient info
+    //Update patient info using the correct column
     const { error: updateError } = await req.supabase
         .from("patients")
         .update({
@@ -169,7 +168,7 @@ export async function updatePatientPersonalInfoHandler(req, res) {
             patient_since: patientSince,
             nickname: nickname
         })
-        .eq("user_id", userId);
+        .eq(queryColumn, idFromParam); // Use the dynamic queryColumn
 
     if (updateError) {
         console.log("Patient update error:", updateError);

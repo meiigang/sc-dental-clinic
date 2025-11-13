@@ -88,13 +88,82 @@ export async function getUnavailableSlotsHandler(req, res) {
     }
 
     try {
-        const { data, error } = await req.supabase.rpc('get_unavailable_slots_for_date', {
-            p_date: date
+        const requestedDate = new Date(date);
+        const dayOfWeek = requestedDate.getDay();
+
+        // 1. Check for a date-specific override for the given date.
+        const { data: override, error: overrideError } = await req.supabase
+            .from('date_specific_hours_override')
+            .select('start_time, end_time, is_unavailable')
+            .eq('override_date', date); // Use the correct 'override_date' column
+
+        if (overrideError) throw overrideError;
+
+        let availableSlots = [];
+
+        if (override && override.length > 0) {
+            // An override exists for this date.
+            const dayOverride = override[0];
+            if (!dayOverride.is_unavailable) {
+                availableSlots.push({ start_time: dayOverride.start_time, end_time: dayOverride.end_time });
+            }
+        } else {
+            // 2. No override found, so fall back to the general weekly availability.
+            const { data: weekly, error: weeklyError } = await req.supabase
+                .from('staff_weekly_availability')
+                .select('start_time, end_time')
+                .eq('day_of_the_week', dayOfWeek);
+            
+            if (weeklyError) throw weeklyError;
+            if (weekly) {
+                availableSlots = weekly;
+            }
+        }
+
+        // --- FIX: Query appointments using a date range on the 'start_time' column ---
+        // 3. Get appointments that are already booked for that day.
+        const requestedDateObj = new Date(date);
+        const nextDayDateObj = new Date(requestedDateObj);
+        nextDayDateObj.setDate(requestedDateObj.getDate() + 1);
+        const nextDayString = nextDayDateObj.toISOString().split('T')[0]; // e.g., '2025-11-19'
+
+        const { data: bookedAppointments, error: appointmentsError } = await req.supabase
+            .from('appointments')
+            .select('start_time, end_time')
+            // Filter where start_time is on or after the beginning of the requested date
+            .gte('start_time', date) 
+            // And where start_time is before the beginning of the next day
+            .lt('start_time', nextDayString)
+            .in('status', ['confirmed', 'pending_approval']);
+        
+        if (appointmentsError) throw appointmentsError;
+        // --- END OF FIX ---
+
+        // 4. Calculate all unavailable slots by combining the above information.
+        const allPossibleSlots = Array.from({ length: 37 }, (_, i) => {
+            const totalMinutes = 9 * 60 + i * 15;
+            const hour = Math.floor(totalMinutes / 60);
+            const minute = totalMinutes % 60;
+            return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
         });
 
-        if (error) throw error;
+        const isSlotAvailable = (slot) => {
+            return availableSlots.some(avail => slot >= avail.start_time && slot < avail.end_time);
+        };
 
-        res.status(200).json({ unavailableSlots: data });
+        const isSlotBooked = (slot) => {
+            // Convert appointment start/end times to HH:MM format for comparison
+            const clinicTimeZone = 'Asia/Manila';
+            return bookedAppointments.some(appt => {
+                const apptStart = new Date(appt.start_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone });
+                const apptEnd = new Date(appt.end_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone });
+                return slot >= apptStart && slot < apptEnd;
+            });
+        };
+
+        const unavailableSlots = allPossibleSlots.filter(slot => !isSlotAvailable(slot) || isSlotBooked(slot));
+        
+        res.status(200).json({ unavailableSlots });
 
     } catch (error) {
         console.error("Error fetching unavailable slots:", error);

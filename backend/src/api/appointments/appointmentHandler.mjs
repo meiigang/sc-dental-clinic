@@ -2,36 +2,30 @@ import { createNotification } from '../notifications/notificationsHandler.mjs';
 
 // Handler for staff to get all appointments
 export async function getAllAppointmentsHandler(req, res) {
-    // 1. Check for staff authentication
-    const user = req.user;
-    if (!user || (user.role !== 'staff' && user.role !== 'dentist')) {
-        return res.status(403).json({ message: "Forbidden: You do not have permission to perform this action." });
-    }
+    // --- FIX: Check for a patientId query parameter ---
+    const { patientId } = req.query;
 
     try {
-        // --- FIX: Add filters to fetch only upcoming and pending appointments ---
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set to the beginning of the current day
-
-        const { data, error } = await req.supabase
+        // Start building the query
+        let query = req.supabase
             .from('appointments')
             .select(`
                 id,
                 start_time,
                 end_time,
                 status,
-                patient:patient_id (
-                    user:user_id ( firstName, middleName, lastName )
-                ),
-                service:service_id ( service_name, price )
-            `)
-            // Only get appointments with these statuses
-            .in('status', ['pending_approval', 'confirmed'])
-            // And only get appointments from today onwards
-            .gte('start_time', today.toISOString())
-            // Order by the appointment time
-            .order('start_time', { ascending: true });
+                patient:patient_id(user:user_id(firstName, middleName, lastName)),
+                service:service_id(service_name, price)
+            `);
+
+        // If a patientId is provided in the URL, add a filter to the query
+        if (patientId) {
+            query = query.eq('patient_id', patientId);
+        }
         // --- END OF FIX ---
+
+        // Execute the final query
+        const { data, error } = await query;
 
         if (error) throw error;
 
