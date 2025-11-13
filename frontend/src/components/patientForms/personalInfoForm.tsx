@@ -351,6 +351,81 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
             />
             <FormField
               control={personalForm.control}
+              name="patientSince"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Patient Since</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      placeholder="MM/DD/YYYY"
+                      disabled={readOnly}
+                      max={today}
+                      value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
+                      onChange={e => {
+                        const val = e.target.value;
+                        field.onChange(val ? new Date(val) : undefined);
+                      }}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                      className={`${hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
+                    />
+                  </FormControl>
+                </FormItem>
+              )} 
+            />
+            <div className="emergency-contact col-span-5 mt-2">
+              <h5 className="text-blue-dark font-semibold">Emergency Contact</h5>
+            </div>
+            <FormField
+              control={personalForm.control}
+              name="emergencyContactName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Full Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Juan Dela Cruz" {...field} 
+                      disabled={readOnly}
+                      className={`${hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="emergencyContactOccupation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Relationship *</FormLabel>
+                  <Input 
+                    {...field}
+                    disabled={readOnly}
+                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
+                  />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={personalForm.control}
+              name="emergencyContactNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-blue-dark">Contact Number *</FormLabel>
+                  <FormControl>
+                    <Input
+                    {...field} 
+                    disabled={readOnly}
+                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <div className="emergency-contact col-span-5 mt-2">
+              <h5 className="text-blue-dark font-semibold">Dental Insurance</h5>
+            </div>
+            <FormField
+              control={personalForm.control}
               name="dentalInsurance"
               render={({field}) => (
                 <FormItem className="col-span-1 md:col-start-1">
@@ -388,79 +463,6 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                   </FormControl>
                 </FormItem>
               )} 
-            />
-            <FormField
-              control={personalForm.control}
-              name="patientSince"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-blue-dark">Patient Since</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      placeholder="MM/DD/YYYY"
-                      disabled={readOnly}
-                      max={today}
-                      value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
-                      onChange={e => {
-                        const val = e.target.value;
-                        field.onChange(val ? new Date(val) : undefined);
-                      }}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                      className={`${hasSubmitted && personalForm.formState.errors.patientSince ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
-                    />
-                  </FormControl>
-                </FormItem>
-              )} 
-            />
-            <div className="emergency-contact col-span-5 mt-2">
-              <h5 
-              className="text-blue-dark font-semibold">Emergency Contact</h5>
-            </div>
-            <FormField
-              control={personalForm.control}
-              name="emergencyContactName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-blue-dark">Full Name *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Juan Dela Cruz" {...field} 
-                      disabled={readOnly}
-                      className={`${hasSubmitted && personalForm.formState.errors.emergencyContactName ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={personalForm.control}
-              name="emergencyContactOccupation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-blue-dark">Occupation *</FormLabel>
-                  <Input 
-                    {...field}
-                    disabled={readOnly}
-                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactOccupation ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
-                  />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={personalForm.control}
-              name="emergencyContactNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-blue-dark">Contact Number *</FormLabel>
-                  <FormControl>
-                    <Input
-                    {...field} 
-                    disabled={readOnly}
-                    className={`${hasSubmitted && personalForm.formState.errors.emergencyContactNumber ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`} />
-                  </FormControl>
-                </FormItem>
-              )}
             />
             {/* If form is in the Register page, Previous and Next buttons appear */}
             {mode === "register" ? (

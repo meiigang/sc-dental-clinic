@@ -36,7 +36,7 @@ export default function StaffDashboard() {
       try {
         const decoded: any = jwtDecode(token);
         setFirstName(decoded.firstName || "User");
-        setFullName(`${decoded.firstName || ""} ${decoded.lastName || ""}`.trim());
+        setFullName(`${decoded.firstName || ""} ${decoded.middleName || ""} ${decoded.lastName || ""}`.trim());
         setUserEmail(decoded.email || "");
         setUserContact(decoded.contactNumber || "");
         setProfilePicture(decoded.profile_picture ||  "/images/img-profile-default.png" );

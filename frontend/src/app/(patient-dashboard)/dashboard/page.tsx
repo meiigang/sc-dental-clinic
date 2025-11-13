@@ -5,8 +5,6 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { RiPencilFill } from "react-icons/ri"
-import { RiLightbulbLine } from 'react-icons/ri'
-import { RiArrowRightUpLine } from "react-icons/ri"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
@@ -37,7 +35,7 @@ export default function PatientDashboard() {
         try {
           const decoded: any = jwtDecode(token);
           setFirstName(decoded.firstName || "User");
-          setFullName(`${decoded.firstName || ""} ${decoded.lastName || ""}`.trim());
+          setFullName(`${decoded.firstName || ""} ${decoded.middleName || ""} ${decoded.lastName || ""}`.trim());
           setUserEmail(decoded.email || "");
           setUserContact(decoded.contactNumber || "");
           setProfilePicture(decoded.profile_picture ||  "/images/img-profile-default.png" );
@@ -130,31 +128,17 @@ export default function PatientDashboard() {
           </div> 
         </div>
 
-        {/* Show dialog box if patient does not have a patient record */}
-        {showPatientDialog && (
-        <div className="dialog-box bg-[#DAE3F6] text-[#082565] p-10 mt-40 rounded-2xl flex flex-row justify-center">
-          <div className="mr-5">
-            <RiLightbulbLine size={35} />
-          </div>
-          <div className="text-container w-170 px-5 text-lg">
-            You need to fill out your <b>Patient Information Record</b> first before you can reserve an appointment.
-            <Link href="/patient-information-record" className="text-[#466BBA] ml-1 inline-flex items-center underline">Take me there<RiArrowRightUpLine /></Link>
-          </div>
-        </div>
-        )}        
-
         {/* Appointments */}
         <div className="mt-50">
-          <h1 className="text-3xl font-bold text-blue-dark">Appointments</h1>
-
-          {/* Appointments Table */}
-          <div className="flex justify-center mt-10">
-           <PatientAppointmentsTable/>
-          </div>
-          <div className="flex justify-center mt-5">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-blue-dark">Appointments</h1>
             <Link href="/reserve-appointment">
               <Button className="bg-blue-primary text-white hover:bg-blue-dark">Reserve Appointment</Button>
             </Link>
+          </div>
+          {/* Appointments Table */}
+          <div className="flex justify-center mt-10">
+           <PatientAppointmentsTable/>
           </div>
         </div>
       </div>

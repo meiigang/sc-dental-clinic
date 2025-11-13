@@ -5,6 +5,7 @@ import "./Odontogram.css"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { X } from "lucide-react"
 
 type OdontogramProps = {
   panelType?: "default" | "log";
@@ -15,14 +16,17 @@ const Odontogram: React.FC<OdontogramProps> = ({panelType = "default"}) => {
 
   return (
     <div className="bg-white rounded-2xl border-2 border-blue-primary p-8 h-128 space-y-8">
-      <div className={panelType === "log" ? "flex flex-row gap-4 justify-between h-full" : ""}>
+      <div className={panelType === "log" ? "flex flex-row gap-4 justify-between h-full" : "flex flex-row gap-4 justify-between"}>
         <Teeth selectedTooth={selectedTooth} setSelectedTooth={setSelectedTooth} />
         {selectedTooth !== null && (
           panelType === "log" ? (
             // Log Appointment Panel
             <div className="bg-blue-light rounded-xl p-8">
               <div>
-                <p className="text-blue-dark text-lg font-bold">Tooth {selectedTooth}</p>
+                <div>
+                  <p className="text-blue-dark text-lg font-bold">Tooth {selectedTooth}</p>
+
+                </div>
                 <Accordion type="single" collapsible className="bg-background rounded-xl px-4 mt-2 mb-4 w-full">
                   <AccordionItem value="item-1">
                     <AccordionTrigger className="text-blue-dark font-medium">Conditions</AccordionTrigger>
@@ -119,18 +123,28 @@ const Odontogram: React.FC<OdontogramProps> = ({panelType = "default"}) => {
             </div>
           ) : (
           // Tooth Details Panel
-          <div className="border-2 border-blue-primary rounded-xl p-8 space-y-8">
-            <p className="text-blue-dark text-lg font-bold mb-4">Tooth {selectedTooth}</p>
+          <div className="bg-blue-light rounded-xl w-72 p-8 space-y-4">
+            <div className="flex justify-between items-center">
+              <p className="text-blue-dark text-lg font-bold">Tooth {selectedTooth}</p>
+              <Button
+                variant="ghost"
+                className="text-blue-dark hover:bg-transparent"
+                onClick={() => setSelectedTooth(null)}
+              >
+                <X />
+              </Button>
+            </div>
             <div className="space-y-4">
               <p className="text-blue-dark">Appointment History</p>
-              <ul className="grid">
+              <ul className="grid gap-2 max-h-40 overflow-y-auto">
                 <li
-                  className="bg-background hover:bg-blue-50 border-blue-primary rounded-lg p-4 mb-2"
+                  className="bg-background text-sm hover:bg-blue-50 border-blue-primary rounded-lg px-4 py-2"
                 >
-                  October 15, 2025 | Surgery
+                  October 15, 2025
+                  <p>Surgery</p>
                 </li>
                 <li
-                  className="bg-background hover:bg-blue-50 border-blue-primary rounded-lg p-4 mb-2"
+                  className="bg-background text-sm hover:bg-blue-50 border-blue-primary rounded-lg px-4 py-2"
                 >
                   October 8, 2025 | Filling
                 </li>
@@ -152,8 +166,6 @@ const Odontogram: React.FC<OdontogramProps> = ({panelType = "default"}) => {
                 Save Notes
               </Button>
             </div>
-            {/* Close Button */}
-            <Button onClick={() => setSelectedTooth(null)}>Close</Button>
           </div>
           )
         )}

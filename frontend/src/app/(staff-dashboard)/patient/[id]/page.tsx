@@ -187,13 +187,13 @@ export default function PatientRecord() {
         </div>
 
         {/* Appointments Table */}
-        <div className="py-20">
+        <div>
           <h1 className="text-3xl font-bold text-blue-dark">Appointment History</h1>
           <AppointmentsTable />
         </div>
 
         {/* Dental Chart */}
-        <div className="py-20">
+        <div>
           <h1 className="text-3xl font-bold text-blue-dark mb-4">Dental Chart</h1>
           <DentalChart />
         </div>
