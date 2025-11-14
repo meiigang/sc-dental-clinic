@@ -6,7 +6,7 @@ import { ArrowUpDown, Search, CheckIcon, ChevronLeft, ChevronRight } from "lucid
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { set } from "zod"
+import { useRecentPatients } from "@/hooks/useRecentPatients" // 1. Import the hook
 
 export default function PatientRecords() {
   const [patients, setPatients] = useState<any[]>([]);
@@ -15,16 +15,26 @@ export default function PatientRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filterLetter, setFilterLetter] = useState(""); // New state for letter filter
   const PATIENTS_PER_PAGE = 5;
+  const { addPatient } = useRecentPatients();
 
   // Fetch patients on mount
   useEffect(() => {
     async function fetchPatients() {
-      const res = await fetch("http://localhost:4000/api/patients/all");
+      // Use a relative path for better portability
+      const res = await fetch("/api/patients/all");
       const data = await res.json();
       setPatients(data.patients || []);
     }
     fetchPatients();
   }, []);
+
+  // 3. Create a handler function to add the patient to the recent list
+  const handlePatientClick = (patient: any) => {
+    const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.trim();
+    if (fullName) {
+      addPatient({ id: patient.id, name: fullName });
+    }
+  };
 
   const filteredAndSortedPatients = [...patients]
   // Filter patients function
@@ -133,7 +143,12 @@ export default function PatientRecords() {
                     key={patient.id}
                     className="bg-background rounded-2xl p-2 md:p-3 lg:p-4 flex items-center gap-3 md:gap-4 hover:bg-blue-accent transition-colors"
                   >
-                    <Link href={`/patient/${patient.id}`} className="flex items-center gap-3 md:gap-4 w-full">
+                    {/* 4. Add the onClick handler to the Link component */}
+                    <Link 
+                      href={`/patient/${patient.id}`} 
+                      className="flex items-center gap-3 md:gap-4 w-full"
+                      onClick={() => handlePatientClick(patient)}
+                    >
                       <Image
                         src={patient.profile_picture || "/images/img-profile-default.png"}
                         alt="User's Profile Picture"

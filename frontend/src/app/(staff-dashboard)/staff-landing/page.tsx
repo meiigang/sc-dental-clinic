@@ -11,6 +11,7 @@ import AvailabilityInputs from "@/components/availability-inputs"
 import { AppointmentsTable } from "@/components/appointments-table"
 import UpcomingAppointments from "../appointments/UpcomingAppointments";
 import StaffTable from "@/components/StaffTable"
+import { RecentPatients } from "@/components/RecentPatients";
 
 export default function StaffDashboard() {
   // Extract token variables
@@ -259,9 +260,9 @@ export default function StaffDashboard() {
 
         { /* Recently Viewed Patient Records */ }
         <div className="py-20">
-          <h1 className="text-3xl font-bold text-blue-dark">Recently Viewed Patient Records</h1>
-          <div className="bg-blue-light p-5 rounded-2xl mt-4 w-full h-128 flex items-center justify-center overflow-y-auto">
-          </div>
+          <h1 className="text-3xl font-bold text-blue-dark mb-4">Recently Viewed Patient Records</h1>
+          {/* 2. Replace the placeholder div with the component */}
+          <RecentPatients />
         </div>
 
       </div>
