@@ -214,7 +214,7 @@ export default function AvailabilityInputs() {
   }
 
   return (
-    <div className="bg-blue-light p-8 rounded-2xl grid-cols-1 md:grid-cols-2 gap-24 mt-4 w-full h-full mx-auto grid">
+    <div className="bg-blue-light p-8 rounded-2xl grid-cols-1 md:grid-cols-2 gap-24 mt-4 w-full h-full mx-auto grid overflow-x-auto">
       {/* Weekly hours column */}
       <div>
         <div className="mb-1 flex items-center gap-2">
@@ -306,35 +306,35 @@ export default function AvailabilityInputs() {
                 Add Availability
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-3xl">
+            <DialogContent className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-3xl max-h-[80vh] overflow-y-auto p-6 rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-blue-dark text-lg font-bold">Select the date you want to set specific hours</DialogTitle>
               </DialogHeader>
               <div className="flex flex-col gap-4">
-                <div className="flex flex-row gap-16">
+                <div className="flex flex-col md:flex-row md:gap-8">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
-                    className="rounded-md border"
+                    className="rounded-md border w-full md:w-1/2 mb-2"
                     initialFocus
                   />
                   {selectedDate && (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 w-full md:w-1/2">
                       {dateSlots.map((slot, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
+                        <div key={idx} className="flex flex-wrap items-center gap-2">
                           <Input
                             type="time"
                             value={slot.from}
                             onChange={e => handleChangeDateSlot(idx, "from", e.target.value)}
-                            className="w-31"
+                            className="w-35 mt-2"
                           />
                           <span className="mx-1">-</span>
                           <Input
                             type="time"
                             value={slot.to}
                             onChange={e => handleChangeDateSlot(idx, "to", e.target.value)}
-                            className="w-31"
+                            className="w-35 mt-2"
                           />
                           <Button
                             type="button"
