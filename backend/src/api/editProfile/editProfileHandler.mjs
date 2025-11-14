@@ -125,13 +125,16 @@ export async function updateUserProfile(req, res){
         return res.status(500).json({ message: "Failed to update user profile.", error: error.message });
     }
 
-    // 3. Create a new token with the updated information
     const newToken = jwt.sign(
         {
             id: updatedUser.id,
             email: updatedUser.email,
             firstName: updatedUser.firstName,
+            middleName: updatedUser.middleName,
             lastName: updatedUser.lastName,
+            nameSuffix: updatedUser.nameSuffix,
+            contactNumber: updatedUser.contactNumber,
+            profile_picture: updatedUser.profile_picture,
             role: updatedUser.role,
         },
         process.env.JWT_SECRET,
@@ -140,6 +143,7 @@ export async function updateUserProfile(req, res){
     // 4. Send the new token back to the frontend
     return res.status(200).json({ 
         message: "User profile updated successfully.",
-        token: newToken 
+        token: newToken,
+        user: updatedUser // Also sending back the user object for good measure
     });
 }
