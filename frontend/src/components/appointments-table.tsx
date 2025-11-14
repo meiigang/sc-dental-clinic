@@ -429,7 +429,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
   };
 
   return (
-    <main className="min-h-screen px-4 sm:px-8 md:px-12 lg:px-20 py-8 space-y-16">
+    <main className="min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-10 sm:py-12 md:py-16 lg:py-20 space-y-8">
       {alertError && (
         <Alert className='bg-destructive dark:bg-destructive/60 text-white w-md mx-auto'>
           <TriangleAlertIcon />
@@ -471,39 +471,70 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
       </div>
 
       {/* --- Table --- */}
-      <section className="max-w-6xl mx-auto bg-blue-light p-6 rounded-2xl shadow-md">
+      <section className="w-full max-w-full sm:max-w-3xl md:max-w-5xl lg:max-w-6xl mx-auto bg-blue-light p-4 sm:p-6 md:p-8 rounded-2xl shadow-md">
         {/* --- TAB BUTTONS --- */}
-        <div className="flex gap-3 mb-6">
-          <Button
-            variant={activeTab === "reserved" ? "default" : "outline"}
-            onClick={() => handleTabChange("reserved")}
-          >
-            Reserved Appointments
-          </Button>
-          <Button
-            variant={activeTab === "booked" ? "default" : "outline"}
-            onClick={() => handleTabChange("booked")}
-          >
-            Booked Appointments
-          </Button>
-          <Button
-            variant={activeTab === "completed" ? "default" : "outline"}
-            onClick={() => handleTabChange("completed")}
-          >
-            Completed Appointments
-          </Button>
-          <Button
-            variant={activeTab === "cancelled" ? "default" : "outline"}
-            onClick={() => handleTabChange("cancelled")}
-          >
-            Cancelled Appointments
-          </Button>
+        <div className="mb-6">
+          {/* Large screens: show buttons */}
+          <div className="hidden lg:flex gap-3 mb-6">
+            <Button
+              variant={activeTab === "reserved" ? "default" : "outline"}
+              onClick={() => handleTabChange("reserved")}
+            >
+              Reserved Appointments
+            </Button>
+            <Button
+              variant={activeTab === "booked" ? "default" : "outline"}
+              onClick={() => handleTabChange("booked")}
+            >
+              Booked Appointments
+            </Button>
+            <Button
+              variant={activeTab === "completed" ? "default" : "outline"}
+              onClick={() => handleTabChange("completed")}
+            >
+              Completed Appointments
+            </Button>
+            <Button
+              variant={activeTab === "cancelled" ? "default" : "outline"}
+              onClick={() => handleTabChange("cancelled")}
+            >
+              Cancelled Appointments
+            </Button>
+          </div>
+
+          {/* Small screens: hamburger menu */}
+          <div className="block lg:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="w-full flex justify-between items-center">
+                  {activeTab === "reserved" && "Reserved"}
+                  {activeTab === "booked" && "Booked"}
+                  {activeTab === "completed" && "Completed"}
+                  {activeTab === "cancelled" && "Cancelled"}
+                  <ChevronDown className="ml-2 w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleTabChange("reserved")}>
+                  Reserved Appointments
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTabChange("booked")}>
+                  Booked Appointments
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTabChange("completed")}>
+                  Completed Appointments
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTabChange("cancelled")}>
+                  Cancelled Appointments
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        
+    
         {/* --- TABLE RENDER --- */}
-        {/* The table structure is the same for all tabs, so we can render it once */}
-        <>
-          <table className="w-full text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+            <table className="w-full min-w-[350vw] sm:min-w-[160vw] md:min-w-[120vw] lg:min-w-full xl:min-w-full text-sm sm:text-base border border-blue-accent rounded-2xl">
             <thead>
               <tr className="bg-blue-accent text-blue-dark font-semibold">
                 <th className="p-3 border border-blue-accent">Date</th>
@@ -549,23 +580,34 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
               ))}
             </tbody>
           </table>
-
-          {/* Pagination */}
-          <div className="flex justify-end items-center mt-4 gap-3">
-            <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
-            <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-          </div>
-        </>
+        </div>
+        {/* Pagination */}
+        <div className="flex justify-center items-center mt-4 gap-3">
+          <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="rounded-full">
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <span className="text-blue-dark font-medium">Page {page} of {totalPages}</span>
+          <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-full">
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
       </section>
 
       {/* --- Edit Modal (staff-only) --- */}
       <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if (!open) setSelectedAppointment(null); }}>
-        <DialogContent className="max-w-[50vw] max-h-[80vh] overflow-y-auto p-6 space-y-4 rounded-2xl">
+        <DialogContent
+        className="
+          w-full 
+          sm:max-w-[90vw]    /* small phones */
+          md:max-w-[70vw]    /* tablets */
+          lg:max-w-[50vw]    /* laptops */
+          xl:max-w-[40vw]    /* large desktops / MacBook 15 inch */
+          max-h-[80vh] 
+          overflow-y-auto 
+          p-6 
+          space-y-4 
+          rounded-2xl"
+        >
 
           <DialogHeader>
             <DialogTitle>Edit Appointment</DialogTitle>
@@ -604,7 +646,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
               <Input value={selectedAppointment.patient} onChange={(e) => setSelectedAppointment({ ...selectedAppointment, patient: e.target.value })} />
 
               <label className="block text-sm font-medium text-gray-700">Service</label>
-<Input value={selectedAppointment.service} onChange={(e) => setSelectedAppointment({ ...selectedAppointment, service: e.target.value })} />
+              <Input value={selectedAppointment.service} onChange={(e) => setSelectedAppointment({ ...selectedAppointment, service: e.target.value })} />
 
               {/* New Status Dropdown inside the form */}
               <label className="block text-sm font-medium text-gray-700">Status</label>
