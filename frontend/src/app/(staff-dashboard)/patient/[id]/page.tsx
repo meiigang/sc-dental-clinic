@@ -11,6 +11,7 @@ import PersonalInfoForm from "@/components/patientForms/personalInfoForm";
 import DentalHistoryForm from "@/components/patientForms/dentalHistoryForm";
 import MedicalHistoryForm from "@/components/patientForms/medicalHistoryForm";
 import DentalChart from "@/components/dental-chart"
+import { useRecentPatients } from "@/hooks/useRecentPatients"; // Import the new hook
 
 export default function PatientRecord() {
   const [personalInfo, setPersonalInfo] = useState<any>(null);
@@ -24,6 +25,8 @@ export default function PatientRecord() {
   const router = useRouter();
   const params = useParams();
   const patientId = params?.id;
+
+  const { addPatient } = useRecentPatients(); // Use the hook
 
   useEffect(() => {
     if (!patientId) return;
@@ -49,6 +52,11 @@ export default function PatientRecord() {
         const personalData = personalRes.ok ? await personalRes.json() : null;
         setPersonalInfo(personalData);
 
+        if (personalData.patient) {
+          const patientName = `${personalData.patient.firstName || ''} ${personalData.patient.lastName || ''}`.trim();
+          addPatient({ id: Number(patientId), name: patientName });
+        }
+
         // Fetch dental history
         const dentalRes = await fetch(`http://localhost:4000/api/patients/patientDentalHistory/${patientId}`);
         const dentalData = dentalRes.ok ? await dentalRes.json() : null;
@@ -65,7 +73,7 @@ export default function PatientRecord() {
       }
     }
     fetchAllPatientData();
-  }, [patientId]);
+  }, [patientId, addPatient]); // Add 'addPatient' to dependency array
 
   const handleLogout = () => {
     localStorage.removeItem("token");
