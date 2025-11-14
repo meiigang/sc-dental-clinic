@@ -36,9 +36,11 @@ const NUMBER_OFFSET_LOWER = 55;
 export default function Teeth({
   selectedTooth,
   setSelectedTooth,
+  modifiedTeeth = new Set(),
 }: {
   selectedTooth: number | null;
   setSelectedTooth: (tooth: number) => void;
+  modifiedTeeth?: Set<number>;
 }) {
   function getParabolaY(x: number, centerX: number, a: number, centerY: number) {
     return a * Math.pow(x - centerX, 2) + centerY;
@@ -147,6 +149,7 @@ export default function Teeth({
               showNumber={false}
               width={TOOTH_IMG_WIDTH}
               height={TOOTH_IMG_HEIGHT}
+              isModified={modifiedTeeth.has(num)}
             />
             <text
               x={numberX}
@@ -174,6 +177,7 @@ export default function Teeth({
               showNumber={false}
               width={TOOTH_IMG_WIDTH}
               height={TOOTH_IMG_HEIGHT}
+              isModified={modifiedTeeth.has(num)}
             />
             <text
               x={numberX}
@@ -193,6 +197,7 @@ export default function Teeth({
         <TemporaryTeeth
           selectedTooth={selectedTooth}
           setSelectedTooth={setSelectedTooth}
+          modifiedTeeth={modifiedTeeth}
         />
       </svg>
     </div>
