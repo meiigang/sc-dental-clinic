@@ -22,6 +22,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { TriangleAlertIcon } from 'lucide-react'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { Filter, ArrowUpDown, ChevronLeft, ChevronRight, CalendarArrowUp, ChevronDown} from "lucide-react";
 import { LogAppointment } from "./log-appointment-modal"
 
@@ -53,6 +55,7 @@ const formatStatusForDisplay = (status: Appointment['status']) => {
 
 // --- FIX: Add patientId to the component's props ---
 export function AppointmentsTable({ patientId }: { patientId?: string | number }) {
+  const [alertError, setAlertError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
@@ -93,7 +96,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
         setAppointments(allAppointments);
       } catch (error) {
         console.error(error);
-        alert("Could not load appointment data.");
+        setAlertError("Could not load appointment data.");
       }
     };
     fetchAppointments();
@@ -427,6 +430,13 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
 
   return (
     <main className="min-h-screen px-4 sm:px-8 md:px-12 lg:px-20 py-8 space-y-16">
+      {alertError && (
+        <Alert className='bg-destructive dark:bg-destructive/60 text-white w-md mx-auto'>
+          <TriangleAlertIcon />
+          <AlertTitle className="font-medium text-left">Your appointment data is not loading.</AlertTitle>
+          <AlertDescription className='text-white/80'>Please try reloading the page or relogging.</AlertDescription>
+        </Alert>
+      )}
       {/* Filter + Sort */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
         <DropdownMenu>

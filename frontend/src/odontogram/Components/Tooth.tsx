@@ -5,152 +5,34 @@ type ToothProps = {
   number: number;
   positionX: number;
   positionY: number;
-  onChange: (number: number, state: ToothState) => void;
+  onChange: (number: number) => void;
   onClick: () => void;
   selected: boolean;
   showNumber?: boolean;
   width?: number;
   height?: number;
+  isModified?: boolean;
 };
 
-type Cavities = {
-  center: number;
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-};
-
-type ToothState = {
-  Cavities: Cavities;
-  Extract: number;
-  Crown: number;
-  Filter: number;
-  Fracture: number;
-};
-
-type Action =
-  | { type: 'crown'; value: number }
-  | { type: 'extract'; value: number }
-  | { type: 'filter'; value: number }
-  | { type: 'fracture'; value: number }
-  | { type: 'carie'; value: number; zone: keyof Cavities | 'all' }
-  | { type: 'clear' };
-
-function setCavities(prevState: ToothState, zone: keyof Cavities | 'all', value: number): Cavities {
-  if (zone === "all") {
-    return {
-      center: value,
-      top: value,
-      bottom: value,
-      left: value,
-      right: value
-    };
-  } else {
-    return {
-      ...prevState.Cavities,
-      [zone]: value
-    };
-  }
-}
-
-function reducer(toothState: ToothState, action: Action): ToothState {
-  switch (action.type) {
-    case 'crown':
-      return { ...toothState, Crown: action.value };
-    case 'extract':
-      return { ...toothState, Extract: action.value };
-    case 'filter':
-      return { ...toothState, Filter: action.value };
-    case 'fracture':
-      return { ...toothState, Fracture: action.value };
-    case 'carie':
-      return { ...toothState, Cavities: setCavities(toothState, action.zone, action.value) };
-    case 'clear':
-      return initialState;
-    default:
-      throw new Error();
-  }
-}
-
-const initialState: ToothState = {
-  Cavities: {
-    center: 0,
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0
-  },
-  Extract: 0,
-  Crown: 0,
-  Filter: 0,
-  Fracture: 0
-};
-
-const Tooth: React.FC<ToothProps> = ({ number, positionX, positionY, onChange, onClick, selected, showNumber = true, width = 32, height = 40 }) => {
-  const [toothState, dispatch] = useReducer(reducer, initialState);
-
-  const firstUpdate = useRef(true);
-  useEffect(() => {
-    if (firstUpdate.current) {
-      firstUpdate.current = false;
-      return;
-    }
-    onChange(number, toothState);
-  }, [toothState, onChange, number]);
-
-  const getClassNamesByZone = (zone: keyof Cavities) => {
-    if (toothState.Cavities) {
-      if (toothState.Cavities[zone] === 1) {
-        return 'to-do';
-      } else if (toothState.Cavities[zone] === 2) {
-        return 'done';
-      }
-    }
-    return '';
-  };
-
+const Tooth: React.FC<ToothProps> = ({
+  number,
+  positionX,
+  positionY,
+  onChange,
+  onClick,
+  selected,
+  showNumber = true,
+  width = 32,
+  height = 40,
+  isModified = false,
+}) => {
   // Tooth position
   const translate = `translate(${positionX},${positionY})`;
 
-  function drawToothActions() {
-    let otherFigures: React.ReactNode = null;
-    if (toothState.Extract > 0) {
-      otherFigures = (
-        <g stroke={toothState.Extract === 1 ? "red" : "blue"}>
-          <line x1="0" y1="0" x2="20" y2="20" strokeWidth="2" />
-          <line x1="0" y1="20" x2="20" y2="0" strokeWidth="2" />
-        </g>
-      );
-    }
-    if (toothState.Fracture > 0) {
-      otherFigures = (
-        <g stroke={toothState.Fracture === 1 ? "red" : "blue"}>
-          <line x1="0" y1="10" x2="20" y2="10" strokeWidth="2"></line>
-        </g>
-      );
-    }
-    if (toothState.Filter > 0) {
-      otherFigures = (
-        <g stroke={toothState.Filter === 1 ? "red" : "blue"}>
-          <line x1="0" y1="20" x2="20" y2="0" strokeWidth="2" />
-        </g>
-      );
-    }
-    if (toothState.Crown > 0) {
-      otherFigures = (
-        <circle
-          cx="10"
-          cy="10"
-          r="10"
-          fill="none"
-          stroke={toothState.Crown === 1 ? "red" : "blue"}
-          strokeWidth="2"
-        />
-      );
-    }
-    return otherFigures;
-  }
+  // Conditionally determine the image path
+  const imagePath = isModified
+    ? `/images/teeth-colored/tooth${number}.png` // Path to colored teeth
+    : `/images/teeth/tooth${number}.png`; // Original image path
 
   return (
     <g
@@ -160,14 +42,13 @@ const Tooth: React.FC<ToothProps> = ({ number, positionX, positionY, onChange, o
       transform={translate}
     >
       <image
-        href={`/images/teeth/tooth${number}.png`}
+        href={imagePath}
         x="0"
         y="0"
         width={width}
         height={height}
         style={{ pointerEvents: "all" }}
       />
-      {drawToothActions()}
       {/* Conditionally render the number on the tooth if showNumber is true */}
       {showNumber && (
         <text
