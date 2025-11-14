@@ -25,7 +25,7 @@ export async function createServiceHandler(req, res){
             price: price,
             unit: unit,
             service_name: name,
-            estimated_duration: duration,
+            estimated_duration: duration, // Store the integer directly
             service_type: type,
             status: status
         }])
@@ -54,7 +54,21 @@ export async function createServiceHandler(req, res){
 
 //GET method for services
 export async function getServicesHandler(req, res) {
-    const { data, error } = await req.supabase.from('services').select('*');
+    
+    //Add filtering based on status query parameter ---
+    const { status } = req.query;
+    let query = req.supabase.from('services').select('*');
+
+    if (status === 'archived') {
+        // If the request asks for archived services, fetch only those.
+        query = query.eq('status', 'Archived');
+    } else {
+        // By default, fetch all services that are NOT archived.
+        query = query.not('status', 'eq', 'Archived');
+    }
+
+    const { data, error } = await query;
+
     if (error) {
         return res.status(500).json({ message: "Failed to fetch services.", error });
     }
@@ -65,7 +79,7 @@ export async function getServicesHandler(req, res) {
         description: s.description,
         price: s.price,
         unit: s.unit,
-        duration: s.estimated_duration,
+        duration: s.estimated_duration, 
         type: s.service_type,
         status: s.status
     }));
@@ -74,6 +88,7 @@ export async function getServicesHandler(req, res) {
 
 //PATCH method for services
 export async function updateServiceHandler(req, res) {
+
     const id = req.params.id;
     if (!id) {
         return res.status(400).json({ message: "Service ID is required." });
@@ -96,7 +111,7 @@ export async function updateServiceHandler(req, res) {
     if (description !== undefined) updateObj.description = description;
     if (price !== undefined) updateObj.price = price;
     if (unit !== undefined) updateObj.unit = unit;
-    if (duration !== undefined) updateObj.estimated_duration = duration;
+    if (duration !== undefined) updateObj.estimated_duration = duration; // Store the integer
     if (type !== undefined) updateObj.service_type = type;
     if (status !== undefined) updateObj.status = status;
 

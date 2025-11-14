@@ -28,9 +28,9 @@ type Service = {
   description: string;
   price: string;
   unit: string;
-  duration: string;
+  duration: number; // Changed to number to store total minutes
   type: string;
-  status: "Available" | "Unavailable";
+  status: "Available" | "Unavailable" | "Archived";
 };
 
 const serviceTypes = [
@@ -52,6 +52,16 @@ const serviceUnits = [
   "/Carpule",
   "U/L"
 ];
+
+// --- NEW: Helper function to format minutes into HHh MMm format ---
+const formatDuration = (totalMinutes: number | null | undefined): string => {
+  if (totalMinutes === null || totalMinutes === undefined || isNaN(totalMinutes)) {
+    return "0h 0m";
+  }
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}m`;
+};
 
 export default function StaffServices() {
   // services state
@@ -88,18 +98,26 @@ export default function StaffServices() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
-    async function fetchServices() {
+    async function fetchAllServices() {
       try {
-        const res = await fetch("http://localhost:4000/api/services");
-        const data = await res.json();
-        if (res.ok && Array.isArray(data.services)) {
-          setServices(data.services);
+        // Fetch active (non-archived) services
+        const activeRes = await fetch("/api/services"); // Use relative path
+        const activeData = await activeRes.json();
+        if (activeRes.ok && Array.isArray(activeData.services)) {
+          setServices(activeData.services);
+        }
+
+        // Fetch archived services
+        const archivedRes = await fetch("/api/services?status=archived"); // Use relative path
+        const archivedData = await archivedRes.json();
+        if (archivedRes.ok && Array.isArray(archivedData.services)) {
+          setArchivedServices(archivedData.services);
         }
       } catch (err) {
-        // handle error
+        console.error("Failed to fetch services:", err);
       }
     }
-    fetchServices();
+    fetchAllServices();
   }, []);
 
   const validateAddForm = () => {
@@ -128,11 +146,12 @@ export default function StaffServices() {
       return;
     }
 
-    const duration = `${hours}h ${minutes}m`;
+    // --- FIX: Calculate total minutes before sending ---
+    const totalMinutes = parseInt(hours, 10) * 60 + parseInt(minutes, 10);
 
     // API call to backend
     try {
-      const res = await fetch("http://localhost:4000/api/services", {
+      const res = await fetch("/api/services", { // Use relative path
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -140,9 +159,9 @@ export default function StaffServices() {
           description: newDescription.trim(),
           price: newPrice,
           unit: newUnit,
-          duration,
+          duration: totalMinutes, // Send total minutes
           type: newType,
-          status: status ? "Available" : "Unavailable",
+          status: status ? "Available" : "Unavailable"
         }),
       });
       const result = await res.json();
@@ -207,7 +226,14 @@ export default function StaffServices() {
       return;
     }
 
-    const result = await updateService(editingService);
+    // --- FIX: Ensure duration is an integer before sending ---
+    // The edit modal should ideally have separate hour/minute inputs.
+    // Assuming editingService.duration is the total minutes as a number.
+    const result = await updateService({
+        ...editingService,
+        duration: Number(editingService.duration) // Ensure it's a number
+    });
+
     if (result && result.service) {
       setServices((prev) =>
         prev.map((s) => (s.id === editingService.id ? result.service : s))
@@ -220,32 +246,42 @@ export default function StaffServices() {
     }
   };
   
-  //Update service
-  const updateService = async (service: Service) => {
+  //Update service (this function is generic and works for archiving too)
+  const updateService = async (service: Partial<Service> & { id: number }) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/services/${service.id}`, {
+      const res = await fetch(`/api/services/${service.id}`, { // Use relative path
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(service),
       });
-      const result = await res.json();
-      return result;
+      return await res.json();
     } catch (err) {
       setError("Failed to update service.");
       return null;
     }
   };
 
-  // archive service (remove from view)
-  const archiveService = (service: Service) => {
-    setServices((prev) => prev.filter((s) => s.id !== service.id));
-    setArchivedServices((prev) => [service, ...prev]);
+  // --- FIX: Convert archiveService to an API call ---
+  const archiveService = async (service: Service) => {
+    const result = await updateService({ id: service.id, status: "Archived" });
+    if (result && result.service) {
+      setServices((prev) => prev.filter((s) => s.id !== service.id));
+      setArchivedServices((prev) => [result.service, ...prev]);
+    } else {
+      alert("Failed to archive service.");
+    }
   };
 
-  // restore service from archive
-  const restoreService = (service: Service) => {
-    setArchivedServices((prev) => prev.filter((s) => s.id !== service.id));
-    setServices((prev) => [service, ...prev]);
+  
+  const restoreService = async (service: Service) => {
+    // When restoring, we'll set it back to 'Available' by default.
+    const result = await updateService({ id: service.id, status: "Available" });
+    if (result && result.service) {
+      setArchivedServices((prev) => prev.filter((s) => s.id !== service.id));
+      setServices((prev) => [result.service, ...prev]);
+    } else {
+      alert("Failed to restore service.");
+    }
   };
 
   // search + filter + sort combined
@@ -559,7 +595,8 @@ export default function StaffServices() {
                   <td className="px-6 py-3">{service.description}</td>
                   <td className="px-6 py-3">₱{service.price}</td>
                   <td className="px-6 py-3">{service.unit}</td>
-                  <td className="px-6 py-3">{service.duration}</td>
+                  {/* --- FIX: Use the formatDuration helper function for display --- */}
+                  <td className="px-6 py-3">{formatDuration(service.duration)}</td>
                   <td className="px-6 py-3">{service.type}</td>
                   <td
                     className={`px-6 py-3 font-medium ${
@@ -668,16 +705,19 @@ export default function StaffServices() {
 
               {/* Duration */}
               <div className="flex flex-col gap-2 md:col-span-2">
-                <label className="font-medium">Estimated Duration *</label>
+                <label className="font-medium">Estimated Duration (in minutes) *</label>
                 <Input
+                  type="number"
+                  min="0"
                   value={editingService.duration}
                   onChange={(e) =>
                     setEditingService({
                       ...editingService,
-                      duration: e.target.value,
+                      duration: parseInt(e.target.value, 10) || 0,
                     })
                   }
                 />
+                <p className="text-sm text-gray-500">Formatted: {formatDuration(editingService.duration)}</p>
               </div>
 
               {/* Description */}
