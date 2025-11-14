@@ -30,10 +30,12 @@ export default function PatientRecords() {
 
   // 3. Create a handler function to add the patient to the recent list
   const handlePatientClick = (patient: any) => {
-    const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.trim();
-    if (fullName) {
-      addPatient({ id: patient.id, name: fullName });
-    }
+    addPatient({ 
+      id: patient.id, 
+      firstName: patient.first_name || '', 
+      lastName: patient.last_name || '',
+      profilePicture: patient.profile_picture || null
+    });
   };
 
   const filteredAndSortedPatients = [...patients]

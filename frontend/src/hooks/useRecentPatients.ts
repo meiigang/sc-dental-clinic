@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-// Define the structure of a patient entry
+// --- FIX: Update the data structure to include more details ---
 export type RecentPatient = {
   id: number;
-  name: string;
+  firstName: string;
+  lastName: string;
+  profilePicture: string | null;
 };
 
 const MAX_RECENT_PATIENTS = 5;
@@ -27,32 +29,10 @@ export const useRecentPatients = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      // Check if the change happened to our specific key
-      if (event.key === STORAGE_KEY && event.newValue) {
-        try {
-          // Update the component's state with the new data
-          setPatients(JSON.parse(event.newValue));
-        } catch (error) {
-          console.error("Failed to parse recent patients from storage event", error);
-        }
-      }
-    };
-
-    // Add the event listener
-    window.addEventListener('storage', handleStorageChange);
-
-    // Cleanup: remove the event listener when the component unmounts
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []); // This effect runs once to set up the listener.
-  // --- END OF FIX ---
-
   // Function to add a patient to the list
   const addPatient = useCallback((patient: RecentPatient) => {
-    if (!patient.id || !patient.name) return;
+    // Guard against adding patients without essential info
+    if (!patient.id || !patient.firstName || !patient.lastName) return;
 
     const updatedPatients = (currentPatients: RecentPatient[]): RecentPatient[] => {
       // Remove the patient if they already exist to move them to the top
