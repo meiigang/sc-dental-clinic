@@ -252,26 +252,22 @@ export default function SalesPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-<Button
-  variant="ghost"
-  className="text-sm sm:text-base md:text-lg font-medium text-blue-dark flex flex-col sm:flex-row items-center gap-0 sm:gap-2 max-w-[60vw] truncate sm:whitespace-normal"
->
-  {displayLabel.split(" – ").map((part, idx, arr) => (
-    <span key={idx} className="flex items-center">
-      {part}
-      {idx < arr.length - 1 && (
-        <>
-          <span className="hidden sm:inline mx-1">–</span>  {/* Dash on big screens */}
-          <span className="sm:hidden">{"\n–\n"}</span>       {/* Dash on small screens */}
-        </>
-      )}
-    </span>
-  ))}
-</Button>
-
-
-
-
+              <Button
+                variant="ghost"
+                className="text-sm sm:text-base md:text-lg font-medium text-blue-dark flex flex-col sm:flex-row items-center gap-0 sm:gap-2 max-w-[60vw] truncate sm:whitespace-normal"
+              >
+                {displayLabel.split(" – ").map((part, idx, arr) => (
+                  <span key={idx} className="flex items-center">
+                    {part}
+                    {idx < arr.length - 1 && (
+                      <>
+                        <span className="hidden sm:inline mx-1">–</span>  {/* Dash on big screens */}
+                        <span className="sm:hidden">{"\n–\n"}</span>       {/* Dash on small screens */}
+                      </>
+                    )}
+                  </span>
+                ))}
+              </Button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent className="max-h-60 overflow-y-auto">
