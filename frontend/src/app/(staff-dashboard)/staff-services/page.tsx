@@ -215,23 +215,22 @@ export default function StaffServices() {
     if (!editingService) return;
     if (!validateEditForm()) return;
 
-    // check duplicates excluding current
-    const isDuplicate = services.some(
+    // --- FIX: Check for duplicates in both active and archived services ---
+    const combinedServices = [...services, ...archivedServices];
+    const isDuplicate = combinedServices.some(
       (s) =>
         s.id !== editingService.id &&
         s.name.toLowerCase() === editingService.name.trim().toLowerCase()
     );
     if (isDuplicate) {
-      setError("A service with this name already exists.");
+      setError("A service with this name already exists in active or archived services.");
       return;
     }
+    // --- END OF FIX ---
 
-    // --- FIX: Ensure duration is an integer before sending ---
-    // The edit modal should ideally have separate hour/minute inputs.
-    // Assuming editingService.duration is the total minutes as a number.
     const result = await updateService({
         ...editingService,
-        duration: Number(editingService.duration) // Ensure it's a number
+        duration: Number(editingService.duration)
     });
 
     if (result && result.service) {
@@ -679,7 +678,8 @@ export default function StaffServices() {
                     setEditingService({ ...editingService, name: e.target.value })
                   }
                 />
-                {errors.type && <p className="text-red-600 text-sm">{errors.type}</p>}
+                {/* --- FIX: Display the correct error message for the name field --- */}
+                {errors.name && <p className="text-red-600 text-sm">{errors.name}</p>}
               </div>
 
               {/* Type */}
@@ -751,7 +751,8 @@ export default function StaffServices() {
                   }
                   placeholder="₱0.00"
                 />
-                {errors.type && <p className="text-red-600 text-sm">{errors.type}</p>}
+                {/* --- FIX: Display the correct error message for the price field --- */}
+                {errors.price && <p className="text-red-600 text-sm">{errors.price}</p>}
               </div>
 
               {/* Unit */}
