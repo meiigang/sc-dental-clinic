@@ -84,10 +84,15 @@ export default function PatientRecords() {
   };
   
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-8 md:py-12 lg:py-16">
-      <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-blue-dark mb-8 text-center">Patient Records</h1>
-      <div className="bg-blue-light rounded-3xl w-full max-w-2xl md:max-w-4xl lg:max-w-5xl flex flex-col p-4 md:p-6 lg:p-8 gap-4 md:gap-6 h-[500px] md:h-[600px] lg:h-[700px]">
-        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+    <main className="min-vh flex flex-col items-center px-4">
+      <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-blue-dark m-8 text-center">Patient Records</h1>
+      <div className="
+        bg-blue-light rounded-3xl w-full max-w-2xl md:max-w-4xl lg:max-w-5xl 
+        flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 gap-3 sm:gap-4 md:gap-6
+        h-[75vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh]
+        overflow-hidden"
+      >
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 md:gap-6">
           {/* Sort */}
           <Select value={sortOption} onValueChange={setSortOption}>
             <SelectTrigger className="bg-white w-full md:w-auto">
@@ -133,7 +138,7 @@ export default function PatientRecords() {
         </div>
 
         {/* Patient List */}
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 overflow-auto">
           {displayedPatients.length === 0 ? (
             <div className="text-center text-gray-500 py-8">No patients found.</div>
           ) : (
@@ -171,7 +176,7 @@ export default function PatientRecords() {
         
         {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-3 md:gap-4 pt-4 md:pt-6 border-t">
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 sm:gap-3 md:gap-4 pt-3 sm:pt-4 md:pt-6 border-t">
             <Button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
