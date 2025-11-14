@@ -7,34 +7,52 @@ import {
   endOfWeek,
   startOfMonth,
   endOfMonth,
-  startOfDay,
-  endOfDay,
-  format,
+  isToday,
+  isWithinInterval,
 } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
+import { toZonedTime, format } from "date-fns-tz";
 
-// Define the types needed for this component
-const DB_STATUSES = [
-  "pending_approval",
-  "confirmed",
-  "completed",
-  "cancelled",
-  "no_show",
-] as const;
-
+// --- FIX: Update the Appt type to match the actual API response ---
 type Appt = {
   id: number;
-  date: string;
-  startTime?: string;
-  endTime?: string;
-  patient: string;
-  service: string;
-  price?: number;
-  status: typeof DB_STATUSES[number];
+  start_time: string;
+  end_time: string;
+  patient: {
+    firstName: string;
+    lastName: string;
+  };
+  service: {
+    service_name: string;
+    price: number;
+  };
+  status:
+    | "pending_approval"
+    | "pending_reschedule"
+    | "confirmed"
+    | "completed"
+    | "cancelled"
+    | "no_show";
+};
+
+// --- FIX: Create robust, timezone-aware date/time formatters ---
+const TZ = "Asia/Manila"; // Set your target timezone
+
+const formatDate = (isoString: string) => {
+  if (!isoString) return "Invalid Date";
+  const zonedDate = toZonedTime(parseISO(isoString), TZ);
+  return format(zonedDate, "MMM dd, yyyy");
+};
+
+const formatTimeRange = (startIso: string, endIso: string) => {
+  if (!startIso || !endIso) return "-";
+  const formatSingleTime = (iso: string) => {
+    const zonedDate = toZonedTime(parseISO(iso), TZ);
+    return format(zonedDate, "h:mm a");
+  };
+  return `${formatSingleTime(startIso)} - ${formatSingleTime(endIso)}`;
 };
 
 export default function UpcomingAppointments() {
-  const [sortOption, setSortOption] = useState("Date");
   const [filterOption, setFilterOption] = useState("All");
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,23 +61,20 @@ export default function UpcomingAppointments() {
   useEffect(() => {
     const fetchAppointments = async () => {
       setIsLoading(true);
-      const token =
-        localStorage.getItem("token") || sessionStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         console.error("Authentication token not found.");
         setIsLoading(false);
         return;
       }
       try {
-        // --- FIX: Use the correct relative path for the API call ---
         const response = await fetch("/api/appointments", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error("Failed to fetch appointments");
 
+        // --- FIX: The fetched data now correctly matches the Appt type ---
         const upcomingAppointments: Appt[] = await response.json();
-
-        // The backend now sends only upcoming appointments, so no client-side filtering is needed here.
         setAppointments(upcomingAppointments);
       } catch (error) {
         console.error("Error fetching upcoming appointments:", error);
@@ -70,32 +85,8 @@ export default function UpcomingAppointments() {
     fetchAppointments();
   }, []);
 
-  const formatDisplayTime = (appt: Appt) => {
-    if (!appt.startTime || !appt.endTime) return "-";
-    const to12 = (t: string) => {
-      const [hh, mm] = t.split(":").map(Number);
-      const ampm = hh >= 12 ? "PM" : "AM";
-      const hour12 = hh % 12 === 0 ? 12 : hh % 12;
-      return `${hour12}:${mm.toString().padStart(2, "0")} ${ampm}`;
-    };
-    return `${to12(appt.startTime)} - ${to12(appt.endTime)}`;
-  };
-
   const formatStatusForDisplay = (status: Appt["status"]) => {
-    switch (status) {
-      case "pending_approval":
-        return "Pending Approval";
-      case "confirmed":
-        return "Confirmed";
-      case "completed":
-        return "Completed";
-      case "cancelled":
-        return "Cancelled";
-      case "no_show":
-        return "No Show";
-      default:
-        return "Unknown";
-    }
+    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const statusClass = (status: Appt["status"]) => {
@@ -103,6 +94,7 @@ export default function UpcomingAppointments() {
       case "confirmed":
         return "text-green-700 bg-green-100 px-2 py-0.5 rounded-md";
       case "pending_approval":
+      case "pending_reschedule":
         return "text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-md";
       case "completed":
       case "no_show":
@@ -114,51 +106,33 @@ export default function UpcomingAppointments() {
     }
   };
 
-  // Apply filter and sort (date) to the confirmed appointments — use Asia/Manila timezone
   const visibleAppointments = useMemo(() => {
-    const TZ = "Asia/Manila";
     const nowZ = toZonedTime(new Date(), TZ);
 
-    const todayStr = format(nowZ, "yyyy-MM-dd");
-    const weekStartStr = format(startOfWeek(nowZ), "yyyy-MM-dd");
-    const weekEndStr = format(endOfWeek(nowZ), "yyyy-MM-dd");
-    const monthPrefix = format(nowZ, "yyyy-MM");
+    let filtered = appointments.filter((appt) => {
+      // --- FIX: Use the correct 'start_time' property ---
+      if (!appt.start_time) return false;
+      const apptDate = toZonedTime(parseISO(appt.start_time), TZ);
 
-    const toDateOnlyStr = (a: Appt) => {
-      // parse whatever the backend gives (date-only or full ISO), convert to Manila tz, then format date-only
-      const parsed = parseISO(a.date);
-      const zoned = toZonedTime(parsed, TZ);
-      return format(zoned, "yyyy-MM-dd");
-    };
-
-    const inThisWeek = (a: Appt) => {
-      const today = new Date();
-      const weekLater = new Date(today);
-      weekLater.setDate(today.getDate() + 7);
-      const appointmentDate = new Date(a.date);
-      return appointmentDate >= today && appointmentDate <= weekLater;
-    };
-
-    const inThisMonth = (a: Appt) => {
-      const d = toDateOnlyStr(a);
-      return d.startsWith(monthPrefix);
-    };
-
-    const isTodayAppt = (a: Appt) => toDateOnlyStr(a) === todayStr;
-
-    let filtered = appointments.filter((a) => {
-      if (filterOption === "Today") return isTodayAppt(a);
-      if (filterOption === "This Week") return inThisWeek(a);
-      if (filterOption === "This Month") return inThisMonth(a);
+      if (filterOption === "Today") return isToday(apptDate);
+      if (filterOption === "This Week") {
+        const weekStart = startOfWeek(nowZ);
+        const weekEnd = endOfWeek(nowZ);
+        return isWithinInterval(apptDate, { start: weekStart, end: weekEnd });
+      }
+      if (filterOption === "This Month") {
+        const monthStart = startOfMonth(nowZ);
+        const monthEnd = endOfMonth(nowZ);
+        return isWithinInterval(apptDate, { start: monthStart, end: monthEnd });
+      }
       return true; // "All"
     });
 
+    // --- FIX: Sort using the correct 'start_time' property ---
     filtered.sort((a, b) => {
-      const da = parseISO(a.date);
-      const db = parseISO(b.date);
-      const za = toZonedTime(da, TZ).getTime();
-      const zb = toZonedTime(db, TZ).getTime();
-      return sortAsc ? za - zb : zb - za;
+      const timeA = parseISO(a.start_time).getTime();
+      const timeB = parseISO(b.start_time).getTime();
+      return sortAsc ? timeA - timeB : timeB - timeA;
     });
 
     return filtered;
@@ -211,31 +185,18 @@ export default function UpcomingAppointments() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="text-center p-4">
-                    Loading appointments...
-                  </td>
-                </tr>
+                <tr><td colSpan={6} className="text-center p-4">Loading appointments...</td></tr>
               ) : visibleAppointments.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center p-4">
-                    No upcoming appointments found.
-                  </td>
-                </tr>
+                <tr><td colSpan={6} className="text-center p-4">No upcoming appointments found for the selected filter.</td></tr>
               ) : (
                 visibleAppointments.map((appt) => (
                   <tr key={appt.id} className="bg-white text-center">
-                    <td className="p-3 border border-blue-accent">
-                      {new Date(appt.date).toLocaleDateString()}
-                    </td>
-                    <td className="p-3 border border-blue-accent">
-                      {formatDisplayTime(appt)}
-                    </td>
-                    <td className="p-3 border border-blue-accent">{appt.patient}</td>
-                    <td className="p-3 border border-blue-accent">{appt.service}</td>
-                    <td className="p-3 border border-blue-accent">
-                      {typeof appt.price === "number" ? appt.price.toFixed(2) : "-"}
-                    </td>
+                    {/* --- FIX: Use the new formatters and correct data properties --- */}
+                    <td className="p-3 border border-blue-accent">{formatDate(appt.start_time)}</td>
+                    <td className="p-3 border border-blue-accent">{formatTimeRange(appt.start_time, appt.end_time)}</td>
+                    <td className="p-3 border border-blue-accent">{`${appt.patient?.firstName ?? ''} ${appt.patient?.lastName ?? ''}`}</td>
+                    <td className="p-3 border border-blue-accent">{appt.service?.service_name ?? 'N/A'}</td>
+                    <td className="p-3 border border-blue-accent">{`₱${appt.service?.price?.toFixed(2) ?? '0.00'}`}</td>
                     <td className="p-3 border border-blue-accent">
                       <span className={statusClass(appt.status)}>
                         {formatStatusForDisplay(appt.status)}

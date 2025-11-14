@@ -32,7 +32,7 @@ const NOTIFICATION_CONFIG = {
         icon: <Clock className="h-6 w-6 text-white" />,
         bgColor: 'bg-blue-500',
         containerClasses: 'bg-blue-100 border-blue-200',
-        text: (data: any) => `Your appointment has been rescheduled to ${formatDate(data.date)}.`
+        text: (data: any) => `The clinic has proposed a new time for your appointment: ${formatDate(data.date)}. Please review.`
     },
     APPOINTMENT_PENDING: {
         icon: <Clock className="h-6 w-6 text-white" />,

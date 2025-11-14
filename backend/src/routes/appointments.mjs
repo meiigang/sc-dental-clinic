@@ -3,36 +3,34 @@ import { authenticateToken } from "../utils/middleware/middleware.mjs";
 import {
     getAllAppointmentsHandler, 
     updateAppointmentDetailsHandler,
-    cancelAppointmentHandler,
     getMyAppointmentsHandler,
-    updateAppointmentStatusHandler
-
+    confirmRescheduleHandler,
+    declineRescheduleHandler,
 } from "../api/appointments/appointmentHandler.mjs";
 
 const router = Router();
 
-// Route for updating an appointment's status
+// --- GET ROUTES ---
 
-//PATCH METHOD
-router.patch("/:id/status", authenticateToken, updateAppointmentDetailsHandler);
-
-//GET METHOD
+// GET all appointments (for staff view, can be filtered by patientId)
 router.get("/", authenticateToken, getAllAppointmentsHandler);
 
-//GENERAL UPDATE
+// GET appointments for the logged-in patient
+router.get("/my-appointments", authenticateToken, getMyAppointmentsHandler);
+
+
+// --- ACTION ROUTES ---
+
+// Handles rescheduling, status changes (confirm, complete, cancel), etc.
 router.patch("/:id", authenticateToken, updateAppointmentDetailsHandler);
 
-//CANCEL APPOINTMENT
-router.patch("/:id/cancel", authenticateToken, cancelAppointmentHandler)
+// --- PATIENT RESCHEDULE RESPONSE ROUTES ---
 
-//APPOINTMENT RESCHEDULING
-router.patch('/:id', authenticateToken, updateAppointmentDetailsHandler); // This is for rescheduling
+// For a patient to CONFIRM a reschedule request from the clinic
+router.post("/:id/confirm-reschedule", authenticateToken, confirmRescheduleHandler);
 
-//APPOINTMENT STATUS UPDATING
-router.patch('/:id/status', authenticateToken, updateAppointmentStatusHandler); // <-- Add this new route
+// For a patient to DECLINE a reschedule request from the clinic
+router.post("/:id/decline-reschedule", authenticateToken, declineRescheduleHandler);
 
-
-//Patient-side: GET APPOINTMENTS
-router.get("/my-appointments", authenticateToken, getMyAppointmentsHandler)
 
 export default router;
