@@ -306,7 +306,7 @@ export default function AvailabilityInputs() {
                 Add Availability
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-3xl max-h-[80vh] overflow-y-auto p-6 rounded-2xl">
+            <DialogContent className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-4xl max-h-[80vh] overflow-y-auto p-6 rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-blue-dark text-lg font-bold">Select the date you want to set specific hours</DialogTitle>
               </DialogHeader>
