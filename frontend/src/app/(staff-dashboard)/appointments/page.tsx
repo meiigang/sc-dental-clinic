@@ -8,7 +8,7 @@ export default function AppointmentsPage() {
   
   return (
     <main>
-      <div className="text-center mt-14">
+      <div id="appointments"className="text-center mt-14">
       <h1 className="text-3xl md:text-4xl font-bold text-blue-dark text-center">Appointments</h1>
       <AppointmentsTable />
     </div>

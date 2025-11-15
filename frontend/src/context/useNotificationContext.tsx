@@ -1,93 +1,78 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 // Define the shape of a notification
 interface Notification {
-  id: string;
-  created_at: string;
-  user_id: string;
-  type: string;
-  data: any;
-  is_read: boolean;
+    id: number;
+    type: string;
+    data: any;
+    is_read: boolean;
+    created_at: string;
 }
 
-interface NotificationContextType {
-  notifications: Notification[];
-  unreadCount: number;
-  markAllAsReadInUI: () => void;
+interface NotificationsContextType {
+    notifications: Notification[];
+    unreadCount: number;
+    fetchNotifications: () => void;
+    markAllAsReadInUI: () => void;
+    markOneAsRead: (id: number) => void;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
 
-export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+export function NotificationsProvider({ children }: { children: ReactNode }) {
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      // --- FIX: Use your custom JWT for authentication ---
-      // 1. Check for the token in both localStorage and sessionStorage
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const fetchNotifications = useCallback(async () => {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) return;
 
-      // 2. If no token is found, the user is not logged in. Stop.
-      if (!token) {
-        console.warn("[NotificationContext] No auth token found. User is not logged in.");
-        setNotifications([]);
-        setUnreadCount(0);
-        return;
-      }
-
-      // 3. If a token is found, proceed with the API call.
-      try {
-        const response = await fetch('/api/notifications', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
-          }
-        }); 
-        
-        if (!response.ok) {
-          console.error('[NotificationContext] Failed to fetch notifications:', response.status, response.statusText);
-          return;
+        try {
+            const response = await fetch('/api/notifications', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch notifications');
+            const data: Notification[] = await response.json();
+            setNotifications(data);
+            setUnreadCount(data.filter(n => !n.is_read).length);
+        } catch (error) {
+            console.error(error);
         }
+    }, []);
 
-        const data: Notification[] = await response.json();
-        console.log("[NotificationContext] SUCCESS: Data received from backend:", data);
-        setNotifications(data);
-        setUnreadCount(data.filter(n => !n.is_read).length);
-
-      } catch (error) {
-        console.error("[NotificationContext] CRITICAL: The fetch call itself failed.", error);
-      }
+    const markAllAsReadInUI = () => {
+        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        setUnreadCount(0);
     };
 
-    fetchNotifications();
-    const intervalId = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
-    return () => clearInterval(intervalId);
-  }, []); // The dependency array is now empty as we no longer depend on the supabase client instance here.
+    const markOneAsRead = (id: number) => {
+        const notificationExists = notifications.some(n => n.id === id && !n.is_read);
+        
+        if (notificationExists) {
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+    };
 
-  const markAllAsReadInUI = () => {
-    setNotifications(currentNotifications => 
-      currentNotifications.map(n => ({ ...n, is_read: true }))
+    useEffect(() => {
+        fetchNotifications();
+        const interval = setInterval(fetchNotifications, 60000); // Poll every 60 seconds
+        return () => clearInterval(interval);
+    }, [fetchNotifications]);
+
+    return (
+        <NotificationsContext.Provider value={{ notifications, unreadCount, fetchNotifications, markAllAsReadInUI, markOneAsRead }}>
+            {children}
+        </NotificationsContext.Provider>
     );
-    setUnreadCount(0);
-  };
-
-  const value = { notifications, unreadCount, markAllAsReadInUI };
-
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
 }
 
 export function useNotifications() {
-  const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
-  }
-  return context;
+    const context = useContext(NotificationsContext);
+    if (context === undefined) {
+        throw new Error('useNotifications must be used within a NotificationsProvider');
+    }
+    return context;
 }

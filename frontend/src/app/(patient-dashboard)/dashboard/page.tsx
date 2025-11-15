@@ -148,7 +148,7 @@ export default function PatientDashboard() {
         </div>
 
         {/* Appointments Table */}
-        <div ref={appointmentsRef} className="py-8 sm:py-12 md:py-16">
+        <div ref={appointmentsRef} id="appointments"  className="py-8 sm:py-12 md:py-16">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-dark m-4">Appointments</h3>
           <PatientAppointmentsTable />
         </div>
