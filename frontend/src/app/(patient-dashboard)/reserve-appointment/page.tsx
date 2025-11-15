@@ -151,15 +151,23 @@ function ReserveAppointmentSteps() {
 export default function ReserveAppointment() {
   return (
     <FormProvider initialValues={reservationInitialState}>
-      <main>
-        <div className="text-center mt-14">
-          <h1 className="mb-10 text-3xl font-bold text-blue-dark">Reserve Appointment</h1>
+      <main className="min-h-screen bg-white">
+        {/* Page Title */}
+        <div className="text-center mt-14 px-4 sm:px-6">
+          <h1 className="mb-10 text-3xl sm:text-4xl font-bold text-blue-dark">Reserve Appointment</h1>
         </div>
-        <div className="px-96 mb-20 space-y-16">
-          <div className="flex justify-center my-5">
-            <Stepper steps={stepTitles} />
+
+        {/* Content Container */}
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-[320px] max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-20 space-y-16">
+            {/* Stepper */}
+            <div className="flex justify-center my-5">
+              <Stepper steps={stepTitles} />
+            </div>
+
+            {/* Form Steps */}
+            <ReserveAppointmentSteps />
           </div>
-          <ReserveAppointmentSteps />
         </div>
       </main>
     </FormProvider>

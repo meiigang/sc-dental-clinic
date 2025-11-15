@@ -1,28 +1,29 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useMemo } from "react";
-import {CalendarArrowUp} from "lucide-react";
+import { CalendarArrowUp, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
-
-// Define the types needed for this component
-const DB_STATUSES = ["pending_approval", "confirmed", "completed", "cancelled", "no_show"] as const;
+// 1. --- FIX: Add 'pending_reschedule' to the list of statuses ---
+const DB_STATUSES = ["pending_approval", "confirmed", "completed", "cancelled", "no_show", "pending_reschedule"] as const;
 type ApptStatus = typeof DB_STATUSES[number];
 
+// --- FIX: Add original_start_time to the Appt type ---
 type Appt = {
   id: number;
-  date: string;
-  startTime?: string;
-  endTime?: string;
-  service: string;
-  price: number;
-  dentist: string;
+  start_time: string;
+  end_time: string;
+  original_start_time?: string | null; // This can be null
   status: ApptStatus;
+  service: { service_name: string; price: number; };
+  staff: { first_name: string; last_name: string; };
 };
 
 // Helper to format DB status for display
 const formatStatusForDisplay = (status: ApptStatus) => {
+  // --- ADDITION: Handle the new status display ---
+  if (status === 'pending_reschedule') return 'Pending Clinic Reschedule';
   return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
@@ -30,6 +31,8 @@ const formatStatusForDisplay = (status: ApptStatus) => {
 const statusClass = (status: ApptStatus) => {
   switch (status) {
     case "confirmed": return "text-green-700 bg-green-100";
+    // --- ADDITION: Add styling for the new status ---
+    case "pending_reschedule": return "text-blue-800 bg-blue-100";
     case "pending_approval": return "text-yellow-800 bg-yellow-100";
     case "completed": return "text-blue-700 bg-blue-100";
     case "no_show": return "text-gray-700 bg-gray-200";
@@ -38,22 +41,43 @@ const statusClass = (status: ApptStatus) => {
   }
 };
 
-// Helper to convert 24h time string (e.g., "14:30") to 12h time label (e.g., "2:30PM")
-const formatTimeLabel = (time24h: string | undefined): string => {
-    if (!time24h) return "Time Slot";
-    const [hh, mm] = time24h.split(":").map(Number);
-    const ampm = hh >= 12 ? "PM" : "AM";
-    const hour12 = hh % 12 === 0 ? 12 : hh % 12;
-    return `${hour12}:${mm.toString().padStart(2, "0")}${ampm}`;
-}
+// --- FIX: Create robust, timezone-aware date/time formatters ---
+const formatDate = (isoString: string | null | undefined) => {
+  if (!isoString) return "Invalid Date";
+  return new Date(isoString).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
+const formatTime = (isoString: string | null | undefined) => {
+  if (!isoString) return "";
+  return new Date(isoString).toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
+const formatTimeRange = (startIso: string, endIso: string) => {
+  if (!startIso || !endIso) return "-";
+  return `${formatTime(startIso)} - ${formatTime(endIso)}`;
+};
 
 export default function PatientAppointmentsTable() {
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // State for the patient-initiated reschedule modal
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appt | null>(null);
-  const [newDate, setNewDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [newDate, setNewDate] = useState<string>('');
   const [newTime, setNewTime] = useState<string>('09:00');
+
+  // --- NEW: State for the confirmation modal ---
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [appointmentToConfirm, setAppointmentToConfirm] = useState<Appt | null>(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -64,7 +88,8 @@ export default function PatientAppointmentsTable() {
         return;
       }
       try {
-        const response = await fetch("http://localhost:4000/api/appointments/my-appointments", {
+        // --- FIX: Use relative path for API calls ---
+        const response = await fetch("/api/appointments/my-appointments", {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch appointments');
@@ -79,76 +104,141 @@ export default function PatientAppointmentsTable() {
     fetchAppointments(); 
   }, []);
 
-  const formatDisplayTime = (appt: Appt) => {
-    if (!appt.startTime || !appt.endTime) return "-";
-    const to12 = (t: string) => {
-        const [hh, mm] = t.split(":").map(Number);
-        const ampm = hh >= 12 ? "PM" : "AM";
-        const hour12 = hh % 12 === 0 ? 12 : hh % 12;
-        return `${hour12}:${mm.toString().padStart(2, "0")} ${ampm}`;
-    };
-    return `${to12(appt.startTime)} - ${to12(appt.endTime)}`;
-  };
-
-    const formatTimeOnly = (time: string | undefined) => {
-    if (!time) return "-";
-    const [hh, mm] = time.split(":").map(Number);
-    const ampm = hh >= 12 ? "PM" : "AM";
-    const hour12 = hh % 12 === 0 ? 12 : hh % 12;
-    return `${hour12}:${mm.toString().padStart(2, "0")}${ampm}`;
-  }
-
   const sortedAppointments = useMemo(() => {
-    return [...appointments].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return [...appointments].sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
   }, [appointments]);
 
-  // Handler to open the modal and set the selected appointment
+  // This handler opens the patient-initiated reschedule modal
   const handleRescheduleClick = (appt: Appt) => {
     setSelectedAppointment(appt);
-    setIsModalOpen(true);
-    setNewDate(appt.date);
-    setNewTime(appt.startTime || '09:00');
-  }
-
-  const handleSubmitReschedule = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!selectedAppointment) return;
-      console.log(`Rescheduling appointment ID ${selectedAppointment.id} to Date: ${newDate}, Time: ${newTime}`);
-      // Close modal and perform API call here in a real application
-      setIsModalOpen(false);
-  }
-
-  // Memoized list of time slots for the dropdown, ensuring the current time is included
-  const timeSlots = useMemo(() => {
-    // --- UPDATED STANDARD SLOTS (9:00 to 16:30 in 30-minute intervals) ---
-    const slots24h = [
-        "09:00", "09:30", "10:00", "10:30", 
-        "11:00", "11:30", "12:00", "12:30", 
-        "13:00", "13:30", "14:00", "14:30", 
-        "15:00", "15:30", "16:00", "16:30", 
-    ];
-
-    const standardSlots = slots24h.map(value => ({ 
-        value, 
-        label: formatTimeLabel(value) 
-    }));
     
-    if (selectedAppointment && selectedAppointment.startTime) {
-        const originalTimeValue = selectedAppointment.startTime;
-        
-        // Check if the original time is already in the standard slots by value
-        const isStandardSlot = standardSlots.some(slot => slot.value === originalTimeValue);
-        
-        // If not a standard slot, dynamically add it to the top of the list
-        if (!isStandardSlot) {
-            const originalTimeLabel = formatTimeLabel(originalTimeValue) + ' (Current)';
-            return [{ value: originalTimeValue, label: originalTimeLabel }, ...standardSlots];
+    // --- FIX: Correctly initialize date/time state from the ISO string ---
+    const apptDate = new Date(appt.start_time);
+    // Format to YYYY-MM-DD for the <input type="date">
+    const year = apptDate.getFullYear();
+    const month = String(apptDate.getMonth() + 1).padStart(2, '0');
+    const day = String(apptDate.getDate()).padStart(2, '0');
+    setNewDate(`${year}-${month}-${day}`);
+
+    // Format to HH:MM for the <select>
+    const hours = String(apptDate.getHours()).padStart(2, '0');
+    const minutes = String(apptDate.getMinutes()).padStart(2, '0');
+    setNewTime(`${hours}:${minutes}`);
+
+    setIsRescheduleModalOpen(true);
+  }
+
+  // --- FIX: Implement the actual API call for patient-initiated reschedule ---
+  const handleSubmitReschedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAppointment || !selectedAppointment.service) return;
+
+    // Construct the new start time as an ISO string
+    const newStartDateTime = new Date(`${newDate}T${newTime}:00`);
+    
+    // Calculate the duration of the original appointment in milliseconds
+    const originalDuration = new Date(selectedAppointment.end_time).getTime() - new Date(selectedAppointment.start_time).getTime();
+    
+    // Calculate the new end time by adding the original duration to the new start time
+    const newEndDateTime = new Date(newStartDateTime.getTime() + originalDuration);
+
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    try {
+        const res = await fetch(`/api/appointments/${selectedAppointment.id}`, {
+            method: 'PATCH',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                start_time: newStartDateTime.toISOString(),
+                end_time: newEndDateTime.toISOString(),
+            })
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Failed to request reschedule.');
         }
+
+        const { appointment: updatedAppt } = await res.json();
+
+        // Update the UI with the new 'pending_reschedule' status
+        setAppointments(prev => prev.map(a => a.id === updatedAppt.id ? updatedAppt : a));
+        setIsRescheduleModalOpen(false);
+        alert("Your reschedule request has been sent to the clinic for approval.");
+
+    } catch (error) {
+        console.error("Error rescheduling appointment:", error);
+        alert(`Error: ${error instanceof Error ? error.message : 'An unknown error occurred.'}`);
     }
-    
-    // If it is a standard slot, or no appointment is selected, return the standard list
-    return standardSlots;
-  }, [selectedAppointment]);
+  }
+
+  // 3. --- NEW: Handlers for confirming or declining a dentist-initiated reschedule ---
+  const handleConfirmReschedule = async (appointmentId: number) => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    try {
+      const res = await fetch(`/api/appointments/${appointmentId}/confirm-reschedule`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to confirm.');
+      const { appointment: updatedAppt } = await res.json();
+      setAppointments(prev => prev.map(appt => appt.id === appointmentId ? updatedAppt : appt));
+      setIsConfirmModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred. Please try again.");
+    }
+  };
+
+  // --- FIX: This handler now CANCELS the appointment entirely ---
+  const handleCancelAppointment = async (appointmentId: number) => {
+    if (!confirm("Are you sure you want to cancel this appointment? This action cannot be undone.")) return;
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    try {
+      const res = await fetch(`/api/appointments/${appointmentId}/decline-reschedule`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to cancel appointment.');
+      const { appointment: updatedAppt } = await res.json();
+      setAppointments(prev => prev.map(appt => appt.id === appointmentId ? updatedAppt : appt));
+      setIsConfirmModalOpen(false); // Close the modal on success
+    } catch (error) {
+      console.error(error);
+      alert("An error occurred. Please try again.");
+    }
+  };
+
+  const formatTimeLabel = (time24h: string) => {
+    const date = new Date(`1970-01-01T${time24h}:00`);
+    return date.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  // --- FIX: Dynamically generate time slots at 15-minute intervals ---
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    // Loop from 9 AM (9) to 5 PM (17)
+    for (let h = 9; h <= 17; h++) {
+      // Loop for each 15-minute interval in the hour
+      for (let m = 0; m < 60; m += 15) {
+        // Stop if we've gone past 5:00 PM
+        if (h === 17 && m > 0) continue;
+
+        const hour = String(h).padStart(2, '0');
+        const minute = String(m).padStart(2, '0');
+        const timeValue = `${hour}:${minute}`;
+        slots.push({ value: timeValue, label: formatTimeLabel(timeValue) });
+      }
+    }
+    return slots;
+  }, []);
+
 
   return (
     <div className="w-full bg-blue-light p-6 rounded-2xl shadow-md">
@@ -167,17 +257,19 @@ export default function PatientAppointmentsTable() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={5} className="text-center p-8">Loading your appointments...</td></tr>
+              <tr><td colSpan={7} className="text-center p-8">Loading your appointments...</td></tr>
             ) : sortedAppointments.length === 0 ? (
-              <tr><td colSpan={5} className="text-center p-8">You have no appointments scheduled.</td></tr>
+              <tr><td colSpan={7} className="text-center p-8">You have no appointments scheduled.</td></tr>
             ) : (
               sortedAppointments.map(appt => (
                 <tr key={appt.id} className="bg-white text-center border-b border-blue-accent">
-                  <td className="p-3">{new Date(appt.date).toLocaleDateString()}</td>
-                  <td className="p-3">{formatDisplayTime(appt)}</td>
-                  <td className="p-3">{appt.service}</td>
-                  <td className="p-3">{appt.price}</td>
-                  <td className="p-3">{appt.dentist}</td>
+                  {/* --- FIX: Use the new timezone-aware formatters --- */}
+                  <td className="p-3">{formatDate(appt.start_time)}</td>
+                  <td className="p-3">{formatTimeRange(appt.start_time, appt.end_time)}</td>
+                  {/* --- FIX: Use optional chaining for nested properties --- */}
+                  <td className="p-3">{appt.service?.service_name ?? 'N/A'}</td>
+                  <td className="p-3">{`₱${appt.service?.price ?? 0}`}</td>
+                  <td className="p-3">{`Dr. ${appt.staff?.last_name ?? 'N/A'}`}</td>
                   <td className="p-3">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusClass(appt.status)}`}>
                       {formatStatusForDisplay(appt.status)}
@@ -185,16 +277,30 @@ export default function PatientAppointmentsTable() {
                   </td>
                   <td className="p-3">
                     <div className="flex items-center justify-center gap-2">
-                      <Button
+                      {/* 4. --- NEW: Conditional UI for actions --- */}
+                      {appt.status === 'pending_reschedule' ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-blue-dark text-blue-dark hover:bg-blue-100"
+                          onClick={() => {
+                            setAppointmentToConfirm(appt);
+                            setIsConfirmModalOpen(true);
+                          }}
+                        >
+                          Review Request
+                        </Button>
+                      ) : appt.status === 'confirmed' ? (
+                        <Button
                           size="icon"
                           variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRescheduleClick(appt);
-                          }}
+                          onClick={() => handleRescheduleClick(appt)}
                         >
                           <CalendarArrowUp className="w-4 h-4" />
                         </Button>
+                      ) : (
+                        <span>-</span>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -204,8 +310,67 @@ export default function PatientAppointmentsTable() {
         </table>
       </div>
 
-      {/* --- Modal Implementation --- */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      {/* --- Confirmation Modal for Dentist-Initiated Reschedule --- */}
+      <Dialog open={isConfirmModalOpen} onOpenChange={setIsConfirmModalOpen}>
+        <DialogContent className="sm:max-w-4xl p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-blue-dark">Reschedule Request</DialogTitle>
+            <DialogDescription className="flex items-start gap-2 pt-2 text-yellow-800">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              <span>The clinic has proposed a new time for your appointment. Please review and respond.</span>
+            </DialogDescription>
+          </DialogHeader>
+          {appointmentToConfirm && (
+            <div className="space-y-6 py-4">
+              {/* Original Details */}
+              <div className="p-4 border rounded-lg bg-gray-50">
+                <h4 className="font-semibold text-gray-500 mb-2">Original Appointment</h4>
+                {/* --- FIX: Use timezone-aware formatters --- */}
+                <p className="text-lg text-gray-800">{formatDate(appointmentToConfirm.original_start_time)}</p>
+                <p className="text-lg text-gray-800 font-light">{formatTime(appointmentToConfirm.original_start_time)}</p>
+              </div>
+              {/* New Proposed Details */}
+              <div className="p-4 border-2 border-blue-accent rounded-lg bg-white">
+                <h4 className="font-semibold text-blue-dark mb-2">New Proposed Time</h4>
+                {/* --- FIX: Use timezone-aware formatters --- */}
+                <p className="text-xl font-bold text-blue-dark">{formatDate(appointmentToConfirm.start_time)}</p>
+                <p className="text-xl font-bold text-blue-dark">{formatTime(appointmentToConfirm.start_time)}</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <Button
+              variant="destructive"
+              onClick={() => appointmentToConfirm && handleCancelAppointment(appointmentToConfirm.id)}
+            >
+              <XCircle className="mr-2 h-4 w-4" /> Cancel Appointment
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!appointmentToConfirm) return;
+                setIsConfirmModalOpen(false);
+                handleRescheduleClick(appointmentToConfirm); // Open the other modal
+              }}
+            >
+              <CalendarArrowUp className="mr-2 h-4 w-4" /> Request New Schedule
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => {
+                if (!appointmentToConfirm) return;
+                handleConfirmReschedule(appointmentToConfirm.id);
+                setIsConfirmModalOpen(false);
+              }}
+            >
+              <CheckCircle className="mr-2 h-4 w-4" /> Confirm New Time
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- This is the existing modal for patient-initiated reschedules. It remains unchanged. --- */}
+      <Dialog open={isRescheduleModalOpen} onOpenChange={setIsRescheduleModalOpen}>
         <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto p-0 rounded-2xl">
             <DialogHeader className="p-6 pb-0">
                 <DialogTitle className="text-2xl font-bold text-blue-dark">Reschedule Appointment</DialogTitle>
@@ -214,14 +379,10 @@ export default function PatientAppointmentsTable() {
             {selectedAppointment && (
             <form onSubmit={handleSubmitReschedule}>
               <div className="flex flex-col md:flex-row gap-8 p-6">
-                {/* Left Column: Calendar (Wider on mobile, 5/12 on desktop) */}
                 <div className="md:w-5/12">
-                    {/* Calendar Placeholder - In a real app, you would use <Calendar /> here */}
                     <div className="border border-gray-200 rounded-xl shadow-lg p-4 bg-white flex justify-center items-center h-full min-h-[300px]">
-                        {/* Placeholder for shadcn Calendar component */}
                         <div className="text-center">
                             <h4 className="text-lg font-semibold text-blue-dark mb-2">Select New Date</h4>
-                            {/* Simple date input to mimic selection for front-end logic */}
                             <input 
                                 type="date"
                                 value={newDate}
@@ -232,59 +393,45 @@ export default function PatientAppointmentsTable() {
                         </div>
                     </div>
                 </div>
-
-                {/* Right Column: Details and Form (5/12 on mobile, 7/12 on desktop) */}
                 <div className="md:w-7/12 space-y-8 py-2">
-                    
-                    {/* Original Details (Read-only) */}
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold text-blue-dark">Original Appointment Details</h3>
-                        
-                        {/* Original Date */}
                         <div className="grid grid-cols-3 items-center gap-4">
                             <label className="text-sm text-gray-600 font-medium">Date</label>
                             <input 
-                                value={new Date(selectedAppointment.date).toLocaleDateString("en-US", { month: 'long', day: 'numeric', year: 'numeric' })}
+                                value={formatDate(selectedAppointment.start_time)}
                                 readOnly
                                 className="col-span-2 p-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-800"
                             />
                         </div>
-                        
-                        {/* Original Start/End Time */}
                         <div className="grid grid-cols-3 items-center gap-4">
                             <label className="text-sm text-gray-600 font-medium">Time</label>
                             <div className="col-span-2 flex gap-2">
                                 <input 
-                                    value={formatTimeLabel(selectedAppointment.startTime)}
+                                    value={formatTime(selectedAppointment.start_time)}
                                     readOnly
                                     className="flex-1 p-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-800 text-center"
                                 />
                                 <span className="text-gray-500 self-center">-</span>
                                 <input 
-                                    value={formatTimeLabel(selectedAppointment.endTime)}
+                                    value={formatTime(selectedAppointment.end_time)}
                                     readOnly
                                     className="flex-1 p-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-800 text-center"
                                 />
                             </div>
                         </div>
                     </div>
-                    
-                    {/* Reschedule Form (Inputs) */}
                     <div className="space-y-4 pt-4">
                         <h3 className="text-lg font-semibold text-blue-dark">Rescheduled Appointment Details</h3>
-                        
-                        {/* New Date (Selected from Calendar Placeholder) */}
                         <div className="grid grid-cols-3 items-center gap-4">
                             <label htmlFor="newDate" className="text-sm text-gray-600 font-medium">Date</label>
                             <input
                                 id="newDate"
-                                value={new Date(newDate).toLocaleDateString("en-US", { month: 'long', day: 'numeric', year: 'numeric' })}
+                                value={formatDate(newDate)}
                                 readOnly
                                 className="col-span-2 p-2 border border-blue-accent rounded-lg text-sm font-medium text-blue-dark bg-white"
                             />
                         </div>
-                        
-                        {/* New Time Selection (Uses dynamic list including current time) */}
                         <div className="grid grid-cols-3 items-center gap-4">
                             <label htmlFor="newTime" className="text-sm text-gray-600 font-medium">Time</label>
                             <select 
@@ -293,7 +440,6 @@ export default function PatientAppointmentsTable() {
                                 onChange={(e) => setNewTime(e.target.value)}
                                 className="col-span-2 p-2 border border-blue-accent rounded-lg text-sm font-medium text-blue-dark appearance-none bg-white focus:ring-2 focus:ring-blue-500"
                             >
-                                {/* 3. This maps over the dynamic list generated below */}
                                 {timeSlots.map(slot => (
                                     <option key={slot.value} value={slot.value}>
                                         {slot.label}
@@ -304,13 +450,11 @@ export default function PatientAppointmentsTable() {
                     </div>
                 </div>
               </div>
-
-              {/* Action Buttons */}
               <div className="flex justify-end gap-3 bg-gray-50 p-6 border-t rounded-b-2xl">
                 <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={() => setIsRescheduleModalOpen(false)}
                     className="rounded-full px-6 font-semibold"
                 >
                   Cancel Appointment
@@ -326,8 +470,6 @@ export default function PatientAppointmentsTable() {
           )}
         </DialogContent>
       </Dialog>
-      {/* --- End Modal Implementation --- */}
-
     </div>
   );
 }

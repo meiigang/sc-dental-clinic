@@ -111,7 +111,7 @@ export default function DateTimeForm() {
   };
 
   return (
-    <div className="bg-blue-light rounded-xl p-12">
+    <div className="bg-blue-light rounded-xl p-12 overflow-x-auto">
       <p className="mb-4 text-xl font-bold text-blue-dark">Select Date and Preferred Time</p>
       <div className="flex items-start">
         <div className="bg-background rounded-lg p-6">
