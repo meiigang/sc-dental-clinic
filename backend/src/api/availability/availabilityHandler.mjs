@@ -95,7 +95,7 @@ export async function getUnavailableSlotsHandler(req, res) {
         const { data: override, error: overrideError } = await req.supabase
             .from('date_specific_hours_override')
             .select('start_time, end_time, is_unavailable')
-            .eq('override_date', date); // Use the correct 'override_date' column
+            .eq('override_date', date);
 
         if (overrideError) throw overrideError;
 
@@ -120,26 +120,22 @@ export async function getUnavailableSlotsHandler(req, res) {
             }
         }
 
-        // --- FIX: Query appointments using a date range on the 'start_time' column ---
         // 3. Get appointments that are already booked for that day.
         const requestedDateObj = new Date(date);
         const nextDayDateObj = new Date(requestedDateObj);
         nextDayDateObj.setDate(requestedDateObj.getDate() + 1);
-        const nextDayString = nextDayDateObj.toISOString().split('T')[0]; // e.g., '2025-11-19'
+        const nextDayString = nextDayDateObj.toISOString().split('T')[0];
 
         const { data: bookedAppointments, error: appointmentsError } = await req.supabase
             .from('appointments')
             .select('start_time, end_time')
-            // Filter where start_time is on or after the beginning of the requested date
             .gte('start_time', date) 
-            // And where start_time is before the beginning of the next day
             .lt('start_time', nextDayString)
             .in('status', ['confirmed', 'pending_approval']);
         
         if (appointmentsError) throw appointmentsError;
-        // --- END OF FIX ---
 
-        // 4. Calculate all unavailable slots by combining the above information.
+        // 4. Calculate all unavailable slots.
         const allPossibleSlots = Array.from({ length: 37 }, (_, i) => {
             const totalMinutes = 9 * 60 + i * 15;
             const hour = Math.floor(totalMinutes / 60);
@@ -152,7 +148,6 @@ export async function getUnavailableSlotsHandler(req, res) {
         };
 
         const isSlotBooked = (slot) => {
-            // Convert appointment start/end times to HH:MM format for comparison
             const clinicTimeZone = 'Asia/Manila';
             return bookedAppointments.some(appt => {
                 const apptStart = new Date(appt.start_time).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: clinicTimeZone });
@@ -197,19 +192,113 @@ export async function getBookedDatesHandler(req, res) {
 // For a patient to get the general days of the week the clinic is open.
 export async function getAvailableWorkdaysHandler(req, res) {
     try {
-        // --- FIX: Removed the incorrect .eq('is_available', true) filter ---
         const { data, error } = await req.supabase
             .from('staff_weekly_availability')
             .select('day_of_the_week');
 
         if (error) throw error;
 
-        // Create a Set to get unique day numbers, then convert back to an array
         const availableDays = [...new Set(data.map(item => item.day_of_the_week))];
 
         res.status(200).json({ availableDays });
     } catch (error) {
         console.error("Error fetching available workdays:", error);
         res.status(500).json({ message: "Failed to fetch available workdays." });
+    }
+}
+
+// --- GET (for Staff Rescheduling) ---
+// A new, more robust handler for getting available slots for a specific staff member on a specific day.
+export async function getStaffAvailabilityForDate(req, res) {
+    const { staffId, date, serviceDuration, appointmentIdToIgnore } = req.query;
+
+    if (!staffId || !date || !serviceDuration) {
+        return res.status(400).json({ message: "staffId, date, and serviceDuration are required." });
+    }
+
+    try {
+        const requestedDate = new Date(date);
+        const dayOfWeek = requestedDate.getDay(); // 0 (Sun) - 6 (Sat)
+        const durationMinutes = parseInt(serviceDuration, 10);
+
+        // 1. Determine the staff's working hours for the given date.
+        let workingHours = null;
+        const { data: override, error: overrideError } = await req.supabase
+            .from('date_specific_hours_override')
+            .select('start_time, end_time, is_unavailable')
+            .eq('staff_id', staffId)
+            .eq('override_date', date)
+            .single();
+
+        if (overrideError && overrideError.code !== 'PGRST116') throw overrideError; // Ignore 'no rows' error
+
+        if (override) {
+            if (override.is_unavailable) return res.status(200).json([]); // Day off
+            workingHours = { start: override.start_time, end: override.end_time };
+        } else {
+            const { data: weekly, error: weeklyError } = await req.supabase
+                .from('staff_weekly_availability')
+                .select('start_time, end_time')
+                .eq('staff_id', staffId)
+                .eq('day_of_the_week', dayOfWeek)
+                .single();
+            
+            if (weeklyError && weeklyError.code !== 'PGRST116') throw weeklyError;
+            if (weekly) {
+                workingHours = { start: weekly.start_time, end: weekly.end_time };
+            }
+        }
+
+        if (!workingHours) return res.status(200).json([]); // Not scheduled to work
+
+        // 2. Get all existing appointments for that staff on that day.
+        const dayStart = `${date}T00:00:00.000Z`;
+        const dayEnd = `${date}T23:59:59.999Z`;
+
+        // --- FIX: Build the query first, then execute it ---
+        let appointmentsQuery = req.supabase
+            .from('appointments')
+            .select('id, start_time, end_time')
+            .eq('staff_id', staffId)
+            .gte('start_time', dayStart)
+            .lte('start_time', dayEnd)
+            .in('status', ['confirmed', 'pending_approval', 'pending_reschedule']);
+
+        if (appointmentIdToIgnore) {
+            appointmentsQuery = appointmentsQuery.not('id', 'eq', appointmentIdToIgnore);
+        }
+
+        const { data: appointments, error: appointmentsError } = await appointmentsQuery;
+        
+        if (appointmentsError) throw appointmentsError;
+
+        // 3. Generate all possible slots and filter out conflicts.
+        const availableSlots = [];
+        const slotStart = new Date(`${date}T${workingHours.start}`);
+        const dayEndTime = new Date(`${date}T${workingHours.end}`);
+
+        while (slotStart < dayEndTime) {
+            const slotEnd = new Date(slotStart.getTime() + durationMinutes * 60000);
+            if (slotEnd > dayEndTime) break;
+
+            const isBooked = appointments.some(appt => {
+                const apptStart = new Date(appt.start_time);
+                const apptEnd = new Date(appt.end_time);
+                // Check for overlap: (SlotStart < ApptEnd) and (SlotEnd > ApptStart)
+                return slotStart < apptEnd && slotEnd > apptStart;
+            });
+
+            if (!isBooked) {
+                availableSlots.push(slotStart.toTimeString().substring(0, 5)); // Format as HH:MM
+            }
+
+            slotStart.setMinutes(slotStart.getMinutes() + 15); // Move to the next 15-min interval
+        }
+
+        res.status(200).json(availableSlots);
+
+    } catch (error) {
+        console.error("Error fetching staff availability:", error);
+        res.status(500).json({ message: "Internal server error.", error: error.message });
     }
 }
