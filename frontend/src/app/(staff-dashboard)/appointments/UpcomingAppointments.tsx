@@ -18,8 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Filter, ArrowUpDown, TriangleAlertIcon } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Filter, ArrowUpDown, TriangleAlertIcon, ArrowUpRight } from "lucide-react"
 import { toZonedTime } from "date-fns-tz"
 
 // Define the types needed for this component
@@ -45,7 +47,7 @@ type Appt = {
 export default function UpcomingAppointments() {
   const [alertError, setAlertError] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState("latest");
-  const [filterOption, setFilterOption] = useState("All");
+  const [filterOption, setFilterOption] = useState("Today");
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -148,18 +150,16 @@ export default function UpcomingAppointments() {
       return appointmentDate >= today && appointmentDate <= weekLater;
     };
 
-    const inThisMonth = (a: Appt) => {
-      const d = toDateOnlyStr(a);
-      return d.startsWith(monthPrefix);
-    };
-
     const isTodayAppt = (a: Appt) => toDateOnlyStr(a) === todayStr;
 
     let filtered = appointments.filter((a) => {
-      if (filterOption === "Today") return isTodayAppt(a);
-      if (filterOption === "This Week") return inThisWeek(a);
-      if (filterOption === "This Month") return inThisMonth(a);
-      return true; // "All"
+      if (filterOption === "Today") {
+        return isTodayAppt(a);
+      }
+      if (filterOption === "This Week") {
+        return inThisWeek(a);
+      }
+      return true;
     });
 
     filtered.sort((a, b) => {
@@ -172,7 +172,6 @@ export default function UpcomingAppointments() {
       } else // "oldest"
         return za - zb; // Oldest first (ascending)
     });
-
     return filtered;
   }, [appointments, filterOption, sortOption]);
   return (
@@ -184,20 +183,18 @@ export default function UpcomingAppointments() {
           <AlertDescription className="text-white/80">Please try reloading the page or relogging.</AlertDescription>
         </Alert>
       )}
-      <div className="max-w-6xl mx-auto bg-blue-light mt-4 p-6 rounded-3xl shadow-md">
+      <div className="w-full mx-auto bg-blue-light mt-4 p-6 rounded-2xl shadow-md">
         <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {/* Filter by Time Period (this week, this month, all) */}
             <Select value={filterOption} onValueChange={(value) => setFilterOption(value as any)}>
               <SelectTrigger className="bg-white">
                 <Filter />
-                <SelectValue placeholder="Filter Type" />
+                <SelectValue placeholder="Filter" />
               </SelectTrigger>
               <SelectContent className="bg-white">
                 <SelectItem value="Today">Today</SelectItem>
                 <SelectItem value="This Week">This Week</SelectItem>
-                <SelectItem value="This Month">This Month</SelectItem>
-                <SelectItem value="All">All</SelectItem>
               </SelectContent>
             </Select>
             {/* Sort by date */}
@@ -212,6 +209,9 @@ export default function UpcomingAppointments() {
               </SelectContent>
             </Select>
           </div>
+          <Link href="/staff-dashboard/appointments">
+            <Button><ArrowUpRight />View All Appointments</Button>
+          </Link>
         </div>
 
         <div className="overflow-x-auto">

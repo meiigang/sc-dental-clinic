@@ -59,7 +59,6 @@ function NavigationButtons({
           Previous
         </Button>
       )}
-      {/* FIX: Show "Next" button only on steps 1 and 2. */}
       {currentStep < 3 && (
         <Button
           className="bg-blue-primary hover:bg-blue-dark text-white rounded-lg px-6 py-2"
@@ -69,7 +68,6 @@ function NavigationButtons({
           Next
         </Button>
       )}
-      {/* FIX: Show "Confirm Reservation" button only on step 3. */}
       {currentStep === 3 && onFinalSubmit && (
         <Button
           className="bg-blue-primary hover:bg-blue-dark text-white rounded-lg px-6 py-2"
@@ -94,7 +92,7 @@ function ReserveAppointmentSteps() {
       <NavigationButtons
         currentStep={currentStep}
         setCurrentStep={setCurrentStep}
-        totalSteps={4} // This is correct, as there are 4 total states
+        totalSteps={4}
         isNextDisabled={
           (currentStep === 1 && (!formValues.date || !formValues.selectedTime)) ||
           (currentStep === 2 && !formValues.selectedService)

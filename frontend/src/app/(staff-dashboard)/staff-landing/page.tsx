@@ -3,13 +3,13 @@ import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { RiPencilFill } from "react-icons/ri"
+import { Pencil } from "lucide-react"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
 import { RecentPatients } from "@/components/RecentPatients"
 import AvailabilityInputs from "@/components/availability-inputs"
-import UpcomingAppointments from "../appointments/UpcomingAppointments";
+import UpcomingAppointments from "../appointments/UpcomingAppointments"
 import StaffTable from "@/components/StaffTable"
 
 export default function StaffDashboard() {
@@ -86,7 +86,7 @@ export default function StaffDashboard() {
 
   return (
     <main>
-      <div className="page-container px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-5 sm:py-14 md:py-14 lg:py-14 xl:py-14  space-y-6 min-h-screen">
+      <div className="page-container px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-5 sm:py-14 md:py-14 lg:py-14 xl:py-14 space-y-2 min-h-screen">
         {/* User Profile */}
         <div className="mt-4">
           <h1 className="inline-block text-2xl sm:text-3xl md:text-4xl font-bold text-blue-dark">Welcome, {firstName}</h1>
@@ -98,7 +98,7 @@ export default function StaffDashboard() {
               <div className="flex flex-col md:flex-row items-start gap-6 md:gap-8">
                 {/* Left: Profile Picture and Edit/Register Buttons */}
                 <div className="flex flex-col gap-3 sm:gap-4 items-center w-full sm:w-auto">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <Image
                       src={profilePicture}
                       alt="Profile Picture"
@@ -113,7 +113,7 @@ export default function StaffDashboard() {
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button className="bg-blue-primary text-white hover:bg-blue-dark w-full">
-                          <RiPencilFill /> Edit Profile
+                          <Pencil /> Edit Profile
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-3xl">
@@ -207,25 +207,25 @@ export default function StaffDashboard() {
         </div>
 
         {/* Availability */}
-        <div ref={availabilityRef} className="py-8 sm:py-12 md:py-20">
+        <div ref={availabilityRef} className="py-2 sm:py-6 md:py-14">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-dark">Availability</h3>
           <AvailabilityInputs />
         </div>
 
         {/* Upcoming Appointments */}
-        <div ref={upcomingAppointmentsRef} className="py-8 sm:py-12 md:py-20">
+        <div ref={upcomingAppointmentsRef} className="py-2 sm:py-6 md:py-14">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-dark">Upcoming Appointments</h3>
           <UpcomingAppointments />
         </div>
         
         {/* Staff Accounts Table */}
-        <div className="py-8 sm:py-12 md:py-20">
+        <div className="py-2 sm:py-6 md:py-14">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-dark">Staff Accounts</h3>
           <StaffTable />
         </div>
 
         { /* Recently Viewed Patient Records */ }
-        <div ref={patientRecordsRef} className="py-8 sm:py-12 md:py-20">
+        <div ref={patientRecordsRef} className="py-2 sm:py-6 md:py-14">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-dark">Recently Viewed Patient Records</h3>
           <RecentPatients />
         </div>

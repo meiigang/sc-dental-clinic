@@ -22,9 +22,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { TriangleAlertIcon } from "lucide-react"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { Filter, ArrowUpDown, ChevronLeft, ChevronRight, CalendarArrowUp, ChevronDown} from "lucide-react";
+import { Filter, ArrowUpDown, ChevronLeft, ChevronRight, ChevronDown, Pencil, TriangleAlertIcon} from "lucide-react";
 import { LogAppointment } from "./log-appointment-modal"
 
 // Define  database statuses
@@ -41,6 +40,13 @@ type Appointment = {
   price: number;
   status: typeof DB_STATUSES[number];
 };
+
+const filterTypes = [
+  "All",
+  "Today",
+  "This Week",
+  "This Month"
+];
 
 const formatStatusForDisplay = (status: Appointment['status']) => {
   switch (status) {
@@ -59,9 +65,8 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
   const [page, setPage] = useState(1);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
-  const [filterOption, setFilterOption] = useState("This Week");
-  const [sortOption, setSortOption] = useState("Date");
-  const [isLoading, setIsLoading] = useState(true);
+  const [filterOption, setFilterOption] = useState("All");
+  const [sortOption, setSortOption] = useState("latest");
   const [bookedPage, setBookedPage] = useState(1);
   const [reservedPage, setReservedPage] = useState(1);
   const [selectedAppointment, setSelectedAppointment] = useState<
@@ -91,11 +96,10 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
         });
         // --- END OF FIX ---
 
-        if (!response.ok) throw new Error('Failed to fetch appointments');
+        if (!response.ok) setAlertError('Failed to fetch appointments');
         const allAppointments: Appointment[] = await response.json();
         setAppointments(allAppointments);
       } catch (error) {
-        console.error(error);
         setAlertError("Your appointment data failed to load.");
       }
     };
@@ -167,11 +171,11 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
 
   // Sort function
   const sortData = (data: Appointment[]) => {
-    return [...data].sort((a, b) => {
-      if (sortOption === "Name") return a.patient.localeCompare(b.patient);
-      if (sortOption === "Status") return a.status.localeCompare(b.status);
-      if (sortOption === "Date") return new Date(a.date).getTime() - new Date(b.date).getTime();
-      return 0;
+    return data.sort((a, b) => {
+      if (sortOption === "latest") {
+        return new Date(b.date).getTime() - new Date(a.date).getTime(); // Latest first (descending)
+      } else // "oldest"  
+        return new Date(a.date).getTime() - new Date(b.date).getTime(); // Oldest first (ascending)
     });
   };
 
@@ -429,7 +433,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
   };
 
   return (
-    <main className="min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-10 sm:py-12 md:py-16 lg:py-20 space-y-8">
+    <main className="min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-10 sm:py-12 md:py-16 space-y-8">
       {alertError && (
         <Alert className="bg-destructive dark:bg-destructive/60 text-md text-white w-md mx-auto">
           <TriangleAlertIcon />
@@ -437,41 +441,32 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
           <AlertDescription className="text-white/80">Please try reloading the page or relogging.</AlertDescription>
         </Alert>
       )}
-      {/* Filter + Sort */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="bg-blue-primary text-white flex items-center gap-2 rounded-full px-6 py-2">
-              <Filter className="h-4 w-4" /> {filterOption}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            {["All", "Today", "This Week", "This Month"].map((opt) => (
-              <DropdownMenuItem key={opt} onClick={() => { setFilterOption(opt); setBookedPage(1); setReservedPage(1); }}>
-                {opt}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="bg-blue-primary text-white flex items-center gap-2 rounded-full px-6 py-2">
-              <ArrowUpDown className="h-4 w-4" /> Sort by {sortOption}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            {["Date", "Name", "Status"].map((opt) => (
-              <DropdownMenuItem key={opt} onClick={() => { setSortOption(opt); setBookedPage(1); setReservedPage(1); }}>
-                {opt}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
       {/* --- Table --- */}
       <section className="w-full max-w-full sm:max-w-3xl md:max-w-5xl lg:max-w-6xl mx-auto bg-blue-light p-4 sm:p-6 md:p-8 rounded-2xl shadow-md">
+        <div className="mb-4 flex flex-col sm:flex-row gap-4">
+        {/* Filter by time period (All, Today, This Week, This Month) */}
+        <Select value={filterOption} onValueChange={(value) => setFilterOption(value as any)}>
+          <SelectTrigger className="bg-white">
+            <Filter /><SelectValue placeholder="Filter" />
+          </SelectTrigger>
+          <SelectContent className="bg-white">
+            {filterTypes.map((type) => (
+              <SelectItem key={type} value={type}>{type}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {/* Sort by date */}
+        <Select value={sortOption} onValueChange={setSortOption}>
+          <SelectTrigger className="bg-white">
+            <ArrowUpDown />
+            <SelectValue placeholder="Sort by Date" />
+          </SelectTrigger>
+          <SelectContent className="bg-white">
+            <SelectItem value="latest">Latest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+          </SelectContent>
+        </Select>
+        </div>
         {/* --- TAB BUTTONS --- */}
         <div className="mb-6">
           {/* Large screens: show buttons */}
@@ -533,8 +528,8 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
         </div>
     
         {/* --- TABLE RENDER --- */}
-        <div className="overflow-x-auto">
-            <table className="w-full min-w-[350vw] sm:min-w-[160vw] md:min-w-[120vw] lg:min-w-full xl:min-w-full text-sm sm:text-base border border-blue-accent rounded-2xl">
+        <div className="overflow-x-auto overflow-hidden rounded-2xl">
+            <table className="w-full min-w-[350vw] sm:min-w-[160vw] md:min-w-[120vw] lg:min-w-full xl:min-w-full text-sm sm:text-base border border-blue-accent">
             <thead>
               <tr className="bg-blue-accent text-blue-dark font-semibold">
                 <th className="p-3 border border-blue-accent">Date</th>
@@ -550,8 +545,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
               {pagedData.map((appt, index) => (
                 <tr
                   key={appt.id}
-                  className="text-center bg-white hover:bg-blue-100 cursor-pointer"
-                  onClick={() => handleRowClick(appt, index, activeTab)}
+                  className="text-center bg-white hover:bg-blue-100"
                 >
                   <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
                   <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
@@ -565,14 +559,14 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
                     <div className="flex items-center justify-center gap-2">
                       {/* Reschedule */}
                       <Button
-                        size="icon"
-                        variant="ghost"
+                        variant="outline"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRowClick(appt, index, activeTab);
                         }}
+                        className="bg-blue-light text-blue-primary hover:bg-blue-primary/40 hover:text-blue-dark border border-blue-primary cursor-pointer"
                       >
-                        <CalendarArrowUp className="w-4 h-4" />
+                        <Pencil />Edit
                       </Button>
                     </div>
                   </td>
@@ -608,11 +602,9 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
           space-y-4 
           rounded-2xl"
         >
-
           <DialogHeader>
-            <DialogTitle>Edit Appointment</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-blue-dark">Edit Appointment</DialogTitle>
           </DialogHeader>
-
           {selectedAppointment && (
             <div className="space-y-3">
               {/* Date */}
@@ -684,7 +676,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
 
               {/* Right-aligned: Primary actions */}
               <div className="flex gap-2">
-                <Button variant="secondary" onClick={handleLogAppointment}>
+                <Button onClick={handleLogAppointment}>
                   Log Appointment
                 </Button>
                 <Button onClick={handleSave} className="bg-blue-primary hover:bg-blue-600 text-white">
