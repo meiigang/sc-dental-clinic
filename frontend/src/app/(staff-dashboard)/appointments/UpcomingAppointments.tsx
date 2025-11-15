@@ -141,7 +141,7 @@ export default function UpcomingAppointments() {
 
     const toDateOnlyStr = (a: Appt) => {
       // parse whatever the backend gives (date-only or full ISO), convert to Manila tz, then format date-only
-      const parsed = parseISO(a.date);
+      const parsed = parseISO(a.start_time);
       const zoned = toZonedTime(parsed, TZ);
       return format(zoned, "yyyy-MM-dd");
     };
@@ -150,7 +150,7 @@ export default function UpcomingAppointments() {
       const today = new Date();
       const weekLater = new Date(today);
       weekLater.setDate(today.getDate() + 7);
-      const appointmentDate = new Date(a.date);
+      const appointmentDate = new Date(a.start_time);
       return appointmentDate >= today && appointmentDate <= weekLater;
     };
 
@@ -213,49 +213,48 @@ export default function UpcomingAppointments() {
               </SelectContent>
             </Select>
           </div>
-          <Link href="/staff-dashboard/appointments">
+          <Link href="/appointments">
             <Button><ArrowUpRight />View All Appointments</Button>
           </Link>
         </div>
-
-      </div>
-      <div className="overflow-x-auto">
-        <div className="max-h-[480px] overflow-y-auto rounded-2xl border border-blue-accent">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-blue-accent text-blue-dark font-semibold sticky top-0">
-                <th className="p-3 border border-blue-accent text-center">Date</th>
-                <th className="p-3 border border-blue-accent text-center">Time</th>
-                <th className="p-3 border border-blue-accent text-center">Patient</th>
-                <th className="p-3 border border-blue-accent text-center">Service</th>
-                <th className="p-3 border border-blue-accent text-center">Price</th>
-                <th className="p-3 border border-blue-accent text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr><td colSpan={6} className="text-center p-4">Loading appointments...</td></tr>
-              ) : visibleAppointments.length === 0 ? (
-                <tr><td colSpan={6} className="text-center p-4">No upcoming appointments found for the selected filter.</td></tr>
-              ) : (
-                visibleAppointments.map((appt) => (
-                  <tr key={appt.id} className="bg-white text-center">
-                    {/* --- FIX: Use the new formatters and correct data properties --- */}
-                    <td className="p-3 border border-blue-accent">{formatDate(appt.start_time)}</td>
-                    <td className="p-3 border border-blue-accent">{formatTimeRange(appt.start_time, appt.end_time)}</td>
-                    <td className="p-3 border border-blue-accent">{`${appt.patient?.firstName ?? ''} ${appt.patient?.lastName ?? ''}`}</td>
-                    <td className="p-3 border border-blue-accent">{appt.service?.service_name ?? 'N/A'}</td>
-                    <td className="p-3 border border-blue-accent">{`₱${appt.service?.price?.toFixed(2) ?? '0.00'}`}</td>
-                    <td className="p-3 border border-blue-accent">
-                      <span className={statusClass(appt.status)}>
-                        {formatStatusForDisplay(appt.status)}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="overflow-x-auto">
+          <div className="max-h-[480px] overflow-y-auto rounded-2xl border border-blue-accent">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-blue-accent text-blue-dark font-semibold sticky top-0">
+                  <th className="p-3 border border-blue-accent text-center">Date</th>
+                  <th className="p-3 border border-blue-accent text-center">Time</th>
+                  <th className="p-3 border border-blue-accent text-center">Patient</th>
+                  <th className="p-3 border border-blue-accent text-center">Service</th>
+                  <th className="p-3 border border-blue-accent text-center">Price</th>
+                  <th className="p-3 border border-blue-accent text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan={6} className="text-center p-4">Loading appointments...</td></tr>
+                ) : visibleAppointments.length === 0 ? (
+                  <tr><td colSpan={6} className="text-center p-4">No upcoming appointments found for the selected filter.</td></tr>
+                ) : (
+                  visibleAppointments.map((appt) => (
+                    <tr key={appt.id} className="bg-white text-center">
+                      {/* --- FIX: Use the new formatters and correct data properties --- */}
+                      <td className="p-3 border border-blue-accent">{formatDate(appt.start_time)}</td>
+                      <td className="p-3 border border-blue-accent">{formatTimeRange(appt.start_time, appt.end_time)}</td>
+                      <td className="p-3 border border-blue-accent">{`${appt.patient?.firstName ?? ''} ${appt.patient?.lastName ?? ''}`}</td>
+                      <td className="p-3 border border-blue-accent">{appt.service?.service_name ?? 'N/A'}</td>
+                      <td className="p-3 border border-blue-accent">{`₱${appt.service?.price?.toFixed(2) ?? '0.00'}`}</td>
+                      <td className="p-3 border border-blue-accent">
+                        <span className={statusClass(appt.status)}>
+                          {formatStatusForDisplay(appt.status)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

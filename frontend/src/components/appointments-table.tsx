@@ -633,7 +633,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
 
               {/* Right-aligned: Primary actions */}
               <div className="flex gap-2">
-                <Button onClick={handleLogAppointment}>
+                <Button onClick={() => setIsLogDialogOpen(true)}>
                   Log Appointment
                 </Button>
                 <Button onClick={handleSave} className="bg-blue-primary hover:bg-blue-600 text-white">
