@@ -22,8 +22,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { TriangleAlertIcon } from 'lucide-react'
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import { TriangleAlertIcon } from "lucide-react"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Filter, ArrowUpDown, ChevronLeft, ChevronRight, CalendarArrowUp, ChevronDown} from "lucide-react";
 import { LogAppointment } from "./log-appointment-modal"
 
@@ -431,9 +431,9 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
   return (
     <main className="min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-10 sm:py-12 md:py-16 lg:py-20 space-y-8">
       {alertError && (
-        <Alert className='bg-destructive dark:bg-destructive/60 text-white w-md mx-auto'>
+        <Alert className='bg-destructive dark:bg-destructive/60 text-md text-white w-md mx-auto'>
           <TriangleAlertIcon />
-          <AlertTitle className="font-medium text-left">Your appointment data is not loading.</AlertTitle>
+          <AlertTitle className="font-medium text-left">Your appointment data failed to load.</AlertTitle>
           <AlertDescription className='text-white/80'>Please try reloading the page or relogging.</AlertDescription>
         </Alert>
       )}

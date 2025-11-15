@@ -9,7 +9,7 @@ export function RecentPatients() {
 
   return (
     // 1. Add a container div with background, padding, and shadow
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-blue-light mt-4 p-6 rounded-lg shadow-md">
       {patients.length === 0 ? (
         <div className="text-center text-gray-500 py-8">
           No patients viewed recently.
@@ -30,7 +30,7 @@ export function RecentPatients() {
                   <Image
                     src={patient.profilePicture || "/images/img-profile-default.png"}
                     alt={`${fullName}'s Profile Picture`}
-                    className="rounded-2xl object-cover flex-shrink-0"
+                    className="rounded-2xl object-cover shrink-0"
                     width={60}
                     height={60}
                   />
