@@ -96,7 +96,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
         setAppointments(allAppointments);
       } catch (error) {
         console.error(error);
-        setAlertError("Could not load appointment data.");
+        setAlertError("Your appointment data failed to load.");
       }
     };
     fetchAppointments();
@@ -431,10 +431,10 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
   return (
     <main className="min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-10 sm:py-12 md:py-16 lg:py-20 space-y-8">
       {alertError && (
-        <Alert className='bg-destructive dark:bg-destructive/60 text-md text-white w-md mx-auto'>
+        <Alert className="bg-destructive dark:bg-destructive/60 text-md text-white w-md mx-auto">
           <TriangleAlertIcon />
-          <AlertTitle className="font-medium text-left">Your appointment data failed to load.</AlertTitle>
-          <AlertDescription className='text-white/80'>Please try reloading the page or relogging.</AlertDescription>
+          <AlertTitle className="font-medium text-left">{alertError}</AlertTitle>
+          <AlertDescription className="text-white/80">Please try reloading the page or relogging.</AlertDescription>
         </Alert>
       )}
       {/* Filter + Sort */}

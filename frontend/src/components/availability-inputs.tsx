@@ -126,8 +126,7 @@ export default function AvailabilityInputs() {
         setInitialDateSpecific(newOverridesData);
 
       } catch (error) {
-        console.error("Error fetching availability:", error);
-        setAlertError("Could not load your saved availability.");
+        setAlertError("Your availability data failed to load.");
       } finally {
         setIsLoading(false);
       }
@@ -218,10 +217,10 @@ export default function AvailabilityInputs() {
   return (
     <div>
       {alertError && (
-        <Alert className='bg-destructive dark:bg-destructive/60 text-md text-white w-full mx-auto mt-4'>
+        <Alert className="bg-destructive dark:bg-destructive/60 text-md text-white w-full mx-auto mt-4">
           <TriangleAlertIcon size={30} />
-          <AlertTitle className="font-medium text-left">Your availability data failed to load.</AlertTitle>
-          <AlertDescription className='text-white/80'>Please try reloading the page or relogging.</AlertDescription>
+          <AlertTitle>{alertError}</AlertTitle>
+          <AlertDescription className="text-white/80">Please try reloading the page or relogging.</AlertDescription>
         </Alert>
       )}
       <div className="bg-blue-light p-8 rounded-2xl grid-cols-1 md:grid-cols-2 gap-24 mt-4 w-full h-full mx-auto grid shadow-md">
