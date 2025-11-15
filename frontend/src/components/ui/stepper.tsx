@@ -9,7 +9,7 @@ export const Stepper = ({ steps }: StepperProps) => {
   const { currentStep } = useFormContext();
 
   return (
-    <div className="w-full my-3 flex">
+    <div className="w-full my-3 flex overflow-x-auto">
       {steps.map((step, index) => (
         <div key={index} className="flex-1 flex flex-col items-center relative">
           {/* Line to the left (except first) */}
@@ -33,7 +33,7 @@ export const Stepper = ({ steps }: StepperProps) => {
             <div className="absolute right-0 top-5 w-1/2 h-1 bg-blue-900 z-0" />
           )}
           {/* Label */}
-          <span className="text-blue-dark text-sm text-center w-28 break-words whitespace-normal mt-2">
+          <span className="text-blue-dark text-sm text-center w-28 break-words whitespace-normal mt-2 ">
             {step}
           </span>
         </div>
