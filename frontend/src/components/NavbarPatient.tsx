@@ -18,7 +18,7 @@ export default function NavbarPatient() {
   };
 
   // MODIFICATION: Removed 'Notifications' from this array as it will be handled by the bell icon.
-  const links: string[] = ["Patient Information Record", "Dashboard", "Log Out"];
+  const links: string[] = ["Billing", "Patient Information Record", "Dashboard", "Log Out"];
 
   return (
     <nav className="bg-blue-primary shadow-md sticky top-0 z-50">
