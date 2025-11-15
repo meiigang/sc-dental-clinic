@@ -69,12 +69,15 @@ export async function updateAppointmentDetailsHandler(req, res) {
 
     try {
         // --- FIX: Fetch the original_start_time as well ---
-        const { data: originalAppointment, error: fetchError } = await req.supabase.from('appointments').select('start_time, original_start_time, patient:patient_id(user_id), staff:staff_id(user_id)').eq('id', id).single();
+        const { data: originalAppointment, error: fetchError } = await req.supabase.from('appointments').select('start_time, original_start_time, status, patient:patient_id(user_id), staff:staff_id(user_id)').eq('id', id).single();
         if (fetchError) throw fetchError;
 
+        // --- FIX: Define isRescheduled BEFORE it is used ---
         const isRescheduled = start_time && new Date(start_time).getTime() !== new Date(originalAppointment.start_time).getTime();
+        const isStatusChange = !isRescheduled && status && status !== originalAppointment.status;
         
-        let updatePayload = {};
+        let updatePayload = {};        
+        
         if (isRescheduled) {
             // If the time has changed, it's a reschedule.
             updatePayload = {
@@ -104,13 +107,21 @@ export async function updateAppointmentDetailsHandler(req, res) {
 
         // Notify the other party ONLY if it was a reschedule action.
         if (isRescheduled) {
-            if (user.role === 'patient') {
-                const staffUserId = originalAppointment.staff?.user_id;
-                if (staffUserId) {
-                    await createNotification(req.supabase, staffUserId, 'NEW_BOOKING_REQUEST', { appointmentId: updatedAppointment.id });
-                }
-            } else { // Staff/Dentist initiated the reschedule
+            // Handle reschedule notifications (existing logic)
+            if (user.role !== 'patient') { // Staff/Dentist initiated the reschedule
                 await createNotification(req.supabase, originalAppointment.patient.user_id, 'APPOINTMENT_RESCHEDULED', { date: updatedAppointment.start_time, appointmentId: updatedAppointment.id });
+            }
+            // (Patient-initiated reschedule logic can be added here if needed)
+        } else if (isStatusChange) {
+            // Handle status-change notifications (NEW logic)
+            const patientUserId = originalAppointment.patient?.user_id;
+            if (patientUserId) {
+                if (status === 'confirmed' && originalAppointment.status === 'pending_approval') {
+                    await createNotification(req.supabase, patientUserId, 'APPOINTMENT_CONFIRMED', { date: updatedAppointment.start_time, appointmentId: updatedAppointment.id });
+                } else if (status === 'cancelled') {
+                    // This covers the user's reported case: Confirmed -> Cancelled
+                    await createNotification(req.supabase, patientUserId, 'APPOINTMENT_CANCELLED', { date: updatedAppointment.start_time, appointmentId: updatedAppointment.id });
+                }
             }
         }
         
@@ -123,7 +134,7 @@ export async function updateAppointmentDetailsHandler(req, res) {
         console.error("Error Code:", error.code);
         console.error("Error Message:", error.message);
         console.error("Full Error Object:", error);
-        
+
         console.error("Error updating appointment:", error);
         if (error.code === '23505') return res.status(409).json({ message: "The requested time slot is already booked." });
         return res.status(500).json({ message: "Internal server error." });
