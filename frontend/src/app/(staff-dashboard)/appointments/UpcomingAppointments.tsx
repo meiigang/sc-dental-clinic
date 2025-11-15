@@ -1,16 +1,35 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react"
 import {
   parseISO,
   startOfWeek,
   endOfWeek,
   startOfMonth,
   endOfMonth,
-  isToday,
-  isWithinInterval,
-} from "date-fns";
-import { toZonedTime, format } from "date-fns-tz";
+  startOfDay,
+  endOfDay,
+  format,
+} from "date-fns"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Filter, ArrowUpDown, TriangleAlertIcon } from "lucide-react"
+import { toZonedTime } from "date-fns-tz"
+
+// Define the types needed for this component
+const DB_STATUSES = [
+  "pending_approval",
+  "confirmed",
+  "completed",
+  "cancelled",
+  "no_show",
+] as const;
 
 // --- FIX: Update the Appt type to match the actual API response ---
 type Appt = {
@@ -53,10 +72,11 @@ const formatTimeRange = (startIso: string, endIso: string) => {
 };
 
 export default function UpcomingAppointments() {
+  const [alertError, setAlertError] = useState<string | null>(null);
+  const [sortOption, setSortOption] = useState("latest");
   const [filterOption, setFilterOption] = useState("All");
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [sortAsc, setSortAsc] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -71,7 +91,7 @@ export default function UpcomingAppointments() {
         const response = await fetch("/api/appointments", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!response.ok) throw new Error("Failed to fetch appointments");
+        if (!response.ok) setAlertError("Your appointment data failed to load.");
 
         // --- FIX: The fetched data now correctly matches the Appt type ---
         const upcomingAppointments: Appt[] = await response.json();
@@ -130,45 +150,56 @@ export default function UpcomingAppointments() {
 
     // --- FIX: Sort using the correct 'start_time' property ---
     filtered.sort((a, b) => {
-      const timeA = parseISO(a.start_time).getTime();
-      const timeB = parseISO(b.start_time).getTime();
-      return sortAsc ? timeA - timeB : timeB - timeA;
+      const da = parseISO(a.date);
+      const db = parseISO(b.date);
+      const za = toZonedTime(da, TZ).getTime();
+      const zb = toZonedTime(db, TZ).getTime();
+      if (sortOption === "latest") {
+        return zb - za; // Latest first (descending)
+      } else // "oldest"
+        return za - zb; // Oldest first (ascending)
     });
 
     return filtered;
-  }, [appointments, filterOption, sortAsc]);
-
+  }, [appointments, filterOption, sortOption]);
   return (
-    <div className="max-w-6xl mx-auto bg-blue-light p-6 rounded-3xl shadow-md">
-      <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-        <h2 className="text-2xl font-bold text-blue-dark">Upcoming Appointments</h2>
-
-        <div className="flex items-center gap-3">
-          {/* Filter select: This Week, This Month, All */}
-          <label className="text-sm text-gray-600">
-            Filter:
-            <select
-              value={filterOption}
-              onChange={(e) => setFilterOption(e.target.value as any)}
-              className="ml-2 px-2 py-1 rounded-md border bg-blue-accent text-blue-dark text-sm"
-            >
-              <option value="Today">Today</option>
-              <option value="This Week">This Week</option>
-              <option value="This Month">This Month</option>
-              <option value="All">All</option>
-            </select>
-          </label>
-
-          {/* Sort by date toggle */}
-          <button
-            onClick={() => setSortAsc((s) => !s)}
-            className="ml-2 px-3 py-1 rounded-md border bg-white text-sm"
-            aria-label="Toggle sort order"
-          >
-            Sort: Date {sortAsc ? "↑" : "↓"}
-          </button>
+    <div>
+      {alertError && (
+        <Alert className="bg-destructive dark:bg-destructive/60 text-md text-white w-full mx-auto mt-4">
+          <TriangleAlertIcon className="h-4 w-4" />
+          <AlertTitle>{alertError}</AlertTitle>
+          <AlertDescription className="text-white/80">Please try reloading the page or relogging.</AlertDescription>
+        </Alert>
+      )}
+      <div className="max-w-6xl mx-auto bg-blue-light mt-4 p-6 rounded-3xl shadow-md">
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+          <div className="flex items-center gap-3">
+            {/* Filter by Time Period (this week, this month, all) */}
+            <Select value={filterOption} onValueChange={(value) => setFilterOption(value as any)}>
+              <SelectTrigger className="bg-white">
+                <Filter />
+                <SelectValue placeholder="Filter Type" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="Today">Today</SelectItem>
+                <SelectItem value="This Week">This Week</SelectItem>
+                <SelectItem value="This Month">This Month</SelectItem>
+                <SelectItem value="All">All</SelectItem>
+              </SelectContent>
+            </Select>
+            {/* Sort by date */}
+            <Select value={sortOption} onValueChange={setSortOption}>
+              <SelectTrigger className="bg-white">
+                <ArrowUpDown />
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="latest">Latest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
 
       <div className="overflow-x-auto">
         <div className="max-h-[480px] overflow-y-auto rounded-2xl border border-blue-accent">
@@ -203,10 +234,31 @@ export default function UpcomingAppointments() {
                       </span>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  visibleAppointments.map((appt) => (
+                    <tr key={appt.id} className="bg-white text-center">
+                      <td className="p-3 border border-blue-accent">
+                        {new Date(appt.date).toLocaleDateString()}
+                      </td>
+                      <td className="p-3 border border-blue-accent">
+                        {formatDisplayTime(appt)}
+                      </td>
+                      <td className="p-3 border border-blue-accent">{appt.patient}</td>
+                      <td className="p-3 border border-blue-accent">{appt.service}</td>
+                      <td className="p-3 border border-blue-accent">
+                        {typeof appt.price === "number" ? appt.price.toFixed(2) : "-"}
+                      </td>
+                      <td className="p-3 border border-blue-accent">
+                        <span className={statusClass(appt.status)}>
+                          {formatStatusForDisplay(appt.status)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
