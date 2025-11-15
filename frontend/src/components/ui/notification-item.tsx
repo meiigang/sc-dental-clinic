@@ -1,6 +1,10 @@
 import { CheckCircle, XCircle, Clock, AlertTriangle, CalendarPlus } from 'lucide-react';
+import Link from 'next/link';
+import { useNotifications } from '@/context/useNotificationContext'; // --- NEW: Import context ---
+import { useRouter } from 'next/navigation'; // --- NEW: Import router for navigation ---
 
 interface NotificationItemProps {
+    id: number;
     type: string;
     data: any;
     is_read: boolean;
@@ -54,15 +58,60 @@ const NOTIFICATION_CONFIG = {
     }
 };
 
-export function NotificationItem({ type, data, is_read }: NotificationItemProps) {
+export function NotificationItem({ id, type, data, is_read }: NotificationItemProps) {
     const config = NOTIFICATION_CONFIG[type as keyof typeof NOTIFICATION_CONFIG] || NOTIFICATION_CONFIG.DEFAULT;
+    const { markOneAsRead } = useNotifications(); // --- NEW: Get the function from context ---
+    const router = useRouter(); // --- NEW: Get the router instance ---
+    
+    const getHref = () => {
+        const appointmentId = data?.appointmentId;
+        if (!appointmentId) return '#';
+
+        if (type === 'NEW_BOOKING_REQUEST') {
+            // Staff notifications should go to the staff appointments page
+            return '/staff-dashboard/appointments#appointments';
+        }
+            // All other (patient) notifications go to the patient dashboard
+            return '/patient-dashboard/dashboard#appointments';
+    };
+
+    // --- NEW: Click handler to mark as read and then navigate ---
+    const handleClick = async (e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault(); // Prevent the Link's default navigation temporarily
+
+        // Only make an API call if the notification is unread
+        if (!is_read) {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (token) {
+                try {
+                    // Call the backend but don't wait for it to finish
+                    fetch(`/api/notifications/${id}/read`, {
+                        method: 'PATCH',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    // Update the UI immediately for instant feedback
+                    markOneAsRead(id);
+                } catch (error) {
+                    console.error("Failed to mark notification as read:", error);
+                }
+            }
+        }
+        // Navigate to the destination
+        router.push(getHref());
+    };
 
     return (
-        <div className={`flex items-center p-4 rounded-lg border ${config.containerClasses} ${!is_read ? 'font-semibold' : 'opacity-70'}`}>
-            <div className={`flex-shrink-0 h-10 w-10 rounded-full ${config.bgColor} flex items-center justify-center mr-4`}>
-                {config.icon}
+        // --- FIX: Use a div with an onClick handler instead of wrapping with Link ---
+        <div onClick={handleClick} className="cursor-pointer">
+            <div className={`flex items-center p-4 rounded-lg border transition-all my-2 
+                ${config.containerClasses} 
+                ${is_read ? 'opacity-60 font-normal' : 'opacity-100 font-bold'}`
+            }>
+                <div className={`flex-shrink-0 h-10 w-10 rounded-full ${config.bgColor} flex items-center justify-center mr-4`}>
+                    {config.icon}
+                </div>
+                <p>{config.text(data)}</p>
             </div>
-            <p>{config.text(data)}</p>
         </div>
     );
 }
