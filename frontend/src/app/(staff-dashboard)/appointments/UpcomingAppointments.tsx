@@ -7,8 +7,8 @@ import {
   endOfWeek,
   startOfMonth,
   endOfMonth,
-  startOfDay,
-  endOfDay,
+  isToday, // --- FIX: Import isToday ---
+  isWithinInterval, // --- FIX: Import isWithinInterval ---
   format,
 } from "date-fns"
 import {
@@ -117,6 +117,8 @@ export default function UpcomingAppointments() {
       case "pending_reschedule":
         return "text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded-md";
       case "completed":
+        // --- FIX: Added a distinct style for completed for clarity ---
+        return "text-blue-800 bg-blue-100 px-2 py-0.5 rounded-md";
       case "no_show":
         return "text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md";
       case "cancelled":
@@ -150,14 +152,13 @@ export default function UpcomingAppointments() {
 
     // --- FIX: Sort using the correct 'start_time' property ---
     filtered.sort((a, b) => {
-      const da = parseISO(a.date);
-      const db = parseISO(b.date);
-      const za = toZonedTime(da, TZ).getTime();
-      const zb = toZonedTime(db, TZ).getTime();
+      const timeA = new Date(a.start_time).getTime();
+      const timeB = new Date(b.start_time).getTime();
       if (sortOption === "latest") {
-        return zb - za; // Latest first (descending)
-      } else // "oldest"
-        return za - zb; // Oldest first (ascending)
+        return timeB - timeA; // Latest first (descending)
+      } else { // "oldest"
+        return timeA - timeB; // Oldest first (ascending)
+      }
     });
 
     return filtered;
@@ -201,6 +202,7 @@ export default function UpcomingAppointments() {
           </div>
         </div>
 
+      </div>
       <div className="overflow-x-auto">
         <div className="max-h-[480px] overflow-y-auto rounded-2xl border border-blue-accent">
           <table className="w-full text-left border-collapse">
@@ -234,31 +236,10 @@ export default function UpcomingAppointments() {
                       </span>
                     </td>
                   </tr>
-                ) : (
-                  visibleAppointments.map((appt) => (
-                    <tr key={appt.id} className="bg-white text-center">
-                      <td className="p-3 border border-blue-accent">
-                        {new Date(appt.date).toLocaleDateString()}
-                      </td>
-                      <td className="p-3 border border-blue-accent">
-                        {formatDisplayTime(appt)}
-                      </td>
-                      <td className="p-3 border border-blue-accent">{appt.patient}</td>
-                      <td className="p-3 border border-blue-accent">{appt.service}</td>
-                      <td className="p-3 border border-blue-accent">
-                        {typeof appt.price === "number" ? appt.price.toFixed(2) : "-"}
-                      </td>
-                      <td className="p-3 border border-blue-accent">
-                        <span className={statusClass(appt.status)}>
-                          {formatStatusForDisplay(appt.status)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
