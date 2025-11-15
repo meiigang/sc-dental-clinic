@@ -475,7 +475,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
                         variant="outline"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleRowClick(appt, index, activeTab);
+                          handleRowClick(appt);
                         }}
                         className="bg-blue-light text-blue-primary hover:bg-blue-primary/40 hover:text-blue-dark border border-blue-primary cursor-pointer"
                       >
