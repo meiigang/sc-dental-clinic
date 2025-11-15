@@ -18,8 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Filter, ArrowUpDown, TriangleAlertIcon } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Filter, ArrowUpDown, TriangleAlertIcon, ArrowUpRight } from "lucide-react"
 import { toZonedTime } from "date-fns-tz"
 
 // Define the types needed for this component
@@ -34,6 +36,7 @@ const DB_STATUSES = [
 // --- FIX: Update the Appt type to match the actual API response ---
 type Appt = {
   id: number;
+  date: string;
   start_time: string;
   end_time: string;
   patient: {
@@ -74,7 +77,7 @@ const formatTimeRange = (startIso: string, endIso: string) => {
 export default function UpcomingAppointments() {
   const [alertError, setAlertError] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState("latest");
-  const [filterOption, setFilterOption] = useState("All");
+  const [filterOption, setFilterOption] = useState("Today");
   const [appointments, setAppointments] = useState<Appt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -131,23 +134,36 @@ export default function UpcomingAppointments() {
   const visibleAppointments = useMemo(() => {
     const nowZ = toZonedTime(new Date(), TZ);
 
-    let filtered = appointments.filter((appt) => {
-      // --- FIX: Use the correct 'start_time' property ---
-      if (!appt.start_time) return false;
-      const apptDate = toZonedTime(parseISO(appt.start_time), TZ);
+    const todayStr = format(nowZ, "yyyy-MM-dd");
+    const weekStartStr = format(startOfWeek(nowZ), "yyyy-MM-dd");
+    const weekEndStr = format(endOfWeek(nowZ), "yyyy-MM-dd");
+    const monthPrefix = format(nowZ, "yyyy-MM");
 
-      if (filterOption === "Today") return isToday(apptDate);
+    const toDateOnlyStr = (a: Appt) => {
+      // parse whatever the backend gives (date-only or full ISO), convert to Manila tz, then format date-only
+      const parsed = parseISO(a.date);
+      const zoned = toZonedTime(parsed, TZ);
+      return format(zoned, "yyyy-MM-dd");
+    };
+
+    const inThisWeek = (a: Appt) => {
+      const today = new Date();
+      const weekLater = new Date(today);
+      weekLater.setDate(today.getDate() + 7);
+      const appointmentDate = new Date(a.date);
+      return appointmentDate >= today && appointmentDate <= weekLater;
+    };
+
+    const isTodayAppt = (a: Appt) => toDateOnlyStr(a) === todayStr;
+
+    let filtered = appointments.filter((a) => {
+      if (filterOption === "Today") {
+        return isTodayAppt(a);
+      }
       if (filterOption === "This Week") {
-        const weekStart = startOfWeek(nowZ);
-        const weekEnd = endOfWeek(nowZ);
-        return isWithinInterval(apptDate, { start: weekStart, end: weekEnd });
+        return inThisWeek(a);
       }
-      if (filterOption === "This Month") {
-        const monthStart = startOfMonth(nowZ);
-        const monthEnd = endOfMonth(nowZ);
-        return isWithinInterval(apptDate, { start: monthStart, end: monthEnd });
-      }
-      return true; // "All"
+      return true;
     });
 
     // --- FIX: Sort using the correct 'start_time' property ---
@@ -160,7 +176,6 @@ export default function UpcomingAppointments() {
         return timeA - timeB; // Oldest first (ascending)
       }
     });
-
     return filtered;
   }, [appointments, filterOption, sortOption]);
   return (
@@ -172,20 +187,18 @@ export default function UpcomingAppointments() {
           <AlertDescription className="text-white/80">Please try reloading the page or relogging.</AlertDescription>
         </Alert>
       )}
-      <div className="max-w-6xl mx-auto bg-blue-light mt-4 p-6 rounded-3xl shadow-md">
+      <div className="w-full mx-auto bg-blue-light mt-4 p-6 rounded-2xl shadow-md">
         <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {/* Filter by Time Period (this week, this month, all) */}
             <Select value={filterOption} onValueChange={(value) => setFilterOption(value as any)}>
               <SelectTrigger className="bg-white">
                 <Filter />
-                <SelectValue placeholder="Filter Type" />
+                <SelectValue placeholder="Filter" />
               </SelectTrigger>
               <SelectContent className="bg-white">
                 <SelectItem value="Today">Today</SelectItem>
                 <SelectItem value="This Week">This Week</SelectItem>
-                <SelectItem value="This Month">This Month</SelectItem>
-                <SelectItem value="All">All</SelectItem>
               </SelectContent>
             </Select>
             {/* Sort by date */}
@@ -200,6 +213,9 @@ export default function UpcomingAppointments() {
               </SelectContent>
             </Select>
           </div>
+          <Link href="/staff-dashboard/appointments">
+            <Button><ArrowUpRight />View All Appointments</Button>
+          </Link>
         </div>
 
       </div>

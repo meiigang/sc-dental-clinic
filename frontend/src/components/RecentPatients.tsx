@@ -8,8 +8,7 @@ export function RecentPatients() {
   const { patients } = useRecentPatients();
 
   return (
-    // 1. Add a container div with background, padding, and shadow
-    <div className="bg-blue-light mt-4 p-6 rounded-lg shadow-md">
+    <div className="bg-blue-light mt-4 p-6 rounded-2xl shadow-md">
       {patients.length === 0 ? (
         <div className="text-center text-gray-500 py-8">
           No patients viewed recently.

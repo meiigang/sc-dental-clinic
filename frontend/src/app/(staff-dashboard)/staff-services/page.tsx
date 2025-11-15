@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Filter, ArrowUpDown, Search, Pencil, Archive, ArchiveX, Undo2 } from "lucide-react";
+import { CirclePlus, Filter, ArrowUpDown, Search, Pencil, Archive, ArchiveX, Undo2 } from "lucide-react";
 
 type Service = {
   id: number;
@@ -431,7 +431,7 @@ export default function StaffServices() {
           <Dialog>
             <DialogTrigger asChild>
               <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
+                <CirclePlus className="h-4 w-4" />
                 Add Service
               </Button>
             </DialogTrigger>

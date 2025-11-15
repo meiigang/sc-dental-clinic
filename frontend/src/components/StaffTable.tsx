@@ -67,7 +67,7 @@ export default function StaffTable() {
   }
 
   return (
-    <div className="mt-6 bg-blue-light p-6 rounded-2xl shadow-sm">
+    <div className="mt-6 bg-blue-light p-6 rounded-2xl shadow-md">
       <><Toaster /></>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
