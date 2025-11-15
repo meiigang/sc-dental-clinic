@@ -86,7 +86,7 @@ export default function StaffDashboard() {
 
   return (
     <main>
-      <div className="page-container px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-20 space-y-6 min-h-screen">
+      <div className="page-container px-4 sm:px-6 md:px-10 lg:px-20 xl:px-32 py-5 sm:py-14 md:py-14 lg:py-14 xl:py-14  space-y-6 min-h-screen">
         {/* User Profile */}
         <div className="mt-4">
           <h1 className="inline-block text-2xl sm:text-3xl md:text-4xl font-bold text-blue-dark">Welcome, {firstName}</h1>

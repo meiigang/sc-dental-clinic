@@ -228,8 +228,8 @@ export default function SalesPage() {
 
   return (
     <main className="w-full">
-      <section className="sales-container flex flex-col items-center py-20 min-h-screen">
-        <h1 className="text-3xl font-bold text-blue-dark">Sales (Completed Appointments)</h1>
+      <section className="sales-container flex flex-col items-center py-10 sm:py-16 lg:py-20 px-4 min-h-screen">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-dark text-center">Sales</h1>
 
         {/* Tabs */}
         <div className="flex gap-3 m-6">
@@ -244,173 +244,188 @@ export default function SalesPage() {
           ))}
         </div>
 
-{/* Period Toggle with Dropdown Scroll */}
-<div className="flex items-center gap-3 mb-4">
-  <Button variant="outline" size="icon" onClick={handlePrev}>
-    <ChevronLeft className="h-5 w-5" />
-  </Button>
+        {/* Period Toggle with Dropdown Scroll */}
+        <div className="flex justify-center items-center gap-3 mb-6 w-full max-w-full px-2">
+          <Button variant="outline" size="icon" onClick={handlePrev}>
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
 
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="ghost" className="text-lg font-medium text-blue-dark flex items-center gap-2">
-        {displayLabel}
-      </Button>
-    </DropdownMenuTrigger>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="text-sm sm:text-base md:text-lg font-medium text-blue-dark flex flex-col sm:flex-row items-center gap-0 sm:gap-2 max-w-[60vw] truncate sm:whitespace-normal"
+              >
+                {displayLabel.split(" – ").map((part, idx, arr) => (
+                  <span key={idx} className="flex items-center">
+                    {part}
+                    {idx < arr.length - 1 && (
+                      <>
+                        <span className="hidden sm:inline mx-1">–</span>  {/* Dash on big screens */}
+                        <span className="sm:hidden">{"\n–\n"}</span>       {/* Dash on small screens */}
+                      </>
+                    )}
+                  </span>
+                ))}
+              </Button>
+            </DropdownMenuTrigger>
 
-    <DropdownMenuContent className="max-h-60 overflow-y-auto">
-      {(() => {
-        const items: { label: string; date: Date; isThis?: boolean }[] = [];
-        const now = new Date();
+            <DropdownMenuContent className="max-h-60 overflow-y-auto">
+              {(() => {
+                const items: { label: string; date: Date; isThis?: boolean }[] = [];
+                const now = new Date();
 
-        // Helper: get week range (Mon–Fri)
-        const getWeekRange = (d: Date) => {
-          const monday = new Date(d);
-          monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-          const friday = new Date(monday);
-          friday.setDate(monday.getDate() + 4);
-          return { monday, friday };
-        };
+                // Helper: get week range (Mon–Fri)
+                const getWeekRange = (d: Date) => {
+                  const monday = new Date(d);
+                  monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+                  const friday = new Date(monday);
+                  friday.setDate(monday.getDate() + 4);
+                  return { monday, friday };
+                };
 
-        const addIfNotExists = (label: string, date: Date, isThis = false) => {
-          if (!items.some((i) => i.label === label)) items.push({ label, date, isThis });
-        };
+                const addIfNotExists = (label: string, date: Date, isThis = false) => {
+                  if (!items.some((i) => i.label === label)) items.push({ label, date, isThis });
+                };
 
-        // --- WEEKLY ---
-        if (activeTab === "Weekly") {
-          completedAppointments.forEach((appt) => {
-            const d = new Date(appt.date);
-            const { monday, friday } = getWeekRange(d);
+                // --- WEEKLY ---
+                if (activeTab === "Weekly") {
+                  completedAppointments.forEach((appt) => {
+                    const d = new Date(appt.date);
+                    const { monday, friday } = getWeekRange(d);
 
-            const label = `${monday.toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-            })} – ${friday.toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}`;
+                    const label = `${monday.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                    })} – ${friday.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}`;
 
-            addIfNotExists(label, monday);
-          });
+                    addIfNotExists(label, monday);
+                  });
 
-          // Always include "This Week"
-          const { monday: thisMon, friday: thisFri } = getWeekRange(now);
-          const thisWeekLabel = `${thisMon.toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-          })} – ${thisFri.toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })} (This Week)`;
-          addIfNotExists(thisWeekLabel, thisMon, true);
-        }
+                  // Always include "This Week"
+                  const { monday: thisMon, friday: thisFri } = getWeekRange(now);
+                  const thisWeekLabel = `${thisMon.toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                  })} – ${thisFri.toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })} (This Week)`;
+                  addIfNotExists(thisWeekLabel, thisMon, true);
+                }
 
-        // --- MONTHLY ---
-        else if (activeTab === "Monthly") {
-          completedAppointments.forEach((appt) => {
-            const d = new Date(appt.date);
-            const label = d.toLocaleString("default", { month: "long", year: "numeric" });
-            addIfNotExists(label, new Date(d.getFullYear(), d.getMonth(), 1));
-          });
+                // --- MONTHLY ---
+                else if (activeTab === "Monthly") {
+                  completedAppointments.forEach((appt) => {
+                    const d = new Date(appt.date);
+                    const label = d.toLocaleString("default", { month: "long", year: "numeric" });
+                    addIfNotExists(label, new Date(d.getFullYear(), d.getMonth(), 1));
+                  });
 
-          // Always include "This Month"
-          const thisMonthLabel = now.toLocaleString("default", {
-            month: "long",
-            year: "numeric",
-          }) + " (This Month)";
-          addIfNotExists(
-            thisMonthLabel,
-            new Date(now.getFullYear(), now.getMonth(), 1),
-            true
-          );
-        }
+                  // Always include "This Month"
+                  const thisMonthLabel = now.toLocaleString("default", {
+                    month: "long",
+                    year: "numeric",
+                  }) + " (This Month)";
+                  addIfNotExists(
+                    thisMonthLabel,
+                    new Date(now.getFullYear(), now.getMonth(), 1),
+                    true
+                  );
+                }
 
-        // --- ANNUALLY ---
-        else {
-          completedAppointments.forEach((appt) => {
-            const d = new Date(appt.date);
-            const label = d.getFullYear().toString();
-            addIfNotExists(label, new Date(d.getFullYear(), 0, 1));
-          });
-        }
+                // --- ANNUALLY ---
+                else {
+                  completedAppointments.forEach((appt) => {
+                    const d = new Date(appt.date);
+                    const label = d.getFullYear().toString();
+                    addIfNotExists(label, new Date(d.getFullYear(), 0, 1));
+                  });
+                }
 
-        // --- SORT & ORGANIZE ---
-        items.sort((a, b) => b.date.getTime() - a.date.getTime());
+                // --- SORT & ORGANIZE ---
+                items.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-        const thisItem = items.find((i) => i.isThis);
-        const filteredItems = thisItem
-          ? [thisItem, ...items.filter((i) => i !== thisItem)]
-          : items;
+                const thisItem = items.find((i) => i.isThis);
+                const filteredItems = thisItem
+                  ? [thisItem, ...items.filter((i) => i !== thisItem)]
+                  : items;
 
-        return filteredItems.map(({ label, date, isThis }, idx) => (
-          <DropdownMenuItem
-            key={idx}
-            onClick={() => setCurrentDate(date)}
-            className={
-              isThis
-                ? "bg-blue-50 text-blue-700 font-medium"
-                : "hover:bg-blue-100"
-            }
-          >
-            {label}
-          </DropdownMenuItem>
-        ));
-      })()}
-    </DropdownMenuContent>
+                return filteredItems.map(({ label, date, isThis }, idx) => (
+                  <DropdownMenuItem
+                    key={idx}
+                    onClick={() => setCurrentDate(date)}
+                    className={
+                      isThis
+                        ? "bg-blue-50 text-blue-700 font-medium"
+                        : "hover:bg-blue-100"
+                    }
+                  >
+                    {label}
+                  </DropdownMenuItem>
+                ));
+              })()}
+            </DropdownMenuContent>
 
+          </DropdownMenu>
 
-  </DropdownMenu>
-
-  <Button variant="outline" size="icon" onClick={handleNext}>
-    <ChevronRight className="h-5 w-5" />
-  </Button>
-</div>
+          <Button variant="outline" size="icon" onClick={handleNext}>
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
 
 
         {/* Table */}
-        <table className="w-full max-w-6xl text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden shadow">
-          <thead>
-            <tr className="bg-blue-accent text-blue-dark font-semibold">
-              <th className="p-3 border border-blue-accent">Date</th>
-              <th className="p-3 border border-blue-accent">Time</th>
-              <th className="p-3 border border-blue-accent">Patient</th>
-              <th className="p-3 border border-blue-accent">Service</th>
-              <th className="p-3 border border-blue-accent">Amount Paid</th>
-              <th className="p-3 border border-blue-accent">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagedData.length > 0 ? (
-              pagedData.map((appt) => (
-                <tr key={appt.id} className="text-center bg-white hover:bg-blue-100 transition-colors">
-                  <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
-                  <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
-                  <td className="p-3 border border-blue-accent">{appt.patient}</td>
-                  <td className="p-3 border border-blue-accent">{appt.service}</td>
-                  <td className="p-3 border border-blue-accent">₱{appt.price.toLocaleString()}</td>
-                  <td className="p-3 border border-blue-accent">
-                    <span className={statusClass(appt.status)}>Completed</span>
+        <div className="w-full max-w-6xl overflow-x-auto">
+          <table className="w-full max-w-6xl text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden shadow">
+            <thead>
+              <tr className="bg-blue-accent text-blue-dark font-semibold">
+                <th className="p-3 border border-blue-accent">Date</th>
+                <th className="p-3 border border-blue-accent">Time</th>
+                <th className="p-3 border border-blue-accent">Patient</th>
+                <th className="p-3 border border-blue-accent">Service</th>
+                <th className="p-3 border border-blue-accent">Amount Paid</th>
+                <th className="p-3 border border-blue-accent">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedData.length > 0 ? (
+                pagedData.map((appt) => (
+                  <tr key={appt.id} className="text-center bg-white hover:bg-blue-100 transition-colors">
+                    <td className="p-3 border border-blue-accent">{new Date(appt.date).toLocaleDateString()}</td>
+                    <td className="p-3 border border-blue-accent">{formatDisplayTime(appt)}</td>
+                    <td className="p-3 border border-blue-accent">{appt.patient}</td>
+                    <td className="p-3 border border-blue-accent">{appt.service}</td>
+                    <td className="p-3 border border-blue-accent">₱{appt.price.toLocaleString()}</td>
+                    <td className="p-3 border border-blue-accent">
+                      <span className={statusClass(appt.status)}>Completed</span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="p-6 text-center text-gray-500">
+                    No completed appointments for this period.
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="p-6 text-center text-gray-500">
-                  No completed appointments for this period.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
+       
 
         {/* Summary */}
-        <div className="tab-content mt-12 w-full max-w-6xl text-left">
-          <h2 className="text-2xl font-semibold mb-4">{activeTab} Sales Overview</h2>
+        <div className="mt-12 w-full max-w-6xl">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4">{activeTab} Sales Overview</h2>
           <p className="text-gray-600 mb-6">Showing only completed appointments for {displayLabel}.</p>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-            <h3 className="text-3xl font-bold text-blue-dark">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-2">
+            <h3 className="text-2xl sm:text-3xl font-bold text-blue-dark">
               Total: <span className="text-green-600">₱{totalAmount.toLocaleString()}</span>
             </h3>
             <p className="text-gray-500 text-sm mt-2 sm:mt-0">
@@ -419,7 +434,7 @@ export default function SalesPage() {
             </p>
           </div>
 
-          <div className="bg-white border border-blue-accent rounded-2xl p-6 shadow-sm">
+          <div className="bg-white border border-blue-accent rounded-2xl p-4 sm:p-6 shadow-sm">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={chartData}>
