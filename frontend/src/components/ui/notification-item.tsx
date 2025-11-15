@@ -69,10 +69,10 @@ export function NotificationItem({ id, type, data, is_read }: NotificationItemPr
 
         if (type === 'NEW_BOOKING_REQUEST') {
             // Staff notifications should go to the staff appointments page
-            return '/staff-dashboard/appointments#appointments';
+            return '/appointments#appointments';
         }
             // All other (patient) notifications go to the patient dashboard
-            return '/patient-dashboard/dashboard#appointments';
+            return '/dashboard#appointments';
     };
 
     // --- NEW: Click handler to mark as read and then navigate ---
