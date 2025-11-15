@@ -53,68 +53,83 @@ export async function updateAppointmentDetailsHandler(req, res) {
     const { id } = req.params;
     const { start_time, end_time, status } = req.body;
 
-    // --- FIX: Allow patients to request a reschedule, but not change status directly ---
+     // --- DEBUG: Log incoming request details ---
+    console.log("\n--- Backend: updateAppointmentDetailsHandler ---");
+    console.log(`[${new Date().toISOString()}]`);
+    console.log("Appointment ID:", id);
+    console.log("Request Body:", req.body);
+
     if (user.role === 'patient') {
-        // Patients are only allowed to submit a new time, not change the status field.
         if (status) {
             return res.status(403).json({ message: "Forbidden: Patients cannot directly change appointment status." });
         }
     } else if (user.role !== 'staff' && user.role !== 'dentist') {
-        // Block any other roles completely.
         return res.status(403).json({ message: "Forbidden" });
     }
 
     try {
-        const { data: originalAppointment, error: fetchError } = await req.supabase.from('appointments').select('start_time, patient:patient_id(user_id), staff:staff_id(user_id)').eq('id', id).single();
+        // --- FIX: Fetch the original_start_time as well ---
+        const { data: originalAppointment, error: fetchError } = await req.supabase.from('appointments').select('start_time, original_start_time, patient:patient_id(user_id), staff:staff_id(user_id)').eq('id', id).single();
         if (fetchError) throw fetchError;
 
         const isRescheduled = start_time && new Date(start_time).getTime() !== new Date(originalAppointment.start_time).getTime();
-        let updatedAppointment, updateError;
-
+        
+        let updatePayload = {};
         if (isRescheduled) {
-            // This block now handles reschedule requests from BOTH staff and patients.
-            const { data, error } = await req.supabase.from('appointments').update({ 
-                start_time, 
-                end_time, 
-                status: 'pending_reschedule', // Always set to pending on reschedule
-                original_start_time: originalAppointment.start_time 
-            }).eq('id', id).select(APPOINTMENT_SELECT_QUERY).single();
-            updatedAppointment = data;
-            updateError = error;
+            // If the time has changed, it's a reschedule.
+            updatePayload = {
+                start_time,
+                end_time,
+                status: 'pending_reschedule',
+                original_start_time: originalAppointment.original_start_time || originalAppointment.start_time
+            };
         } else {
-            // This block is now only for staff/dentist status-only updates.
+            // If the time has NOT changed, this is a status-only update.
             if (user.role === 'patient') {
                 return res.status(400).json({ message: "No new time provided for reschedule request." });
             }
-            const { data, error } = await req.supabase.from('appointments').update({ status }).eq('id', id).select(APPOINTMENT_SELECT_QUERY).single();
-            updatedAppointment = data;
-            updateError = error;
+            updatePayload = { status };
         }
+
+        console.log("Final update payload:", updatePayload);
+
+        const { data: updatedAppointment, error: updateError } = await req.supabase
+            .from('appointments')
+            .update(updatePayload)
+            .eq('id', id)
+            .select(APPOINTMENT_SELECT_QUERY)
+            .single();
 
         if (updateError) throw updateError;
 
-        // Notify the other party about the reschedule request
+        // Notify the other party ONLY if it was a reschedule action.
         if (isRescheduled) {
             if (user.role === 'patient') {
-                // Patient requested, so notify the assigned staff member.
                 const staffUserId = originalAppointment.staff?.user_id;
                 if (staffUserId) {
-                    // --- FIX: Use a specific type for patient-initiated requests ---
                     await createNotification(req.supabase, staffUserId, 'NEW_BOOKING_REQUEST', { appointmentId: updatedAppointment.id });
                 }
-            } else { // Staff/Dentist requested
+            } else { // Staff/Dentist initiated the reschedule
                 await createNotification(req.supabase, originalAppointment.patient.user_id, 'APPOINTMENT_RESCHEDULED', { date: updatedAppointment.start_time, appointmentId: updatedAppointment.id });
             }
         }
         
+         console.log("Successfully updated appointment in DB:", updatedAppointment);
+
         res.status(200).json({ message: 'Appointment updated.', appointment: flattenAppointmentData(updatedAppointment) });
 
     } catch (error) {
+        console.error("!!! ERROR in updateAppointmentDetailsHandler !!!");
+        console.error("Error Code:", error.code);
+        console.error("Error Message:", error.message);
+        console.error("Full Error Object:", error);
+        
         console.error("Error updating appointment:", error);
         if (error.code === '23505') return res.status(409).json({ message: "The requested time slot is already booked." });
         return res.status(500).json({ message: "Internal server error." });
     }
 }
+
 
 // Handler for a patient to get their own appointments
 export async function getMyAppointmentsHandler(req, res) {

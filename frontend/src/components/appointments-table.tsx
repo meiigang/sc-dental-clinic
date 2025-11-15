@@ -53,7 +53,10 @@ type Appointment = {
   } | null;
 };
 
-const DB_STATUSES = ["pending_approval", "confirmed", "completed", "cancelled", "no_show", "pending_reschedule"] as const;
+// --- FIX: Define the list of manual actions separately ---
+const MANUAL_STATUS_OPTIONS: Appointment['status'][] = ["confirmed", "completed", "cancelled", "no_show"];
+
+const DB_STATUSES = ["confirmed", "completed", "cancelled", "no_show" ] as const;
 
 const formatStatusForDisplay = (status: Appointment['status']) => {
   return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -94,6 +97,9 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
   // --- NEW: State for the time slot dropdown ---
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+
+  // --- NEW: State to track if a reschedule has been initiated in the modal ---
+  const [isRescheduleTriggered, setIsRescheduleTriggered] = useState(false);
 
   const rowsPerPage = 10;
   
@@ -149,9 +155,9 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
     switch (status) {
       case "confirmed": return "text-green-700 bg-green-100";
       case "pending_approval":
-      case "pending_reschedule": return "text-yellow-800 bg-yellow-100";
-      case "completed": return "text-gray-700 bg-gray-100";
-      case "cancelled":
+      case "pending_reschedule": return "text-blue-800 bg-blue-100";
+      case "completed": return "text-gray-900 bg-green-300";
+      case "cancelled": return "text-red-700 bg-red-300";
       case "no_show": return "text-red-700 bg-red-100";
       default: return "text-gray-700 bg-gray-100";
     }
@@ -189,13 +195,26 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
 
   const handleRowClick = (appt: Appointment) => {
     setSelectedAppointment(appt);
+    setIsRescheduleTriggered(false); // Reset reschedule mode when modal opens
     setIsModalOpen(true);
   };
+
+  
 
   const handleSave = async () => {
     if (!selectedAppointment) return;
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return alert("Authentication error.");
+
+    // --- DEBUG: Log the state and payload before sending ---
+    console.log("--- Frontend: Preparing to Save ---");
+    console.log("isRescheduleTriggered:", isRescheduleTriggered);
+    const payload = {
+        start_time: selectedAppointment.start_time,
+        end_time: selectedAppointment.end_time,
+        status: selectedAppointment.status,
+    };
+    console.log("Payload to be sent:", payload);
 
     try {
       const response = await fetch(`/api/appointments/${selectedAppointment.id}`, {
@@ -204,19 +223,23 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-            start_time: selectedAppointment.start_time,
-            end_time: selectedAppointment.end_time,
-            status: selectedAppointment.status,
-        })
+        body: JSON.stringify(payload)
       });
 
+      // --- FIX: Read the body ONCE as text, then parse it ---
+      const responseText = await response.text();
+      console.log("Raw server response text:", responseText);
+
+      // Now, parse the text we've already read.
+      const data = JSON.parse(responseText);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save changes');
+        // If the response was not ok, the parsed data contains the error message.
+        throw new Error(data.message || 'An unknown error occurred.');
       }
 
-      const { appointment: savedAppt } = await response.json();
+      // If the response was ok, the parsed data is our success object.
+      const { appointment: savedAppt } = data;
       
       setAppointments(prev => {
         const indexToUpdate = prev.findIndex(a => a.id === savedAppt.id);
@@ -281,6 +304,14 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
 
     fetchSlots();
   }, [selectedAppointment?.start_time, selectedAppointment?.id, isModalOpen]);
+
+  // --- NEW: useEffect to automatically update status when a reschedule is triggered ---
+  useEffect(() => {
+    if (isRescheduleTriggered && selectedAppointment) {
+      // When a time/date change happens, automatically set the status in the state
+      setSelectedAppointment(prev => prev ? { ...prev, status: 'pending_reschedule' } : null);
+    }
+  }, [isRescheduleTriggered]);
 
 
   return (
@@ -407,7 +438,8 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
           <DialogHeader><DialogTitle>Edit Appointment</DialogTitle></DialogHeader>
           {selectedAppointment && (
             <div className="space-y-3">
-              {/* --- FIX: Change grid to 3 columns to accommodate End Time --- */}
+              {/* --- FIX: Change grid to 3 columns to accommodate End Time --- */
+              /* --- NEW: Add the read-only End Time field --- */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Date</label>
@@ -420,6 +452,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
                       const timePart = selectedAppointment.start_time.split('T')[1] || '00:00:00.000Z';
                       const newStartTime = `${newDate}T${timePart}`;
                       setSelectedAppointment({ ...selectedAppointment, start_time: newStartTime });
+                      setIsRescheduleTriggered(true); // Trigger reschedule mode
                     }}
                   />
                 </div>
@@ -434,6 +467,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
                       const duration = selectedAppointment.service?.estimated_duration || 60;
                       const newEndTime = new Date(new Date(newStartTime).getTime() + duration * 60000).toISOString();
                       setSelectedAppointment({ ...selectedAppointment, start_time: newStartTime, end_time: newEndTime });
+                      setIsRescheduleTriggered(true); // Trigger reschedule mode
                     }}
                     disabled={isLoadingSlots}
                   >
@@ -453,7 +487,6 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
                     </SelectContent>
                   </Select>
                 </div>
-                {/* --- NEW: Add the read-only End Time field --- */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700">End Time</label>
                   <Input
@@ -471,17 +504,40 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
               <Input readOnly value={selectedAppointment.service?.service_name || ''} />
 
               <label className="block text-sm font-medium text-gray-700">Status</label>
+              {/* --- FIX: The Select component now uses the new dynamic logic --- */}
               <Select
-                value={selectedAppointment.status}
-                onValueChange={(newStatus) => setSelectedAppointment({ ...selectedAppointment, status: newStatus as Appointment['status'] })}
+                value={
+                  // For pending_approval, show placeholder. Otherwise, show the real status.
+                  selectedAppointment.status === 'pending_approval'
+                    ? undefined
+                    : selectedAppointment.status
+                }
+                onValueChange={(newStatus) => {
+                  if (!newStatus) return;
+                  setSelectedAppointment({ ...selectedAppointment, status: newStatus as Appointment['status'] });
+                }}
+                // Disable the dropdown if a reschedule has been triggered
+                disabled={isRescheduleTriggered}
               >
-                <SelectTrigger className={statusClass(selectedAppointment.status)}><SelectValue /></SelectTrigger>
+                {/* --- FIX: Conditionally apply styling to remove the background for pending_approval --- */}
+                <SelectTrigger className={
+                  selectedAppointment.status === 'pending_approval'
+                    ? '' // Use default styling when showing the placeholder
+                    : statusClass(selectedAppointment.status)
+                }>
+                  <SelectValue placeholder="Select an action..." />
+                </SelectTrigger>
                 <SelectContent>
-                  {DB_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>{formatStatusForDisplay(status)}</SelectItem>
-                  ))}
+                  {/* Conditionally render the list of options */}
+                  {isRescheduleTriggered ? (
+                    <SelectItem value="pending_reschedule">Pending Reschedule</SelectItem>
+                  ) : (
+                    MANUAL_STATUS_OPTIONS.map((status) => (
+                      <SelectItem key={status} value={status}>{formatStatusForDisplay(status)}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
-              </Select>            
+              </Select>       
             </div>
           )}
           <DialogFooter>
