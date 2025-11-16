@@ -4,20 +4,24 @@ import jwt from "jsonwebtoken";
 export default async function loginHandler(req, res) {
     const { email, password } = req.body;
 
-    // Find user by email
+    // Find user by email or contact number
     const { data: user, error } = await req.supabase
         .from("users")
         .select("*")
         .or(`email.eq.${email},contactNumber.eq.${email}`)
         .single();
 
-    // Only log after user is defined
     console.log("User from DB:", user);
-    console.log("Password from form:", password);
-    console.log("Password hash from DB:", user?.password_hash);
 
     if (!user || !user.password_hash) {
         return res.status(401).json({ message: "Invalid email/contact number or password." });
+    }
+
+    // --- NEW: Check status before password ---
+    if (user.status === "inactive") {
+        return res.status(403).json({
+            message: "Your account is inactive. Please contact the clinic to reactivate your account."
+        });
     }
 
     // Compare password
