@@ -355,16 +355,6 @@ export default function PatientAppointmentsTable() {
             >
               <CalendarArrowUp className="mr-2 h-4 w-4" /> Request New Schedule
             </Button>
-            <Button
-              className="bg-green-600 hover:bg-green-700"
-              onClick={() => {
-                if (!appointmentToConfirm) return;
-                handleConfirmReschedule(appointmentToConfirm.id);
-                setIsConfirmModalOpen(false);
-              }}
-            >
-              <CheckCircle className="mr-2 h-4 w-4" /> Confirm New Time
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
