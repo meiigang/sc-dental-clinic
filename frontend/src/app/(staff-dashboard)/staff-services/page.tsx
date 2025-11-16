@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { CirclePlus, Filter, ArrowUpDown, Search, Pencil, Archive, ArchiveX, Undo2 } from "lucide-react";
 
 type Service = {
@@ -53,7 +55,7 @@ const serviceUnits = [
   "U/L"
 ];
 
-// --- NEW: Helper function to format minutes into HHh MMm format ---
+// Helper function to format minutes into HHh MMm format
 const formatDuration = (totalMinutes: number | null | undefined): string => {
   if (totalMinutes === null || totalMinutes === undefined || isNaN(totalMinutes)) {
     return "0h 0m";
@@ -94,7 +96,6 @@ export default function StaffServices() {
   const [serviceToArchive, setServiceToArchive] = useState<Service | null>(null); // service pending archive confirmation
 
   // error states for add form
-  const [error, setError] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
@@ -142,7 +143,7 @@ export default function StaffServices() {
       (s) => s.name.toLowerCase() === newName.trim().toLowerCase()
     );
     if (isDuplicate) {
-      setError("A service with this name already exists.");
+      toast.error("A service with this name already exists.");
       return;
     }
 
@@ -166,6 +167,7 @@ export default function StaffServices() {
       });
       const result = await res.json();
       if (res.ok) {
+        toast.success("Service added successfully!");
         setServices([result.service, ...services]);
         // reset form
         setNewName("");
@@ -176,20 +178,18 @@ export default function StaffServices() {
         setMinutes("0");
         setNewType("");
         setStatus(true);
-        setError("");
         setErrors({});
       } else {
-        setError(result.message || "Failed to add service.");
+        toast.error(result.message || "Failed to add service.");
       }
     } catch (err) {
-      setError("Failed to add service.");
+      toast.error("Failed to add service.");
     }
   };
 
   const openEdit = (service: Service) => {
     setEditingService(service);
     setIsEditOpen(true);
-    setError("");
   };
 
   const validateEditForm = () => {
@@ -215,7 +215,7 @@ export default function StaffServices() {
     if (!editingService) return;
     if (!validateEditForm()) return;
 
-    // --- FIX: Check for duplicates in both active and archived services ---
+    // Check for duplicates in both active and archived services
     const combinedServices = [...services, ...archivedServices];
     const isDuplicate = combinedServices.some(
       (s) =>
@@ -223,10 +223,9 @@ export default function StaffServices() {
         s.name.toLowerCase() === editingService.name.trim().toLowerCase()
     );
     if (isDuplicate) {
-      setError("A service with this name already exists in active or archived services.");
+      toast.error("A service with this name already exists in active or archived services.");
       return;
     }
-    // --- END OF FIX ---
 
     const result = await updateService({
         ...editingService,
@@ -234,18 +233,18 @@ export default function StaffServices() {
     });
 
     if (result && result.service) {
+      toast.success("Service updated successfully!");
       setServices((prev) =>
         prev.map((s) => (s.id === editingService.id ? result.service : s))
       );
       setIsEditOpen(false);
       setEditingService(null);
-      setError("");
     } else {
-      setError(result?.message || "Failed to update service.");
+      toast.error(result?.message || "Failed to update service.");
     }
   };
   
-  //Update service (this function is generic and works for archiving too)
+  // Update service (this function is generic and works for archiving too)
   const updateService = async (service: Partial<Service> & { id: number }) => {
     try {
       const res = await fetch(`/api/services/${service.id}`, { // Use relative path
@@ -255,19 +254,20 @@ export default function StaffServices() {
       });
       return await res.json();
     } catch (err) {
-      setError("Failed to update service.");
+      toast.error("Failed to update service.");
       return null;
     }
   };
 
-  // --- FIX: Convert archiveService to an API call ---
+  // Convert archiveService to an API call
   const archiveService = async (service: Service) => {
     const result = await updateService({ id: service.id, status: "Archived" });
     if (result && result.service) {
+      toast.success("Service archived successfully.");
       setServices((prev) => prev.filter((s) => s.id !== service.id));
       setArchivedServices((prev) => [result.service, ...prev]);
     } else {
-      alert("Failed to archive service.");
+      toast.error("Failed to archive service.");
     }
   };
 
@@ -276,10 +276,11 @@ export default function StaffServices() {
     // When restoring, we'll set it back to 'Available' by default.
     const result = await updateService({ id: service.id, status: "Available" });
     if (result && result.service) {
+      toast.success("Service restored successfully.");
       setArchivedServices((prev) => prev.filter((s) => s.id !== service.id));
       setServices((prev) => [result.service, ...prev]);
     } else {
-      alert("Failed to restore service.");
+      toast.error("Failed to restore service.");
     }
   };
 
@@ -311,6 +312,7 @@ export default function StaffServices() {
 
   return (
     <main className="min-h-screen flex flex-col items-center">
+      <Toaster />
       {/* Top bar */}
       <section className="w-full max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Title */}

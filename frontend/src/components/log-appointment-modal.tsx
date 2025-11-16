@@ -10,6 +10,8 @@ import {
   DialogTitle,
   DialogFooter
 } from "@/components/ui/dialog"
+import { Toaster } from "@/components/ui/sonner"
+import { toast } from "sonner"
 import Odontogram from "@/odontogram/Components/Odontogram"
 import SalesBilling from "./SalesBilling"
 import { format } from 'date-fns';
@@ -64,6 +66,7 @@ export function LogAppointment({ open, onOpenChange, appointment, onCancelLog, o
           setDentalLog(existingLog); // Pre-populate the dentalLog state
         } catch (err: any) {
           setError(err.message);
+          toast.error(err.message || "Failed to fetch dental log.");
         } finally {
           setIsLoading(false);
         }
@@ -87,7 +90,9 @@ export function LogAppointment({ open, onOpenChange, appointment, onCancelLog, o
 
   const handleFinishLog = async () => {
     if (!appointment || !appointment.patient || !dentalLog || !invoiceData) {
-      setError("Cannot finish log. Dental chart and billing information must be complete.");
+      const errorMsg = "Cannot finish log. Dental chart and billing information must be complete.";
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
     
@@ -114,14 +119,19 @@ export function LogAppointment({ open, onOpenChange, appointment, onCancelLog, o
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || "Failed to log appointment.");
+        const errorMsg = errData.message || "Failed to log appointment.";
+        setError(errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
 
       // On success
+      toast.success("Appointment logged successfully!");
       onLogSuccess();
 
     } catch (err: any) {
       setError(err.message);
+      toast.error(err.message || "Failed to log appointment.");
     } finally {
       setIsLoading(false);
     }
@@ -194,6 +204,7 @@ export function LogAppointment({ open, onOpenChange, appointment, onCancelLog, o
             )
           )}
         </DialogFooter>
+        <Toaster />
       </DialogContent>
     </Dialog>
   )

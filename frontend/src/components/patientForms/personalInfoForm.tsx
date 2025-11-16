@@ -6,6 +6,7 @@ import { z } from "zod"
 import { jwtDecode } from "jwt-decode"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -139,9 +140,15 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
         }, body: JSON.stringify(payload),
       });
       const result = await res.json();
+      if (res.ok) {
+        toast.success("Personal information saved successfully!");
+      } else {
+        toast.error(result.message || "Failed to save personal information.");
+      }
       return result;
     } catch (error) {
       console.error("Error submitting personal info:", error);
+      toast.error("Failed to save personal information.");
       return null;
     }
   }
@@ -209,9 +216,15 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
           body: JSON.stringify(payload),
         });
         const result = await res.json();
+        if (res.ok) {
+          toast.success("Personal information updated successfully!");
+        } else {
+          toast.error(result.message || "Failed to update personal information.");
+        }
         return result;
     } catch (error) {
       console.error("Error updating personal info:", error);
+      toast.error("Failed to update personal information.");
       return null;
     }
   }
@@ -545,6 +558,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
           </Dialog>
         </form>
       </Form>
+      <Toaster />
     </div>
   )
 }

@@ -5,8 +5,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react";
-import { TriangleAlertIcon } from "lucide-react";
+import { toast } from "sonner";
+import { Plus, X, TriangleAlertIcon } from "lucide-react";
 import { format } from "date-fns";
 
 // --- TYPE DEFINITIONS ---
@@ -21,7 +21,7 @@ type WeeklySlot = {
 
 // This is the structure your UI uses for the weekly schedule
 type WeeklyAvailability = {
-    [day: string]: TimeSlot[];
+  [day: string]: TimeSlot[];
 };
 
 // This is the structure for overrides
@@ -29,18 +29,17 @@ type DateSlot = { date: Date; slots: TimeSlot[] };
 
 // --- HELPER FUNCTIONS (Your existing helpers are great) ---
 function formatDate(date: Date) {
-    return format(date, "MMM d, yyyy");
+  return format(date, "MMM d, yyyy");
 }
 
 const days = [
-    { key: "SUN", label: "Sunday" }, { key: "MON", label: "Monday" }, { key: "TUE", label: "Tuesday" },
-    { key: "WED", label: "Wednesday" }, { key: "THU", label: "Thursday" }, { key: "FRI", label: "Friday" },
-    { key: "SAT", label: "Saturday" },
+  { key: "SUN", label: "Sunday" }, { key: "MON", label: "Monday" }, { key: "TUE", label: "Tuesday" },
+  { key: "WED", label: "Wednesday" }, { key: "THU", label: "Thursday" }, { key: "FRI", label: "Friday" },
+  { key: "SAT", label: "Saturday" },
 ];
 
 const dayKeyToNumber: {[key: string]: number} = { SUN: 0, MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6 };
 const numberToDayKey: { [key: number]: string } = { 0: "SUN", 1: "MON", 2: "TUE", 3: "WED", 4: "THU", 5: "FRI", 6: "SAT" };
-
 const defaultTimes: WeeklyAvailability = { SUN: [], MON: [], TUE: [], WED: [], THU: [], FRI: [], SAT: [] };
 
 function isWeeklyAvailabilityEqual(a: WeeklyAvailability, b: WeeklyAvailability) {
@@ -97,7 +96,7 @@ export default function AvailabilityInputs({ userRole }: { userRole?: string }) 
           headers: { "Authorization": `Bearer ${token}` }
         });
 
-        if (!response.ok) throw new Error("Failed to fetch availability data.");
+        if (!response.ok) setAlertError("Failed to fetch availability data.");
         
         const data = await response.json();
 
@@ -137,12 +136,12 @@ export default function AvailabilityInputs({ userRole }: { userRole?: string }) 
     fetchAvailability();
   }, [userRole]); // <-- add userRole as a dependency
 
-  // Dirty state calculation (your existing logic is correct)
+  // Dirty state calculation
   const isDirty =
     !isWeeklyAvailabilityEqual(availability, initialAvailability) ||
     !isDateSpecificEqual(dateSpecific, initialDateSpecific);
 
-  // Backend call to save data (your existing logic is correct)
+  // Backend call to save data
   const handleSaveAvailability = async () => {
     setIsLoading(true);
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -177,16 +176,14 @@ export default function AvailabilityInputs({ userRole }: { userRole?: string }) 
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to save availability.");
+        toast.error(errorData.message || "Failed to save availability.");
       }
-
       setInitialAvailability(availability);
       setInitialDateSpecific(dateSpecific);
-      alert("Availability updated successfully!");
-
+      toast.success("Availability updated successfully!");
     } catch (error) {
       console.error("Error saving availability:", error);
-      alert(`An error occurred: ${error instanceof Error ? error.message : "Unknown error"}`);
+      toast.error(`An error occurred: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setIsLoading(false);
     }

@@ -18,6 +18,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { profileSchema, Profile } from "./schema";
 import { jwtDecode } from "jwt-decode"
@@ -25,7 +27,6 @@ import { useEffect, useState, useRef } from "react";
 import { z } from "zod";
 
 export function EditProfileForm() {
-  
   //Define use states
   const [userId, setUserId] = useState<string>("");
   const [profilePictureUrl, setProfilePictureUrl] = useState<string>("/images/img-profile-default.png");
@@ -144,12 +145,11 @@ export function EditProfileForm() {
             sessionStorage.setItem("token", responseData.token);
         }
       }
-
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
       window.location.reload();
     } catch (error: any) {
       console.error("Update failed:", error);
-      alert(`Error: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   }
 

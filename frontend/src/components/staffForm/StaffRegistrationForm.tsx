@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -44,7 +45,7 @@ export default function StaffRegistrationForm({ onSubmit, readOnly }: StaffRegis
           name="first_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>First Name</FormLabel>
+              <FormLabel>First Name *</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -70,7 +71,7 @@ export default function StaffRegistrationForm({ onSubmit, readOnly }: StaffRegis
           name="last_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Last Name</FormLabel>
+              <FormLabel>Last Name *</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -106,7 +107,7 @@ export default function StaffRegistrationForm({ onSubmit, readOnly }: StaffRegis
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="text-blue-dark">Email Address *</FormLabel>
               <FormControl>
                 <Input type="email" {...field} />
               </FormControl>
@@ -119,10 +120,13 @@ export default function StaffRegistrationForm({ onSubmit, readOnly }: StaffRegis
           name="contact_number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Contact Number</FormLabel>
+              <FormLabel>Contact Number *</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
+              <FormDescription className="text-xs">
+                Your contact number should be 11 characters.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -132,10 +136,13 @@ export default function StaffRegistrationForm({ onSubmit, readOnly }: StaffRegis
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Password *</FormLabel>
               <FormControl>
                 <Input type="password" {...field} />
               </FormControl>
+              <FormDescription className="text-xs">
+                Your password should be a minimum of 8 characters.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -145,7 +152,7 @@ export default function StaffRegistrationForm({ onSubmit, readOnly }: StaffRegis
           name="confirm_password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
+              <FormLabel>Confirm Password *</FormLabel>
               <FormControl>
                 <Input type="password" {...field} />
               </FormControl>
