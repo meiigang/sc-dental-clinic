@@ -256,7 +256,7 @@ export default function PatientRecord() {
         </div>
 
         {/* Appointment History */}
-        <div className="w-full max-w-screen-xl mx-auto">
+        <div className="w-full max-w-screen-xl mx-auto overflox-x-auto">
           <h1 className="text-2xl sm:text-3xl font-bold text-blue-dark mb-4">
             Appointment History
           </h1>
