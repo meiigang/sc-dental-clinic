@@ -26,7 +26,6 @@ export default function StaffTable() {
   const [staff, setStaff] = useState<StaffUser[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [alertError, setAlertError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const fetchStaff = async () => {
