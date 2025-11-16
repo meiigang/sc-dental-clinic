@@ -187,13 +187,18 @@ export default function PatientRecord() {
                     </Button>
 
                     <Button
-                      onClick={() => {
+                      onClick={async () => {
+                        const newStatus =
+                          editingPatient.status === "Active" ? "inactive" : "active";
+                        // PATCH request to backend
+                        await fetch(`http://localhost:4000/api/users/${profileData.user_id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ status: newStatus }),
+                        });
                         setEditingPatient({
                           ...editingPatient,
-                          status:
-                            editingPatient.status === "Active"
-                              ? "Inactive"
-                              : "Active",
+                          status: newStatus === "active" ? "Active" : "Inactive",
                         });
                         setShowConfirmationModal(false);
                       }}

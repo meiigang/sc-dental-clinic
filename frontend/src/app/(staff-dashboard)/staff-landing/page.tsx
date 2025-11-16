@@ -28,6 +28,7 @@ export default function StaffDashboard() {
     contactNumber: "",
     password: ""
   });
+  const [userRole, setUserRole] = useState("");
   const router = useRouter();
 
   // Refs for scroll navigation
@@ -54,6 +55,7 @@ export default function StaffDashboard() {
           contactNumber: decoded.contactNumber || "",
           password: ""
         });
+        setUserRole(decoded.role || "");
       } catch (err) {
         setFirstName("User");
         setFullName("User");
@@ -209,13 +211,13 @@ export default function StaffDashboard() {
         {/* Availability */}
         <div ref={availabilityRef} className="py-2 sm:py-6 md:py-14">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-dark">Availability</h3>
-          <AvailabilityInputs />
+          <AvailabilityInputs userRole={userRole}/>
         </div>
 
         {/* Upcoming Appointments */}
         <div ref={upcomingAppointmentsRef} className="py-2 sm:py-6 md:py-14">
           <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-dark">Upcoming Appointments</h3>
-          <UpcomingAppointments />
+          <UpcomingAppointments userRole={userRole} />
         </div>
         
         {/* Staff Accounts Table */}
