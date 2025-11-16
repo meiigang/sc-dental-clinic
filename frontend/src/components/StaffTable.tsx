@@ -18,8 +18,7 @@ type StaffUser = {
   nameSuffix?: string
   email: string
   contactNumber?: string
-  active?: boolean
-  profile_picture?: string
+  status: "active" | "inactive"
 }
 
 export default function StaffTable() {
@@ -35,8 +34,19 @@ export default function StaffTable() {
       const res = await fetch("http://localhost:4000/api/users?role=staff")
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`)
       const data = await res.json()
-      // normalize array shape if API returns { users: [...] }
-      const list = Array.isArray(data) ? data : data.users ?? []
+      // Map only needed fields
+      const list = Array.isArray(data)
+        ? data.map((u) => ({
+            id: u.id,
+            firstName: u.firstName,
+            middleName: u.middleName,
+            lastName: u.lastName,
+            nameSuffix: u.nameSuffix,
+            email: u.email,
+            contactNumber: u.contactNumber,
+            status: u.status,
+          }))
+        : []
       setStaff(list)
     } catch (err: any) {
       setError(err.message || "Failed to load staff")
@@ -49,23 +59,21 @@ export default function StaffTable() {
     fetchStaff()
   }, [])
 
-  const toggleActive = async (user: StaffUser) => {
-    const newActive = !user.active
-    // optimistic UI update
-    setStaff((prev) => prev.map((s) => (s.id === user.id ? { ...s, active: newActive } : s)))
+  const toggleStatus = async (user: StaffUser) => {
+    const newStatus = user.status === "active" ? "inactive" : "active"
+    setStaff((prev) => prev.map((s) => (s.id === user.id ? { ...s, status: newStatus } : s)))
     try {
       const res = await fetch(`http://localhost:4000/api/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: newActive }),
+        body: JSON.stringify({ status: newStatus }),
       })
       if (!res.ok) {
         throw new Error("Failed to update status")
       }
-      toast.success(`Successfully updated staff status to ${newActive ? "Active" : "Inactive"}.`);
+      toast.success(`Successfully updated staff status to ${newStatus}.`);
     } catch (err: any) {
-      // revert on error
-      setStaff((prev) => prev.map((s) => (s.id === user.id ? { ...s, active: user.active } : s)))
+      setStaff((prev) => prev.map((s) => (s.id === user.id ? { ...s, status: user.status } : s)))
       toast.error("Error updating status. Please try again.");
     }
   }
@@ -156,20 +164,20 @@ export default function StaffTable() {
                 <td className="px-3 py-2 border border-blue-accent">
                   <span
                     className={`px-2 py-1 rounded-md ${
-                      u.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      u.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                     }`}
                   >
-                    {u.active ? "Active" : "Inactive"}
+                    {u.status === "active" ? "Active" : "Inactive"}
                   </span>
                 </td>
                 <td className="px-3 py-2 border border-blue-accent">
                   <button
-                    onClick={() => toggleActive(u)}
+                    onClick={() => toggleStatus(u)}
                     className={`px-3 py-1 rounded-md text-white ${
-                      u.active ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
+                      u.status === "active" ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
                     }`}
                   >
-                    {u.active ? "Disable" : "Enable"}
+                    {u.status === "active" ? "Disable" : "Enable"}
                   </button>
                 </td>
               </tr>
