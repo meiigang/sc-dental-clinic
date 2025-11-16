@@ -12,7 +12,7 @@ import { updatePatientDentalHistory } from  "../api/patients/patientDentalHistor
 import patientMedicalHistoryHandler from "../api/patients/patientMedicalHistory.mjs";
 import { getPatientMedicalHistory } from "../api/patients/patientMedicalHistory.mjs";
 import { updatePatientMedicalHistory } from "../api/patients/patientMedicalHistory.mjs";
-
+import { getPatientChartHistory } from "../api/patients/patientChartHandler.mjs";
 const router = Router();
 
 router.use(supabaseMiddleware);
@@ -51,4 +51,5 @@ router.get("/patientMedicalHistory/:patientId", getPatientMedicalHistory);
 //PATCH patient medical info
 router.patch("/patientMedicalHistory/:medicalHistoryId", updatePatientMedicalHistory);
 
+router.get('/:id/chart-history', getPatientChartHistory);
 export default router;
