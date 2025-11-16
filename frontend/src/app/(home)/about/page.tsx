@@ -35,7 +35,7 @@ export default function About() {
       <section className="bg-white py-20 px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-blue-dark">
-            Meet the Dentist
+            Meet the Dr. Cecile S. Cuaton
           </h2>
           <div className="mt-8 flex flex-col md:flex-row items-center md:items-start md:justify-center gap-8">
             <div className="bg-blue-100 rounded-xl w-48 h-48 overflow-hidden shadow-lg">
@@ -49,10 +49,7 @@ export default function About() {
             </div>
             <div className="max-w-md text-sm sm:text-base md:text-lg text-black text-left md:text-start">
               <p className="mb-4">
-                [This text is a placeholder. Here will be the information about the dentist, primarily her educational background and professional experience.]
-              </p>
-              <p>
-                [Included also in this portion are her personal socials.]
+                Born and raised in Panabo City, Dr. Cecile S. Cuaton began her dental practice there, serving the community for several years before establishing herself in Davao City. Today, she is recognized as one of the city’s most trusted dentists, dedicated to providing compassionate and expert dental care to every patient.
               </p>
             </div>
           </div>
