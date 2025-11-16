@@ -8,8 +8,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { X } from "lucide-react"
 
 type OdontogramProps = {
-  onSave?: (data: any) => void; // Callback to pass data up
-  initialData?: any; // For viewing existing records
+  onSave?: (data: any) => void; // For logging appointments
+  initialData?: any;
+  readOnly?: boolean; // --- NEW: Prop to disable editing
+  onToothSelect?: (toothNumber: number | null) => void; // --- NEW: Prop for view-only selection
 };
 
 type ToothData = {
@@ -17,7 +19,7 @@ type ToothData = {
   notes: string;
 };
 
-const Odontogram: React.FC<OdontogramProps> = ({ onSave, initialData }) => {
+const Odontogram: React.FC<OdontogramProps> = ({ onSave, initialData, readOnly = false, onToothSelect }) => {
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   
   // --- FIX: Initialize state from initialData if it exists ---
@@ -50,6 +52,22 @@ const Odontogram: React.FC<OdontogramProps> = ({ onSave, initialData }) => {
       setCurrentConditions({});
     }
   }, [selectedTooth, allTeethData]);
+
+  // --- NEW: Handle tooth clicks differently based on mode ---
+  const handleToothClick = (toothNumber: number) => {
+    if (readOnly) {
+      // In read-only mode, just inform the parent component
+      if (onToothSelect) {
+        // Toggle selection off if the same tooth is clicked again
+        const newSelectedTooth = selectedTooth === toothNumber ? null : toothNumber;
+        setSelectedTooth(newSelectedTooth);
+        onToothSelect(newSelectedTooth);
+      }
+    } else {
+      // In editable mode, open the editor panel
+      setSelectedTooth(toothNumber);
+    }
+  };
 
   const handleCheckboxChange = (key: string, isChecked: boolean) => {
     setCurrentConditions(prev => ({ ...prev, [key]: isChecked }));
@@ -93,10 +111,11 @@ const Odontogram: React.FC<OdontogramProps> = ({ onSave, initialData }) => {
       <div className="flex flex-row gap-4 justify-between h-full">
         <Teeth
           selectedTooth={selectedTooth}
-          setSelectedTooth={setSelectedTooth}
+          setSelectedTooth={handleToothClick} // --- FIX: Use the new handler ---
           modifiedTeeth={new Set(allTeethData.keys())}
         />
-        {selectedTooth !== null && (
+        {/* --- FIX: Only show the editor panel if NOT in read-only mode --- */}
+        {!readOnly && selectedTooth !== null && (
             <div className="bg-blue-light rounded-xl p-8 flex flex-col h-full w-120">
               <div className="grow overflow-y-auto pr-2">
                 <div>
