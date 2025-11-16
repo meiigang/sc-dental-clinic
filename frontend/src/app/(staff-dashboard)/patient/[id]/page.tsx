@@ -107,8 +107,8 @@ export default function PatientRecord() {
                   src="/images/img-profile-default.png"
                   alt="Default Profile Picture"
                   className="rounded-3xl object-cover"
-                  width={150}
-                  height={150}
+                  width={250}
+                  height={250}
                 />
               </div>
 
@@ -256,11 +256,15 @@ export default function PatientRecord() {
         </div>
 
         {/* Appointment History */}
-        <div className="w-full max-w-screen-xl mx-auto overflox-x-auto">
+        <div className="max-w-screen-xl mx-auto py-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-blue-dark mb-4">
             Appointment History
           </h1>
-          <AppointmentsTable patientId={patientId} />
+
+          {/* Table wrapper */}
+          <div className="relative left-1/2 -translate-x-1/2 min-w-[120vw]">
+            <AppointmentsTable patientId={patientId} />
+          </div>
         </div>
 
         {/* Dental Chart */}
