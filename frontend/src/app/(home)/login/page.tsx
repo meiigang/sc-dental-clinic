@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
 import { jwtDecode } from "jwt-decode";
+import { toast } from "sonner";
 
 export default function Login () {
     const [form, setForm] = useState({
@@ -28,6 +29,12 @@ export default function Login () {
         });
 
         const data = await res.json();
+
+        if (res.status === 403) {
+            toast.error(data.message || "Your account is inactive. Please contact the clinic.");
+            setError(data.message || "Your account is inactive. Please contact the clinic.");
+            return;
+        }
 
         if(res.ok && data.token) {
             if (rememberMe) {
