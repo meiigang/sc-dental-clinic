@@ -12,17 +12,20 @@ import { updatePatientDentalHistory } from  "../api/patients/patientDentalHistor
 import patientMedicalHistoryHandler from "../api/patients/patientMedicalHistory.mjs";
 import { getPatientMedicalHistory } from "../api/patients/patientMedicalHistory.mjs";
 import { updatePatientMedicalHistory } from "../api/patients/patientMedicalHistory.mjs";
-import { getPatientChartHistory } from "../api/patients/patientChartHandler.mjs";
-const router = Router();
+import { getPatientChartHistory } from '../api/patients/patientChartHandler.mjs';
+import { getPatientBillingHistory } from '../api/billing/billingHistoryHandler.mjs';
 
+const router = Router();
 router.use(supabaseMiddleware);
 
-//GET to check patient record in database
+// --- Specific text-based routes must come BEFORE general routes with parameters ---
 router.get("/check-record/:userId", checkPatientRecordHandler);
-
 router.get("/all", getAllPatientsHandler);
+router.get('/billing-history/:userId', getPatientBillingHistory); // This is the route for the summary list
 
+// --- General routes with parameters like /:id come AFTER ---
 router.get("/:id", getPatientByIdHandler);
+router.get('/:id/chart-history', getPatientChartHistory);
 
 //POST to create patient personal info
 router.post("/patientPersonalInfo", patientPersonalInfoHandler);
@@ -51,5 +54,4 @@ router.get("/patientMedicalHistory/:patientId", getPatientMedicalHistory);
 //PATCH patient medical info
 router.patch("/patientMedicalHistory/:medicalHistoryId", updatePatientMedicalHistory);
 
-router.get('/:id/chart-history', getPatientChartHistory);
 export default router;
