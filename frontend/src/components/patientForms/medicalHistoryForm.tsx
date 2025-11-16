@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Toaster } from "@/components/ui/sonner"
+import { toast } from "sonner"
 import { jwtDecode } from "jwt-decode"
 import { medicalSchema } from "@/components/patientForms/formSchemas/schemas"
 
@@ -219,9 +221,15 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
         body: JSON.stringify(payload),
       });
       const result = await res.json();
+      if (res.ok) {
+        toast.success("Medical history saved successfully!");
+      } else {
+        toast.error(result.message || "Failed to save medical history.");
+      }
       return result;
     } catch (error) {
       console.error("Error submitting medical info:", error);
+      toast.error("Failed to save medical history.");
       return null;
     }
   }
@@ -264,9 +272,15 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
         body: JSON.stringify(payload),
       });
       const result = await res.json();
+      if (res.ok) {
+        toast.success("Medical history updated successfully!");
+      } else {
+        toast.error(result.message || "Failed to update medical history.");
+      }
       return result;
     } catch (error) {
       console.error("Error updating medical info:", error);
+      toast.error("Failed to update medical history.");
       return null;
     }
   }
@@ -1146,6 +1160,7 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
           </Dialog>
         </form>
       </Form>
+      <Toaster />
     </div>
   )
 }

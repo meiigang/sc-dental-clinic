@@ -23,6 +23,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { Filter, ArrowUpDown, ChevronLeft, ChevronRight, ChevronDown, Pencil, TriangleAlertIcon} from "lucide-react";
 import { LogAppointment } from "./log-appointment-modal"
 import { parseISO, isToday, isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
@@ -162,7 +164,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
   const statusClass = (status: Appointment['status']) => {
     switch (status) {
       case "confirmed": return "text-green-700 bg-green-100";
-      case "pending_approval":
+      case "pending_approval": return "text-yellow-800 bg-yellow-100";
       case "pending_reschedule": return "text-blue-800 bg-blue-100";
       case "completed": return "text-gray-900 bg-green-300";
       case "cancelled": return "text-red-700 bg-red-300";
@@ -237,7 +239,10 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
   const handleSave = async () => {
     if (!selectedAppointment) return;
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!token) return alert("Authentication error.");
+    if (!token) {
+      toast.error("Authentication error. Please log in again.");
+      return;
+    }
 
     // --- DEBUG: Log the state and payload before sending ---
     console.log("--- Frontend: Preparing to Save ---");
@@ -274,6 +279,8 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
       // If the response was ok, the parsed data is our success object.
       const { appointment: savedAppt } = data;
       
+      toast.success("Appointment updated successfully!");
+      
       setAppointments(prev => {
         const indexToUpdate = prev.findIndex(a => a.id === savedAppt.id);
         if (indexToUpdate === -1) return [savedAppt, ...prev];
@@ -284,7 +291,11 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
 
     } catch (error) {
       console.error("Error saving appointment:", error);
-      if (error instanceof Error) alert(`Error: ${error.message}`);
+      if (error instanceof Error) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        toast.error("An unexpected error occurred while saving the appointment.");
+      }
     } finally {
       setIsModalOpen(false);
       setSelectedAppointment(null);
@@ -441,7 +452,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
                   <td className="p-3 border border-blue-accent">{appt.service?.service_name || 'N/A'}</td>
                   <td className="p-3 border border-blue-accent">{`₱${appt.service?.price?.toFixed(2) || '0.00'}`}</td>
                   <td className="p-3 border border-blue-accent">
-                    <span className={`px-2 py-0.5 rounded-md ${statusClass(appt.status)}`}>{formatStatusForDisplay(appt.status)}</span>
+                    <span className={`px-2 py-0.5 rounded-md font-medium ${statusClass(appt.status)}`}>{formatStatusForDisplay(appt.status)}</span>
                   </td>
                   <td className="p-3 border border-blue-accent">
                     <div className="flex items-center justify-center gap-2">
@@ -611,7 +622,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
                 <Button onClick={() => setIsLogDialogOpen(true)}>
                   Log Appointment
                 </Button>
-                <Button onClick={handleSave} className="bg-blue-primary hover:bg-blue-600 text-white">
+                <Button onClick={handleSave}>
                   Save Changes
                 </Button>
               </div>
@@ -634,6 +645,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
           fetchAppointments(); // Re-fetch appointments to show updated status
         }}
       />
+      <Toaster />
     </main>
   )
 }

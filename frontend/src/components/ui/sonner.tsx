@@ -38,7 +38,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           // Success toast colors (green)
           "--success-bg": "#22c55e",
           "--success-text": "#ffffff",
-          "--success-border": "#22c55e",
+          "--success-border": "#ffffff",
           
           // Error toast colors (red)
           "--error-bg": "#ef4444",

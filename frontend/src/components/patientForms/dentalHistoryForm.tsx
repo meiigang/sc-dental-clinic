@@ -5,6 +5,8 @@ import { z } from "zod"
 import { useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Toaster } from "@/components/ui/sonner"
+import { toast } from "sonner";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, } from "@/components/ui/form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { jwtDecode } from "jwt-decode"
@@ -136,9 +138,15 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onS
           }, body: JSON.stringify(payload),
         });
         const result = await res.json();
+        if (res.ok) {
+          toast.success("Dental history saved successfully!");
+        } else {
+          toast.error(result.message || "Failed to save dental history.");
+        }
         return result;
       } catch (error) {
         console.error("Error submitting personal info:", error);
+        toast.error("Failed to save dental history.");
         return null;
       }
     }
@@ -198,9 +206,15 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onS
         body: JSON.stringify(payload),
       });
       const result = await res.json();
+      if (res.ok) {
+        toast.success("Dental history updated successfully!");
+      } else {
+        toast.error(result.message || "Failed to update dental history.");
+      }
       return result;
     } catch (error) {
       console.error("Error updating dental history:", error);
+      toast.error("Failed to update dental history.");
       return null;
     }
   }
@@ -313,6 +327,7 @@ export default function DentalHistoryForm({ initialValues, readOnly = false, onS
           </Dialog>
         </form>
       </Form>
+      <Toaster />
     </div>
   )
 }
