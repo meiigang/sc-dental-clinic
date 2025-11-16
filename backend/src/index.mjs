@@ -12,6 +12,7 @@ import appointmentsRouter from "./routes/appointments.mjs";
 import editProfileRouter from "./routes/editProfile.mjs";
 import notificationRouter from "./routes/notifications.mjs";
 import logAppointmentRouter from "./routes/logging.mjs";
+import salesRoutes from './routes/sales.mjs';
 import invoicesRouter from "./routes/invoices.mjs";
 
 const app = express();
@@ -38,6 +39,7 @@ app.use("/api/appointments", appointmentsRouter);
 app.use("/api/edit-profile", editProfileRouter);
 app.use("/api/notifications",  notificationRouter);
 app.use("/api", logAppointmentRouter);
+app.use('/api/sales', salesRoutes);
 app.use("/api/invoices", invoicesRouter); // Add this line
 
 app.listen(PORT, () => {
