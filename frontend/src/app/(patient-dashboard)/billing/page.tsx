@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
+import { jwtDecode } from 'jwt-decode'; // Make sure this is installed (npm install jwt-decode)
 import {
   Popover,
   PopoverTrigger,
@@ -16,27 +17,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import ReceiptView from "@/components/ReceiptView"; // Import the new component
 
-import SalesBilling from "@/components/SalesBilling";
-
+// Updated type to match the backend summary
 type BillingRecord = {
-  id: string;
-  date: string; // yyyy mm dd
-  time: string;
-  service: string;
-  modeOfPayment: string;
-  price: number;
+  id: string; // Invoice ID
+  invoice_date: string;
+  appointment_time: string;
+  service_names: string;
+  mode_of_payment: string;
+  total_amount: number;
 };
 
 export default function BillingHistoryPage() {
   const [history, setHistory] = useState<BillingRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<number | "">("");
   const [page, setPage] = useState(1);
   const pageSize = 5;
-  const [viewRecord, setViewRecord] = useState<BillingRecord | null>(null);
+  const [viewRecordId, setViewRecordId] = useState<string | null>(null);
 
   const [calendarView, setCalendarView] = useState<"day" | "month" | "year">("day");
   const [calendarYear, setCalendarYear] = useState<number>(new Date().getFullYear());
@@ -47,12 +50,47 @@ export default function BillingHistoryPage() {
     "July","August","September","October","November","December"
   ];
 
+  // Fetch data from the backend instead of using placeholders
   useEffect(() => {
-    setHistory([
-      { id: "1", date: "2025 11 10", time: "10:30 AM", service: "Dental Cleaning", modeOfPayment: "Cash", price: 1200 },
-      { id: "2", date: "2025 11 05", time: "1:15 PM", service: "Tooth Extraction", modeOfPayment: "Debit Card", price: 2500 },
-      { id: "3", date: "2025 10 29", time: "3:45 PM", service: "Orthodontics Consultation", modeOfPayment: "Credit Card", price: 500 },
-    ]);
+    const fetchBillingHistory = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // --- FIX: Get user ID from token and send it in the URL ---
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+            throw new Error("You are not logged in.");
+        }
+
+        // Define the shape of your custom token
+        type CustomToken = {
+            id: string; // This is the user's UUID
+            [key: string]: any;
+        }
+
+        const decoded: CustomToken = jwtDecode(token);
+        const userId = decoded.id; // Get the user's UUID from the token
+
+        if (!userId) {
+            throw new Error("Could not find User ID in your session token.");
+        }
+
+        // The URL now includes the user's UUID. No auth header is needed.
+        const response = await fetch(`/api/patients/billing-history/${userId}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to fetch billing history.');
+        }
+        const data = await response.json();
+        setHistory(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBillingHistory();
   }, []);
 
   const calendarYears = useMemo(() => {
@@ -62,20 +100,19 @@ export default function BillingHistoryPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    const sorted = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sorted = [...history].sort((a, b) => new Date(b.invoice_date).getTime() - new Date(a.invoice_date).getTime());
     return sorted.filter((item) => {
-      const matchesSearch = item.service.toLowerCase().includes(search.toLowerCase())
-        || item.modeOfPayment.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = item.service_names.toLowerCase().includes(search.toLowerCase())
+        || item.mode_of_payment.toLowerCase().includes(search.toLowerCase());
 
-      const [yearStr, monthStr, dayStr] = item.date.split(" ");
-      const itemYear = yearStr;
-      const itemMonth = Number(monthStr) - 1;
-      const itemDay = Number(dayStr);
+      const itemDate = new Date(item.invoice_date);
+      const itemYear = String(itemDate.getFullYear());
+      const itemMonth = itemDate.getMonth();
 
       const matchesYear = selectedYear ? itemYear === selectedYear : true;
       const matchesMonth = selectedMonth !== "" ? itemMonth === selectedMonth : true;
       const matchesDate = selectedDate
-        ? format(new Date(item.date), "yyyy MM dd") === format(selectedDate, "yyyy MM dd")
+        ? format(itemDate, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
         : true;
 
       return matchesSearch && matchesYear && matchesMonth && matchesDate;
@@ -233,27 +270,32 @@ export default function BillingHistoryPage() {
             </tr>
           </thead>
           <tbody>
-            {paginated.map((entry, idx) => (
-              <tr key={entry.id} className={`${idx % 2 === 0 ? "bg-gray-50" : "bg-white"} border-b`}>
-                <td className="px-4 py-3">{format(new Date(entry.date), "MMMM dd yyyy")}</td>
-                <td className="px-4 py-3">{entry.time}</td>
-                <td className="px-4 py-3">{entry.service}</td>
-                <td className="px-4 py-3">{entry.modeOfPayment}</td>
-                <td className="px-4 py-3 text-right">₱{entry.price.toLocaleString()}</td>
-                <td className="px-4 py-3 text-center">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline" onClick={() => setViewRecord(entry)}>View</Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-3xl">
-                      <DialogHeader><DialogTitle>Receipt Details</DialogTitle></DialogHeader>
-                      {viewRecord && <SalesBilling billing={viewRecord} />}
-                    </DialogContent>
-                  </Dialog>
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
+            {isLoading ? (
+              <tr><td colSpan={6} className="text-center py-6">Loading history...</td></tr>
+            ) : error ? (
+              <tr><td colSpan={6} className="text-center py-6 text-red-500">{error}</td></tr>
+            ) : paginated.length > 0 ? (
+              paginated.map((entry) => (
+                <tr key={entry.id} className={`${paginated.indexOf(entry) % 2 === 0 ? "bg-gray-50" : "bg-white"} border-b`}>
+                  <td className="px-4 py-3">{format(new Date(entry.invoice_date), "MMMM dd yyyy")}</td>
+                  <td className="px-4 py-3">{entry.appointment_time}</td>
+                  <td className="px-4 py-3">{entry.service_names}</td>
+                  <td className="px-4 py-3">{entry.mode_of_payment}</td>
+                  <td className="px-4 py-3 text-right">₱{entry.total_amount.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-center">
+                    <Dialog onOpenChange={(open) => !open && setViewRecordId(null)}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline" onClick={() => setViewRecordId(entry.id)}>View</Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-3xl">
+                        <DialogHeader><DialogTitle>Receipt Details</DialogTitle></DialogHeader>
+                        {viewRecordId && <ReceiptView invoiceId={viewRecordId} />}
+                      </DialogContent>
+                    </Dialog>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-gray-500">No billing records found.</td>
               </tr>
