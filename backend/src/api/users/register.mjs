@@ -9,7 +9,7 @@ export default async function registerHandler(req, res) {
   //1. ACCOUNT INFO INSERTION
 
   //Get user input from request body
-  const { lastName, firstName, middleName, suffix, email, contactNumber, password, role } = req.body;
+  const { first_name, last_name, middle_name, suffix, email, contact_number, password, role } = req.body;
 
   //Check if user already exists in database
   const {data: existing} = await req.supabase
@@ -28,12 +28,12 @@ export default async function registerHandler(req, res) {
   //Insert user
   const {error} = await req.supabase.from("users").insert([
       {
-          lastName: lastName,
-          firstName: firstName,
-          middleName: middleName,
+          lastName: last_name,
+          firstName: first_name,
+          middleName: middle_name,
           nameSuffix: suffix,
           email,
-          contactNumber: contactNumber,
+          contactNumber: contact_number,
           password_hash: hashedPassword,
           created_at: new Date().toISOString(),
           role: role || "patient" //Default user role, staff to change at database directly
