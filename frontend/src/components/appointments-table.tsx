@@ -612,9 +612,19 @@ export function AppointmentsTable({ patientId, userRole }: { patientId?: string 
               <div className="flex gap-2">
                 <Button
                   onClick={() => setIsLogDialogOpen(true)}
-                  disabled={userRole === "staff"}
-                  className={userRole === "staff" ? "opacity-50 cursor-not-allowed" : ""}
-                  title={userRole === "staff" ? "Staff cannot log appointments." : ""}
+                  disabled={userRole === "staff" || selectedAppointment?.status !== "confirmed"}
+                  className={
+                    userRole === "staff" || selectedAppointment?.status !== "confirmed"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }
+                  title={
+                    userRole === "staff"
+                      ? "Staff cannot log appointments."
+                      : selectedAppointment?.status !== "confirmed"
+                        ? "You can only log appointments that are confirmed."
+                        : ""
+                  }
                 >
                   Log Appointment
                 </Button>

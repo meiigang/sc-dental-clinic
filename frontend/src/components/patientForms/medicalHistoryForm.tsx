@@ -1,8 +1,7 @@
 "use client"
 import { useForm } from "react-hook-form"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { z } from "zod"
-import { useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -17,12 +16,11 @@ type MedicalHistoryFormProps = {
   initialValues?: z.infer<typeof medicalSchema>;
   readOnly?: boolean;
   onSubmit?: (data: z.infer<typeof medicalSchema>) => void;
-    onPrev?: () => void; // Register stepper
-    mode?: FormMode;
+  onPrev?: () => void; // Register stepper
+  mode?: FormMode;
 };
 
 export default function MedicalHistoryForm({ initialValues, readOnly = false, onSubmit, onPrev, mode }: MedicalHistoryFormProps) {
-  // Instantiate medical form
   const medicalForm = useForm<z.infer<typeof medicalSchema>>({
     defaultValues: initialValues || {
       physicianName: "",
@@ -51,7 +49,6 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
     }
   })
 
-  // Use states for buttons and fields
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isEditing, setIsEditing] = useState(mode === 'register');
   const [userId, setUserId] = useState<string>("");
@@ -60,16 +57,18 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
   const [medicalHistoryId, setMedicalHistoryId] = useState<number | null>(null);
   
   //When submitting form
-  async function onMedicalSubmit (values: z.infer<typeof medicalSchema>) {
-    console.log("Medical History Info:", values)
-      if (medicalHistoryId) {
-        await updateMedicalForm(values, medicalHistoryId); // PATCH if record exists
-      } else {
-        await submitMedicalForm(values); // POST if new
-      }
-    medicalForm.reset(values); // Reset form to clear dirty state and hide Save/Discard buttons
+  async function onMedicalSubmit(values: z.infer<typeof medicalSchema>) {
+    if (medicalHistoryId) {
+      await updateMedicalForm(values, medicalHistoryId); // PATCH if record exists
+      // --- FIX: Refetch latest medical history after update ---
+      await fetchAndResetMedicalHistory(patientId);
+    } else {
+      await submitMedicalForm(values); // POST if new
+      // --- FIX: Refetch latest medical history after create ---
+      await fetchAndResetMedicalHistory(patientId);
+    }
   }
-    
+
   // Reset form when initialValues change
   useEffect(() => {
     if (initialValues) {
@@ -105,80 +104,54 @@ export default function MedicalHistoryForm({ initialValues, readOnly = false, on
 
   //Retrieve patient id from JWT
   useEffect(() => {
-    // 1. Get user ID from JWT
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) {
       const decoded: any = jwtDecode(token);
-      const userId = decoded.id; // or decoded.userId or decoded.sub, depending on your JWT
+      const userId = decoded.id;
       setUserId(userId);
 
-      // 2. Fetch patient record using user ID
       fetch(`http://localhost:4000/api/patients/patientPersonalInfo/${userId}`)
         .then(res => res.json())
         .then(data => {
           if (data.patient && data.patient.id) {
-            setPatientId(data.patient.id); // 3. Save patient primary key
+            setPatientId(data.patient.id);
           }
         })
         .catch(err => console.error("Failed to fetch patient record:", err));
     }
   }, []);
-    
+
   //Fetch and set medicalHistoryId
   useEffect(() => {
-    // --- FIX: Only fetch data if initialValues are NOT provided ---
     if (initialValues || !patientId) return;
+    fetchAndResetMedicalHistory(patientId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patientId, initialValues, medicalForm]);
 
-    async function fetchMedicalHistory() {
-        try { 
-          const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-          const res = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${patientId}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
-          });
-          if (!res.ok) return;
-          const data = await res.json();
-          console.log("Fetched patient medical history:", data);
-          if (data.medicalHistory) {
-            const record = data.medicalHistory;
-            setMedicalHistoryId(record.id);
-            medicalForm.reset({
-              physicianName: record.physician_name || "",
-              officeAddress: record.office_address || "",
-              specialty: record.specialty || "",
-              officeNumber: record.office_number || "",
-              goodHealth: record.good_health ? "yes" : "no",
-              underMedicalTreatment: record.under_medical_treatment ? "yes" : "no",
-              medicalTreatmentCondition: record.medical_treatment_condition || "",
-              hadSurgery: record.had_surgery ? "yes" : "no",
-              surgeryDetails: record.surgery_details || "",
-              wasHospitalized: record.was_hospitalized ? "yes" : "no",
-              hospitalizationDetails: record.hospitalization_details || "",
-              onMedication: record.on_medication ? "yes" : "no",
-              medicationDetails: record.medication_details || "",
-              usesTobacco: record.uses_tobacco ? "yes" : "no",
-              usesDrugs: record.uses_drugs ? "yes" : "no",
-              allergies: record.allergies || [],
-              bleedingTime: record.bleeding_time || "",
-              isPregnant: record.is_pregnant ? "yes" : "no",
-              isNursing: record.is_nursing ? "yes" : "no",
-              isTakingBirthControl: record.is_taking_birth_control ? "yes" : "no",
-              bloodType: record.blood_type || "",
-              bloodPressure: record.blood_pressure || "",
-              diseases: record.diseases || []
-            });
-          } else {
-            setMedicalHistoryId(null);
-          }
-        } catch (err) {
-          console.error("Error fetching medical history:", err);
+  // --- FIX: Helper to fetch latest medical history and reset form ---
+  async function fetchAndResetMedicalHistory(patientId: number | null) {
+    if (!patientId) return;
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const res = await fetch(`http://localhost:4000/api/patients/patientMedicalHistory/${patientId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.medicalHistory) {
+        const record = data.medicalHistory;
+        setMedicalHistoryId(record.id);
+      } else {
+        setMedicalHistoryId(null);
+      }
+    } catch (err) {
+      console.error("Error fetching medical history:", err);
     }
-    fetchMedicalHistory();
-  }, [patientId, medicalForm, initialValues]); // Add initialValues to dependency array
+  }
 
   //Submit data to backend
   async function submitMedicalForm(data: z.infer<typeof medicalSchema>) {
