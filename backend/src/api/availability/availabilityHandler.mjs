@@ -1,42 +1,45 @@
 // --- PUT ---
-// For a staff member to update their own availability.
+// For any staff member to update the dentist's availability.
 export default async function updateAvailabilityHandler(req, res) {
     const userId = req.user?.id;
-    if(!userId) {
-        return res.status(401).json({message: "Unauthorized access."})
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized access." });
     }
 
     try {
-        const { data: staffRecord, error: staffError } = await req.supabase
-                .from("staff") 
-                .select("id") 
-                .eq("user_id", userId)
-                .single();
+        // --- Always get the dentist's staff record ---
+        const { data: dentistStaff, error: staffError } = await req.supabase
+            .from("staff")
+            .select("id")
+            .single(); // Only one dentist in staff table
 
-        if (staffError || !staffRecord) throw new Error("Staff record not found for this user.");
-    
-        const staffId = staffRecord.id;
+        if (staffError || !dentistStaff) throw new Error("Dentist staff record not found.");
+
+        const staffId = dentistStaff.id;
         const { weekly, overrides } = req.body;
 
+        // Delete old availability
         await req.supabase.from("staff_weekly_availability").delete().eq("staff_id", staffId);
         await req.supabase.from("date_specific_hours_override").delete().eq("staff_id", staffId);
 
-        if (weekly && weekly.length > 0){
-            const weeklyToInsert = weekly.map(item => ({...item, staff_id: staffId}));
-            const {error: weeklyError} = await req.supabase.from("staff_weekly_availability").insert(weeklyToInsert);
+        // Insert new weekly availability
+        if (weekly && weekly.length > 0) {
+            const weeklyToInsert = weekly.map(item => ({ ...item, staff_id: staffId }));
+            const { error: weeklyError } = await req.supabase.from("staff_weekly_availability").insert(weeklyToInsert);
             if (weeklyError) throw weeklyError;
         }
-        
+
+        // Insert new overrides
         if (overrides && overrides.length > 0) {
-            const overridesToInsert = overrides.map(item => ({...item, staff_id: staffId}));
+            const overridesToInsert = overrides.map(item => ({ ...item, staff_id: staffId }));
             const { error: overrideError } = await req.supabase.from("date_specific_hours_override").insert(overridesToInsert);
             if (overrideError) throw overrideError;
         }
 
-        res.status(200).json({message:"Availability updated successfully."})
-        
+        res.status(200).json({ message: "Availability updated successfully." });
+
     } catch (error) {
-        console.error("Error updating availability:", error);
+        console.error("Error updating dentist's availability:", error);
         res.status(500).json({ message: "Failed to update availability.", error: error.message });
     }
 }
@@ -50,21 +53,26 @@ export async function getAvailabilityHandler(req, res) {
     }
 
     try {
-        const { data: staffRecord, error: staffError } = await req.supabase
+        // --- Always get the dentist's staff record ---
+        const { data: dentistStaff, error: staffError } = await req.supabase
             .from("staff")
             .select("id")
-            .eq("user_id", userId)
-            .single();
+            .single(); // Only one dentist in staff table
 
-        if (staffError || !staffRecord) throw new Error("Staff record not found for this user.");
-        const staffId = staffRecord.id;
+        console.log("Dentist staff record:", dentistStaff, staffError);
 
+        if (staffError || !dentistStaff) throw new Error("Dentist staff record not found.");
+
+        const staffId = dentistStaff.id;
+
+        // Fetch weekly availability
         const { data: weekly, error: weeklyError } = await req.supabase
             .from("staff_weekly_availability")
             .select("*")
             .eq("staff_id", staffId);
         if (weeklyError) throw weeklyError;
 
+        // Fetch date-specific overrides
         const { data: overrides, error: overrideError } = await req.supabase
             .from("date_specific_hours_override")
             .select("*")
@@ -74,7 +82,7 @@ export async function getAvailabilityHandler(req, res) {
         res.status(200).json({ weekly, overrides });
 
     } catch (error) {
-        console.error("Error fetching staff availability:", error);
+        console.error("Error fetching unified staff availability:", error);
         res.status(500).json({ message: "Failed to fetch availability.", error: error.message });
     }
 }
