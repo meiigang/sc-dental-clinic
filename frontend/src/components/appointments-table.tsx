@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -110,34 +110,37 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
 
   const rowsPerPage = 10;
   
+  // --- FIX: Define fetchAppointments outside of useEffect using useCallback ---
+  const fetchAppointments = useCallback(async () => {
+    setIsLoading(true);
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      console.error("No auth token found");
+      setIsLoading(false);
+      return;
+    }
+    try {
+      let url = "/api/appointments";
+      if (patientId) {
+        url += `?patientId=${patientId}`;
+      }
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) setAlertError('Failed to fetch appointments');
+      const allAppointments: Appointment[] = await response.json();
+      setAppointments(allAppointments);
+    } catch (error) {
+      setAlertError("Could not load appointment data.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [patientId]); // Dependency array for useCallback
+
+  // --- FIX: useEffect now calls the function defined above ---
   useEffect(() => {
-    const fetchAppointments = async () => {
-      setIsLoading(true);
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      if (!token) {
-        console.error("No auth token found");
-        setIsLoading(false);
-        return;
-      }
-      try {
-        let url = "/api/appointments";
-        if (patientId) {
-          url += `?patientId=${patientId}`;
-        }
-        const response = await fetch(url, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) setAlertError('Failed to fetch appointments');
-        const allAppointments: Appointment[] = await response.json();
-        setAppointments(allAppointments);
-      } catch (error) {
-        setAlertError("Could not load appointment data.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchAppointments();
-  }, [patientId]);
+  }, [fetchAppointments]); // Dependency array for useEffect
 
   const reservedAppointments = useMemo(
     () => appointments.filter(appt => appt.status === 'pending_approval' || appt.status === 'pending_reschedule'),
@@ -503,7 +506,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
       {/* --- FIX: Update Edit Modal to include time slot logic --- */}
       <Dialog open={isModalOpen} onOpenChange={(open) => { setIsModalOpen(open); if (!open) setSelectedAppointment(null); }}>
         <DialogContent
-        className="
+        className={`
           w-full 
           sm:max-w-[90vw]    /* small phones */
           md:max-w-[70vw]    /* tablets */
@@ -513,15 +516,15 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
           overflow-y-auto 
           p-6 
           space-y-4 
-          rounded-2xl"
+          rounded-2xl`}
         >
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-blue-dark">Edit Appointment</DialogTitle>
           </DialogHeader>
           {selectedAppointment && (
             <div className="space-y-3">
-              {/* --- FIX: Change grid to 3 columns to accommodate End Time --- */
-              /* --- NEW: Add the read-only End Time field --- */}
+              {/* --- FIX: Change grid to 3 columns to accommodate End Time --- */}
+              {/* --- NEW: Add the read-only End Time field --- */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Date</label>
@@ -583,7 +586,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
               <Input readOnly value={`${selectedAppointment.patient?.firstName || ''} ${selectedAppointment.patient?.lastName || ''}`} />
               
               <label className="block text-sm font-medium text-gray-700">Service</label>
-              <Input value={selectedAppointment.service} onChange={(e) => setSelectedAppointment({ ...selectedAppointment, service: e.target.value })} />
+              <Input readOnly value={selectedAppointment.service?.service_name || ''} />
 
               <label className="block text-sm font-medium text-gray-700">Status</label>
               {/* --- FIX: The Select component now uses the new dynamic logic --- */}
@@ -645,14 +648,18 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
         </DialogContent>
       </Dialog>
 
-      {/* Log Appointment Dialog */}
+      {/* --- FIX: Pass selectedAppointment data to the LogAppointment modal --- */}
       <LogAppointment
         open={isLogDialogOpen}
         onOpenChange={setIsLogDialogOpen}
-        // exits both modals
+        appointment={selectedAppointment}
         onCancelLog={() => {
           setIsLogDialogOpen(false);
+        }}
+        onLogSuccess={() => {
+          setIsLogDialogOpen(false);
           setIsModalOpen(false);
+          fetchAppointments(); // Re-fetch appointments to show updated status
         }}
       />
     </main>

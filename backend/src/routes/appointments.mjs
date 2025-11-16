@@ -7,6 +7,7 @@ import {
     confirmRescheduleHandler,
     declineRescheduleHandler,
 } from "../api/appointments/appointmentHandler.mjs";
+import { getAppointmentLogHandler } from '../api/appointments/getAppointmentLog.mjs';
 
 const router = Router();
 
@@ -32,5 +33,6 @@ router.post("/:id/confirm-reschedule", authenticateToken, confirmRescheduleHandl
 // For a patient to DECLINE a reschedule request from the clinic
 router.post("/:id/decline-reschedule", authenticateToken, declineRescheduleHandler);
 
+router.get('/:id/log', getAppointmentLogHandler);
 
 export default router;

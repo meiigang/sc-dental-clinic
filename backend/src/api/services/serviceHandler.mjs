@@ -86,6 +86,25 @@ export async function getServicesHandler(req, res) {
     return res.status(200).json({ services });
 }
 
+//Get services to populate billing fields
+export async function getBillingServicesHandler(req, res) {
+    // This handler fetches only active services and returns a simplified array 
+    // with only the fields needed for the billing combobox.
+    const { data, error } = await req.supabase
+        .from('services')
+        .select('id, service_name, price') // Select only the necessary columns
+        .not('status', 'in', '("Archived","Unavailable")');
+
+    if (error) {
+         console.error("Backend Error: Failed to fetch billing services.", error); // --- DEBUG LOG ---
+        return res.status(500).json({ message: "Failed to fetch billing services.", error });
+    }
+
+    // Return the data as a direct array, which is what the combobox expects.
+    return res.status(200).json(data);
+}
+
+
 //PATCH method for services
 export async function updateServiceHandler(req, res) {
 

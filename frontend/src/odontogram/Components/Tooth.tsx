@@ -30,7 +30,7 @@ const Tooth: React.FC<ToothProps> = ({
   const translate = `translate(${positionX},${positionY})`;
 
   // Conditionally determine the image path
-  const imagePath = isModified
+  const imagePath = (isModified || selected)
     ? `/images/teeth-colored/tooth${number}.png` // Path to colored teeth
     : `/images/teeth/tooth${number}.png`; // Original image path
 
