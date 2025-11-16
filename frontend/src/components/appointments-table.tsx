@@ -416,7 +416,7 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
     
         {/* --- TABLE RENDER --- */}
         <div className="overflow-x-auto overflow-hidden rounded-2xl">
-            <table className="w-full min-w-[350vw] sm:min-w-[160vw] md:min-w-[120vw] lg:min-w-[100vw] xl:min-w-full text-sm sm:text-base border border-blue-accent">
+            <table className="w-full min-w-[350vw] sm:min-w-[160vw] md:min-w-[120vw] lg:min-w-[120vw] xl:min-w-full text-sm sm:text-base border border-blue-accent">
             <thead>
               <tr className="bg-blue-accent text-blue-dark font-semibold">
                 <th className="p-3 border border-blue-accent">Date</th>
