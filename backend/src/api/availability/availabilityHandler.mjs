@@ -302,3 +302,42 @@ export async function getStaffAvailabilityForDate(req, res) {
         res.status(500).json({ message: "Internal server error.", error: error.message });
     }
 }
+
+// --- GET (for Shared Availability) ---
+// For fetching the shared availability of the dentist (assuming only one dentist's record)
+export async function getSharedAvailabilityHandler(req, res) {
+    try {
+        // Find the dentist's staff record
+        const { data: dentistStaff, error: staffError } = await req.supabase
+            .from("staff")
+            .select("id")
+            .single(); // Only one dentist
+
+        if (staffError || !dentistStaff) {
+            return res.status(404).json({ message: "Dentist staff record not found." });
+        }
+
+        const staffId = dentistStaff.id;
+
+        // Fetch weekly availability
+        const { data: weekly, error: weeklyError } = await req.supabase
+            .from("staff_weekly_availability")
+            .select("*")
+            .eq("staff_id", staffId);
+
+        if (weeklyError) throw weeklyError;
+
+        // Fetch date-specific overrides
+        const { data: overrides, error: overrideError } = await req.supabase
+            .from("date_specific_hours_override")
+            .select("*")
+            .eq("staff_id", staffId);
+
+        if (overrideError) throw overrideError;
+
+        res.status(200).json({ weekly, overrides });
+    } catch (error) {
+        console.error("Error fetching shared staff availability:", error);
+        res.status(500).json({ message: "Failed to fetch shared staff availability.", error: error.message });
+    }
+}

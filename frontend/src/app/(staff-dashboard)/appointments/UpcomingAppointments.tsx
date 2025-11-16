@@ -74,7 +74,12 @@ const formatTimeRange = (startIso: string, endIso: string) => {
   return `${formatSingleTime(startIso)} - ${formatSingleTime(endIso)}`;
 };
 
-export default function UpcomingAppointments() {
+type UpcomingAppointmentsProps = {
+  userRole: string;
+  // ...other props...
+};
+
+export default function UpcomingAppointments({ userRole }: UpcomingAppointmentsProps) {
   const [alertError, setAlertError] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState("latest");
   const [filterOption, setFilterOption] = useState("Today");

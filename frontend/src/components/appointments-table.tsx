@@ -87,7 +87,7 @@ const formatTimeRange = (startIso: string, endIso: string) => {
   return `${formatSingleTime(startIso)} - ${formatSingleTime(endIso)}`;
 };
 
-export function AppointmentsTable({ patientId }: { patientId?: string | number }) {
+export function AppointmentsTable({ patientId, userRole }: { patientId?: string | number, userRole?: string }) {
   const [alertError, setAlertError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -445,14 +445,16 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
                   </td>
                   <td className="p-3 border border-blue-accent">
                     <div className="flex items-center justify-center gap-2">
-                      {/* Reschedule */}
+                      {/* Reschedule/Edit */}
                       <Button
                         variant="outline"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRowClick(appt);
                         }}
-                        className="bg-blue-light text-blue-primary hover:bg-blue-primary/40 hover:text-blue-dark border border-blue-primary cursor-pointer"
+                        className={`bg-blue-light text-blue-primary hover:bg-blue-primary/40 hover:text-blue-dark border border-blue-primary cursor-pointer ${appt.status === "completed" ? "opacity-50 cursor-not-allowed" : ""}`}
+                        disabled={appt.status === "completed"}
+                        title={appt.status === "completed" ? "Completed appointments cannot be edited." : ""}
                       >
                         <Pencil />Edit
                       </Button>
@@ -608,7 +610,12 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
 
               {/* Right-aligned: Primary actions */}
               <div className="flex gap-2">
-                <Button onClick={() => setIsLogDialogOpen(true)}>
+                <Button
+                  onClick={() => setIsLogDialogOpen(true)}
+                  disabled={userRole === "staff"}
+                  className={userRole === "staff" ? "opacity-50 cursor-not-allowed" : ""}
+                  title={userRole === "staff" ? "Staff cannot log appointments." : ""}
+                >
                   Log Appointment
                 </Button>
                 <Button onClick={handleSave} className="bg-blue-primary hover:bg-blue-600 text-white">

@@ -62,7 +62,7 @@ function isDateSpecificEqual(a: DateSlot[], b: DateSlot[]) {
 }
 
 // --- COMPONENT ---
-export default function AvailabilityInputs() {
+export default function AvailabilityInputs({ userRole }: { userRole?: string }) {
   // State for alert errors
   const [alertError, setAlertError] = useState<string | null>(null);
   // States for the UI
@@ -87,8 +87,13 @@ export default function AvailabilityInputs() {
         return;
       }
 
+      // --- Use userRole prop to determine endpoint ---
+      const endpoint = userRole === "staff"
+        ? "/api/availability/shared"
+        : "/api/availability";
+
       try {
-        const response = await fetch("/api/availability", {
+        const response = await fetch(endpoint, {
           headers: { "Authorization": `Bearer ${token}` }
         });
 
@@ -97,11 +102,9 @@ export default function AvailabilityInputs() {
         const data = await response.json();
 
         // --- FIX: Create a deep copy to prevent mutation across renders ---
-        // This creates a new object with new, empty arrays for each day.
         const newWeeklyData: WeeklyAvailability = Object.fromEntries(
           Object.keys(defaultTimes).map(day => [day, []])
         );
-        // --- END OF FIX ---
 
         if (data.weekly) {
           data.weekly.forEach((item: WeeklySlot) => {
@@ -132,7 +135,7 @@ export default function AvailabilityInputs() {
       }
     };
     fetchAvailability();
-  }, []);
+  }, [userRole]); // <-- add userRole as a dependency
 
   // Dirty state calculation (your existing logic is correct)
   const isDirty =

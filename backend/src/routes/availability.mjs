@@ -5,7 +5,8 @@ import {
     getBookedDatesHandler,
     getUnavailableSlotsHandler,
     getAvailableWorkdaysHandler,
-    getStaffAvailabilityForDate
+    getStaffAvailabilityForDate,
+    getSharedAvailabilityHandler
 } from "../api/availability/availabilityHandler.mjs";
 import { authenticateToken } from "../utils/middleware/middleware.mjs";
 
@@ -21,5 +22,6 @@ router.get("/booked-dates", getBookedDatesHandler);
 router.get("/unavailable-slots", getUnavailableSlotsHandler); // 2. Add the new route
 router.get('/available-workdays', getAvailableWorkdaysHandler);
 router.get('/staff-slots', getStaffAvailabilityForDate);
+router.get("/shared", getSharedAvailabilityHandler);
 
 export default router;
