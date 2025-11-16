@@ -13,27 +13,26 @@ export default async function registerHandler(req, res) {
 
 //Validation schema for registration 
 export const registerValidation = [
-  body("firstName")
+  body("first_name")
     .trim()
     .notEmpty().withMessage("First name is required"),
-  body("lastName")
+  body("last_name")
     .trim()
     .notEmpty().withMessage("Last name is required"),
-  body("middleName")
-    .trim()
-    .notEmpty().withMessage("Middle name is required"),
-  body("nameSuffix")
+  body("middle_name")
     .optional({ checkFalsy: true })
-    .custom((value) => !value || nameCase(value)).withMessage("Suffix must start with an uppercase letter"),
+    .trim(),
+  body("suffix")
+    .optional({ checkFalsy: true }),
   body("email")
     .isEmail().withMessage("Valid email is required"),
-  body("contactNumber")
+  body("contact_number")
     .trim()
     .isLength({ min: 11, max: 11 }).withMessage("Contact number must be exactly 11 digits")
     .isNumeric().withMessage("Contact number must contain only digits"),
   body("password")
     .isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
-  body("confirmPassword")
+  body("confirm_password")
     .custom((value, { req }) => value === req.body.password)
     .withMessage("Passwords do not match"),
   (req, res, next) => {
