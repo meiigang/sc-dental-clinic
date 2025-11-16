@@ -6,6 +6,7 @@ import {loginValidation} from "../utils/middleware/validationSchemas.mjs";
 import loginHandler from "../api/users/login.mjs";
 import { registerStaffHandler } from '../api/users/registerStaff.mjs';
 import { getStaffHandler } from '../api/users/getStaff.mjs';
+import { updateUserStatusHandler } from "../api/users/updateStatus.mjs";
 
 const router = Router();
 
@@ -42,5 +43,6 @@ router.post("/register", registerValidation, registerHandler);
 router.post("/register/full", fullRegistrationHandler);
 router.post('/', registerStaffHandler);
 router.get('/', getStaffHandler);
+router.patch("/:id", updateUserStatusHandler);
 
 export default router;

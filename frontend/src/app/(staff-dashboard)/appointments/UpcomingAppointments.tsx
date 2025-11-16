@@ -96,9 +96,9 @@ export default function UpcomingAppointments() {
         });
         if (!response.ok) setAlertError("Your appointment data failed to load.");
 
-        // --- FIX: The fetched data now correctly matches the Appt type ---
-        const upcomingAppointments: Appt[] = await response.json();
-        setAppointments(upcomingAppointments);
+        const upcomingAppointments = await response.json();
+        // --- FIX: Always set as array ---
+        setAppointments(Array.isArray(upcomingAppointments) ? upcomingAppointments : []);
       } catch (error) {
         console.error("Error fetching upcoming appointments:", error);
       } finally {
