@@ -382,65 +382,37 @@ export function AppointmentsTable({ patientId }: { patientId?: string | number }
           </SelectContent>
         </Select>
         </div>
-        {/* --- TAB BUTTONS --- */}
+        
+        {/* --- TAB DROPDOWN (All Screens) --- */}
         <div className="mb-6">
-          {/* Large screens: show buttons */}
-          <div className="hidden lg:flex gap-3 mb-6">
-            <Button
-              variant={activeTab === "reserved" ? "default" : "outline"}
-              onClick={() => handleTabChange("reserved")}
-            >
-              Reserved Appointments
-            </Button>
-            <Button
-              variant={activeTab === "booked" ? "default" : "outline"}
-              onClick={() => handleTabChange("booked")}
-            >
-              Booked Appointments
-            </Button>
-            <Button
-              variant={activeTab === "completed" ? "default" : "outline"}
-              onClick={() => handleTabChange("completed")}
-            >
-              Completed Appointments
-            </Button>
-            <Button
-              variant={activeTab === "cancelled" ? "default" : "outline"}
-              onClick={() => handleTabChange("cancelled")}
-            >
-              Cancelled Appointments
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="min-w-[230px] flex justify-between items-center">
+                {activeTab === "reserved" && "Reserved Appointments"}
+                {activeTab === "booked" && "Booked Appointments"}
+                {activeTab === "completed" && "Completed Appointments"}
+                {activeTab === "cancelled" && "Cancelled Appointments"}
+                <ChevronDown className="ml-2 w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
 
-          {/* Small screens: hamburger menu */}
-          <div className="block lg:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="w-full flex justify-between items-center">
-                  {activeTab === "reserved" && "Reserved"}
-                  {activeTab === "booked" && "Booked"}
-                  {activeTab === "completed" && "Completed"}
-                  {activeTab === "cancelled" && "Cancelled"}
-                  <ChevronDown className="ml-2 w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleTabChange("reserved")}>
-                  Reserved Appointments
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleTabChange("booked")}>
-                  Booked Appointments
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleTabChange("completed")}>
-                  Completed Appointments
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleTabChange("cancelled")}>
-                  Cancelled Appointments
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+            <DropdownMenuContent className="min-w-[230px]">
+              <DropdownMenuItem onClick={() => handleTabChange("reserved")}>
+                Reserved Appointments
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleTabChange("booked")}>
+                Booked Appointments
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleTabChange("completed")}>
+                Completed Appointments
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleTabChange("cancelled")}>
+                Cancelled Appointments
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
     
         {/* --- TABLE RENDER --- */}
         <div className="overflow-x-auto overflow-hidden rounded-2xl">
