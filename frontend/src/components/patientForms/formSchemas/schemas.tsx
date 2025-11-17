@@ -23,12 +23,30 @@ export const personalSchema = z.object({
   nickname: z.string().optional(),
   homeAddress: z.string().min(1, "Required"),
   occupation: z.string().optional(),
+  hasDentalInsurance: z.boolean(),
   dentalInsurance: z.string().optional(),
-  effectiveDate: z.date().min(new Date("1900-01-01"), "Invalid date"),
+  effectiveDate: z.date().optional(),
   patientSince: z.date().min(new Date("1900-01-01"), "Invalid date"),
   emergencyContactName: z.string().min(1, "Required"),
   emergencyContactOccupation: z.string().min(1, "Required"),
   emergencyContactNumber: z.string().min(1, "Required").max(11, "Invalid contact number"),
+}).superRefine((data, ctx) => {
+  if (data.hasDentalInsurance) {
+    if (!data.dentalInsurance) {
+      ctx.addIssue({
+        path: ["dentalInsurance"],
+        message: "Please provide your dental insurance details.",
+        code: z.ZodIssueCode.custom,
+      });
+    }
+    if (!data.effectiveDate) {
+      ctx.addIssue({
+        path: ["effectiveDate"],
+        message: "Please provide the effective date of your dental insurance.",
+        code: z.ZodIssueCode.custom,
+      });
+    }
+  }
 });
 
 export const dentistSchema = z.object({
