@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, TriangleAlertIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   BarChart,
   Bar,
@@ -57,6 +58,7 @@ const statusClass = (status: SaleEntry['status']) => {
 };
 
 export default function SalesPage() {
+  const [alertError, setAlertError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"Weekly" | "Monthly" | "Annually">("Weekly");
   const [sales, setSales] = useState<SaleEntry[]>([]);
   const [page, setPage] = useState(1);
@@ -72,12 +74,12 @@ export default function SalesPage() {
         const res = await fetch("http://localhost:4000/api/sales", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Failed to fetch sales data");
+        if (!res.ok) setAlertError("Failed to fetch sales data");
         const data: SaleEntry[] = await res.json();
         setSales(data);
       } catch (err) {
         console.error(err);
-        alert("Could not load sales data.");
+        setAlertError("Your sales data failed to load.");
       }
     };
     fetchSalesData();
@@ -156,7 +158,6 @@ export default function SalesPage() {
       const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       sortedEntries.sort((a, b) => months.indexOf(a[0]) - months.indexOf(b[0]));
     }
-
     return sortedEntries.map(([date, total]) => ({ date, total }));
   }, [filteredSales, activeTab, currentDate]);
 
@@ -325,8 +326,17 @@ export default function SalesPage() {
           </Button>
         </div>
 
+        {alertError && (
+          <Alert className="bg-destructive dark:bg-destructive/60 text-md text-white w-md mx-auto mb-4">
+            <TriangleAlertIcon />
+            <AlertTitle className="font-medium text-left">{alertError}</AlertTitle>
+            <AlertDescription className="text-white/80">Please try reloading the page or relogging.</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Table */}
         <div className="w-full max-w-6xl overflow-x-auto">
-          <table className="w-full max-w-6xl text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden shadow">
+          <table className="bg-white w-full max-w-6xl text-sm sm:text-base border border-blue-accent rounded-2xl overflow-hidden shadow">
             <thead>
               <tr className="bg-blue-accent text-blue-dark font-semibold">
                 <th className="p-3 border border-blue-accent">Date</th>

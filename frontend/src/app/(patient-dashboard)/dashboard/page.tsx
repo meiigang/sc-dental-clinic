@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { RiPencilFill } from "react-icons/ri"
+import { Pencil } from "lucide-react"
 import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import { EditProfileForm } from "@/components/editProfileForm/EditProfileForm"
@@ -87,7 +87,7 @@ export default function PatientDashboard() {
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button className="bg-blue-primary text-white hover:bg-blue-dark w-full">
-                      <RiPencilFill /> Edit Profile
+                      <Pencil /> Edit Profile
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-3xl">
@@ -129,14 +129,14 @@ export default function PatientDashboard() {
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={() => scrollToSection(appointmentsRef)}
-                    className="w-full bg-white rounded-xl p-4 hover:shadow-md transition-shadow text-left flex flex-col"
+                    className="w-full bg-white rounded-xl p-4 hover:shadow-md transition-shadow text-left flex flex-col cursor-pointer"
                   >
                     <span className="font-semibold text-blue-dark text-sm sm:text-base">View Appointments</span>
                     <span className="text-xs sm:text-sm text-gray-600 mt-1">Check your appointment status.</span>
                   </button>
 
                   <Link href="/reserve-appointment" className="w-full">
-                    <button className="w-full bg-white rounded-xl p-4 hover:shadow-md transition-shadow text-left flex flex-col">
+                    <button className="w-full bg-white rounded-xl p-4 hover:shadow-md transition-shadow text-left flex flex-col cursor-pointer">
                       <span className="font-semibold text-blue-dark text-sm sm:text-base">Reserve Appointment</span>
                       <span className="text-xs sm:text-sm text-gray-600 mt-1">Schedule a new appointment quickly.</span>
                     </button>
