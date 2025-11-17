@@ -10,6 +10,7 @@ import { toast, Toaster } from "sonner"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
 import { personalSchema } from "@/components/patientForms/formSchemas/schemas"
 
 type FormMode = "register" | "edit";
@@ -18,7 +19,7 @@ type PersonalInfoFormProps = {
   initialValues?: z.infer<typeof personalSchema>;
   readOnly?: boolean;
   onSubmit?: (data: z.infer<typeof personalSchema>) => void;
-  onPrev?: () => void; // Register stepper
+  onPrev?: () => void;
   mode?: FormMode;
 };
 
@@ -35,6 +36,7 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
       nickname: "",
       homeAddress: "",
       occupation: "",
+      hasDentalInsurance: false,
       dentalInsurance: "",
       effectiveDate: undefined,
       patientSince: undefined,
@@ -244,8 +246,8 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
   return (
     <div className="form-container bg-blue-light justify-center mt-10 p-10 rounded-xl">
       <h3 className="text-xl font-semibold text-blue-dark mb-5">Personal Information</h3>
-        <Form {...personalForm}>
-          <form ref={formRef} 
+      <Form {...personalForm}>
+        <form ref={formRef} 
           onSubmit={personalForm.handleSubmit(mode === 'register' && onSubmit ? onSubmit : onPersonalSubmit)} 
           className="col-span-5 grid grid-cols-1 md:grid-cols-5 gap-6 w-full max-w-6xl">
             <FormField
@@ -460,49 +462,77 @@ export default function PersonalInfoForm({ initialValues, readOnly = false, onSu
                 </FormItem>
               )}
             />
-            <div className="emergency-contact col-span-5 mt-2">
-              <h5 className="text-blue-dark font-semibold">Dental Insurance</h5>
-            </div>
-            <FormField
-              control={personalForm.control}
-              name="dentalInsurance"
-              render={({field}) => (
-                <FormItem className="col-span-1 md:col-start-1">
-                  <FormLabel className="text-blue-dark">Dental Insurance</FormLabel>
-                  <Input
-                    {...field}
-                    disabled={readOnly}
-                    className={`${hasSubmitted && personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
-                  />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={personalForm.control}
-              name="effectiveDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-blue-dark">Effective Date *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      placeholder="MM/DD/YYYY"
-                      disabled={readOnly}
-                      max={today}
-                      value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
-                      onChange={e => {
-                        const val = e.target.value;
-                        field.onChange(val ? new Date(val) : undefined);
-                      }}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                      className={`${hasSubmitted && personalForm.formState.errors.effectiveDate ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
-                    />
-                  </FormControl>
-                </FormItem>
-              )} 
-            />
+            {/* Dental Insurance Section */}
+            {mode === "register" && (
+              <div className="col-span-5 my-4">
+                <h5 className="text-blue-dark font-semibold">Dental Insurance</h5>
+                <FormField
+                  control={personalForm.control}
+                  name="hasDentalInsurance"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2 mb-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={readOnly}
+                          id="hasDentalInsurance"
+                        />
+                      </FormControl>
+                      <FormLabel htmlFor="hasDentalInsurance" className="text-blue-dark my-3">
+                        I have dental insurance (required)
+                      </FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {/* If hasDentalInsurance is true, show details fields */}
+                {personalForm.watch("hasDentalInsurance") && (
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-end mt-2">
+        <div className="flex-1">
+          <FormField
+            control={personalForm.control}
+            name="dentalInsurance"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-blue-dark">Dental Insurance Details *</FormLabel>
+                <Input
+                  {...field}
+                  disabled={readOnly}
+                  className={`${personalForm.formState.errors.dentalInsurance ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="flex-1">
+          <FormField
+            control={personalForm.control}
+            name="effectiveDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-blue-dark">Effective Date *</FormLabel>
+                <Input
+                  type="date"
+                  disabled={readOnly}
+                  value={field.value ? (typeof field.value === "string" ? field.value : field.value.toISOString().split("T")[0]) : ""}
+                  onChange={e => {
+                    const val = e.target.value;
+                    field.onChange(val ? new Date(val) : undefined);
+                  }}
+                  className={`${personalForm.formState.errors.effectiveDate ? "border-red-500" : ""} ${!readOnly ? "bg-background" : "bg-blue-light"}`}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
+    )}
+              </div>
+            )}
+
             {/* If form is in the Register page, Previous and Next buttons appear */}
             {mode === "register" ? (
               <div className="md:col-span-5 flex justify-end gap-2">

@@ -19,6 +19,8 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import ReceiptView from "@/components/ReceiptView";
+import { Dialog, DialogContent } from "@/components/ui/dialog"; // Import Dialog components
 
 const DB_STATUSES = ["pending_approval", "confirmed", "completed", "cancelled", "no_show"] as const;
 
@@ -63,6 +65,8 @@ export default function SalesPage() {
   const [sales, setSales] = useState<SaleEntry[]>([]);
   const [page, setPage] = useState(1);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   const rowsPerPage = 10;
 
@@ -350,7 +354,14 @@ export default function SalesPage() {
             <tbody>
               {pagedData.length > 0 ? (
                 pagedData.map((sale) => (
-                  <tr key={sale.id} className="text-center bg-white hover:bg-blue-100 transition-colors">
+                  <tr
+                    key={sale.id}
+                    className="text-center bg-white hover:bg-blue-100 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setSelectedInvoiceId(String(sale.id));
+                      setShowReceiptModal(true);
+                    }}
+                  >
                     <td className="p-3 border border-blue-accent">{new Date(sale.date).toLocaleDateString()}</td>
                     <td className="p-3 border border-blue-accent">{formatDisplayTime(sale as any)}</td>
                     <td className="p-3 border border-blue-accent">{sale.patient}</td>
@@ -403,6 +414,13 @@ export default function SalesPage() {
             )}
           </div>
         </div>
+
+        {/* Receipt Modal */}
+        <Dialog open={showReceiptModal} onOpenChange={setShowReceiptModal}>
+          <DialogContent className="max-w-2xl">
+            {selectedInvoiceId && <ReceiptView invoiceId={selectedInvoiceId} />}
+          </DialogContent>
+        </Dialog>
       </section>
     </main>
   );
