@@ -26,12 +26,11 @@ You can start editing by modifying any `page.tsx` file. The page auto-updates as
 - Dashboard pages for staff-side and patient-side have been created, with some features to be implemented in upcoming sprints.
 ### Sprint 2: Service Management, Patient Record Management
 - Staff-side Services page is fully functioning.
-- Ongoing bug fixes for staff-side Patient Record data retrievals.
+- Staff-side Patient Record data retrievals is fully functioning.
 ### Sprint 3: Appointment Management, Booking Management, Dental Chart Management
 - Staff-side Availability feature is fully functioning.
 - Appointment tables have been implemented and are functioning.
-- Appointment reservation and cancellation feature is fully functioning.
-- Backend on rescheduling of appointments is to be implemented.
-- Dental chart management is unfinished. Frontend needs polishing and no backend has been implemented yet.
+- Appointment reservation, rescheduling, and cancellation features are fully functioning.
+- Dental chart is fully functioning.
 ### Sprint 4: Sales Management
-- Sales page has been created. Backend has yet to be implemented.
+- Sales page has been created. Data retrievals from invoices are fully functioning.
