@@ -20,6 +20,7 @@ export default function PatientRecord() {
   const [fullName, setFullName] = useState("User");
   const [userContact, setUserContact] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [profileData, setProfileData] = useState<any>(null);
   const [editingPatient, setEditingPatient] = useState<any>({});
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function PatientRecord() {
         // Fetch patient profile details for header
         const profileRes = await fetch(`http://localhost:4000/api/patients/${patientId}`);
         const profileData = profileRes.ok ? await profileRes.json() : null;
+        setProfileData(profileData);
         if (profileData) {
           setFullName(
             `${profileData.last_name || ''} ${profileData.first_name || ''} ${profileData.middle_name || ''}`.trim()
