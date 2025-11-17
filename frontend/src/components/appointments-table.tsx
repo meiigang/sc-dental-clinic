@@ -621,25 +621,12 @@ export function AppointmentsTable({ patientId, userRole }: { patientId?: string 
 
               {/* Right-aligned: Primary actions */}
               <div className="flex gap-2">
-                <Button
-                  onClick={() => setIsLogDialogOpen(true)}
-                  disabled={userRole === "staff" || selectedAppointment?.status !== "confirmed"}
-                  className={
-                    userRole === "staff" || selectedAppointment?.status !== "confirmed"
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }
-                  title={
-                    userRole === "staff"
-                      ? "Staff cannot log appointments."
-                      : selectedAppointment?.status !== "confirmed"
-                        ? "You can only log appointments that are confirmed."
-                        : ""
-                  }
-                >
-                  Log Appointment
-                </Button>
-                <Button onClick={handleSave}>
+                {userRole !== "staff" && (
+                  <Button onClick={() => setIsLogDialogOpen(true)}>
+                    Log Appointment
+                  </Button>
+                )}
+                <Button onClick={handleSave} className="bg-blue-primary hover:bg-blue-600 text-white">
                   Save Changes
                 </Button>
               </div>
