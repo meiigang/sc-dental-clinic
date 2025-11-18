@@ -7,30 +7,17 @@ Sabado-Cuaton Dental Clinic is a dental clinic management system as a requiremen
 - Backend: [Express.js](https://expressjs.com), [Supabase](https://supabase.com)
 
 ## Installation
-This is a  project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-First, run the development server:
+This is a project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+Run the frontend development server:
 ```bash
 npm run dev
-# or
-yarn dev
+```
+Run the backend development server:
+```bash
+npm run start:dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing by modifying any `page.tsx` file. The page auto-updates as you edit the file.
-
-## Current Progress
-### Sprint 1: User Management
-- Landing pages are fully functioning.
-- Dashboard pages for staff-side and patient-side have been created, with some features to be implemented in upcoming sprints.
-### Sprint 2: Service Management, Patient Record Management
-- Staff-side Services page is fully functioning.
-- Staff-side Patient Record data retrievals is fully functioning.
-### Sprint 3: Appointment Management, Booking Management, Dental Chart Management
-- Staff-side Availability feature is fully functioning.
-- Appointment tables have been implemented and are functioning.
-- Appointment reservation, rescheduling, and cancellation features are fully functioning.
-- Dental chart is fully functioning.
-### Sprint 4: Sales Management
-- Sales page has been created. Data retrievals from invoices are fully functioning.
+You can start editing by modifying any `page.tsx` file. The page auto-updates as you save your edits.
