@@ -91,7 +91,7 @@ export default function PatientRecord() {
     <main>
       <div className="page-container min-h-screen px-4 sm:px-6 lg:px-12 xl:px-20 py-8 sm:py-12 space-y-12">
         {/* Patient Profile */}
-        <div className="w-full max-w-screen-xl mx-auto">
+        <div className="w-full mx-auto">
           <p className="text-base sm:text-lg font-medium text-blue-primary">Patient Record</p>
           <h1 className="inline-block whitespace-nowrap text-2xl sm:text-3xl font-bold text-blue-dark">
             {fullName}
@@ -104,7 +104,7 @@ export default function PatientRecord() {
             <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 flex-wrap">
 
               {/* Profile Picture */}
-              <div className="flex justify-center sm:justify-start flex-shrink-0">
+              <div className="flex justify-center sm:justify-start shrink-0">
                 <Image
                   src="/images/img-profile-default.png"
                   alt="Default Profile Picture"
@@ -215,7 +215,7 @@ export default function PatientRecord() {
         </div>
 
         {/* Patient Information Record */}
-        <div className="w-full max-w-screen-xl mx-auto py-10">
+        <div className="w-full mx-auto py-10">
           <h1 className="text-2xl sm:text-3xl font-bold text-blue-dark mb-4">
             Patient Information Record
           </h1>
@@ -263,19 +263,19 @@ export default function PatientRecord() {
         </div>
 
         {/* Appointment History */}
-        <div className="max-w-screen-xl mx-auto py-4">
+        <div className="w-full py-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-blue-dark mb-4">
             Appointment History
           </h1>
 
           {/* Table wrapper */}
-          <div className="relative left-1/2 -translate-x-1/2 min-w-[120vw]">
+          <div className="w-full overflow-x-auto">
             <AppointmentsTable patientId={patientId} />
           </div>
         </div>
 
         {/* Dental Chart */}
-        <div className="w-full max-w-screen-xl mx-auto py-6">
+        <div className="w-full mx-auto py-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-blue-dark mb-4">
             Dental Chart
           </h1>
